@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "dev:clean": "bash scripts/dev.sh",
-    "build": "next build",
+    "dev:stable": "bash scripts/dev.sh",
+    "build": "bash scripts/prebuild.sh && next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@mollie/api-client": "^4.5.0",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",
     "@supabase/ssr": "^0.6.1",

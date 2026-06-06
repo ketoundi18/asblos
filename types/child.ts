@@ -24,6 +24,15 @@ export type Child = {
   updated_at: string;
   deleted_at: string | null;
   anonymized_at: string | null;
+  created_via?: "STAFF" | "PARENT" | null;
+  enrollment_status?:
+    | "BROUILLON"
+    | "EN_ATTENTE_PAIEMENT"
+    | "PAYE_EN_ATTENTE_ASBL"
+    | "VALIDE"
+    | "REFUSE"
+    | null;
+  asbl_validated_at?: string | null;
 };
 
 export type Guardian = {

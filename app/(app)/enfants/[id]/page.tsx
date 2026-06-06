@@ -84,8 +84,8 @@ export default async function EnfantDetailPage({
       {!fullView ? (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
-            Vue limitée — en tant que bénévole, tu vois uniquement les informations
-            nécessaires sur le terrain.
+            Vue limitée — en tant que {profile.role === "STAGIAIRE" ? "stagiaire" : "bénévole"},
+            tu vois uniquement les informations nécessaires sur le terrain.
           </CardContent>
         </Card>
       ) : null}

@@ -35,6 +35,10 @@ export default function ConnexionPage() {
 
         <p className="text-center text-xs text-muted-foreground">
           Pas d&apos;inscription publique — ton administrateur crée ton compte.
+          <br />
+          <a href="/espace-parents/connexion" className="underline">
+            Espace parents →
+          </a>
         </p>
       </div>
     </main>

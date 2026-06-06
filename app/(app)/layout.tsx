@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
-import { ROLE_LABELS } from "@/lib/auth/roles";
+import { ROLE_LABELS, isParentRole } from "@/lib/auth/roles";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { Home, Users, Calendar, CreditCard, FileText, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,10 @@ export default async function AppLayout({
     redirect("/connexion");
   }
 
+  if (isParentRole(profile.role)) {
+    redirect("/espace-parents");
+  }
+
   if (!profile.is_active) {
     redirect("/connexion");
   }
@@ -44,6 +48,17 @@ export default async function AppLayout({
   const visibleNav = navItems.filter((item) =>
     canSeeItem(profile.role, item.roles)
   );
+
+  const mobileNav =
+    profile.role === "ADMIN"
+      ? [
+          visibleNav.find((i) => i.href === "/")!,
+          visibleNav.find((i) => i.href === "/enfants")!,
+          visibleNav.find((i) => i.href === "/activites")!,
+          visibleNav.find((i) => i.href === "/administration")!,
+          visibleNav.find((i) => i.href === "/paiements")!,
+        ].filter(Boolean)
+      : visibleNav.slice(0, 5);
 
   return (
     <div className="flex min-h-screen flex-col pb-20 md:pb-0">
@@ -63,7 +78,7 @@ export default async function AppLayout({
 
       <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card md:hidden">
         <div className="mx-auto flex max-w-lg justify-around px-2 py-2">
-          {visibleNav.slice(0, 5).map((item) => (
+          {mobileNav.map((item) => (
             <Link
               key={item.href}
               href={item.href}

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
-import type { ChildFormState } from "@/lib/actions/children-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,15 +20,28 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+type FormState = {
+  error: string | null;
+  fieldErrors: Record<string, string>;
+  success?: boolean;
+};
+
 type ChildFormProps = {
-  action: (
-    state: ChildFormState,
-    formData: FormData
-  ) => Promise<ChildFormState>;
-  initialState: ChildFormState;
+  action: (state: FormState, formData: FormData) => Promise<FormState>;
+  initialState: FormState;
   child?: ChildWithGuardians;
   submitLabel: string;
+  /** @deprecated Préfère variant="staff" | "parent" */
   showInternalFields?: boolean;
+  variant?: "staff" | "parent";
+  cancelHref?: string;
+  guardianDefaults?: {
+    relation?: "MERE" | "PERE" | "TUTEUR" | "AUTRE";
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+  };
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -68,11 +80,29 @@ export function ChildForm({
   initialState,
   child,
   submitLabel,
-  showInternalFields = true,
+  showInternalFields,
+  variant = "staff",
+  cancelHref,
+  guardianDefaults,
 }: ChildFormProps) {
   const [state, formAction] = useFormState(action, initialState);
+  const isStaff =
+    showInternalFields !== undefined ? showInternalFields : variant === "staff";
+  const showGuardian = isStaff || variant === "parent";
   const primaryGuardian =
     child?.guardians.find((g) => g.is_primary) ?? child?.guardians[0];
+  const guardianRelation =
+    primaryGuardian?.relation ?? guardianDefaults?.relation ?? "MERE";
+  const guardianFirstName =
+    primaryGuardian?.first_name ?? guardianDefaults?.first_name ?? "";
+  const guardianLastName =
+    primaryGuardian?.last_name ?? guardianDefaults?.last_name ?? "";
+  const guardianEmail =
+    primaryGuardian?.email ?? guardianDefaults?.email ?? "";
+  const guardianPhone =
+    primaryGuardian?.phone ?? guardianDefaults?.phone ?? "";
+  const backHref =
+    cancelHref ?? (child ? `/enfants/${child.id}` : "/enfants");
 
   return (
     <form action={formAction} className="space-y-6">
@@ -124,7 +154,7 @@ export function ChildForm({
               message={state.fieldErrors.birth_date}
             />
           </div>
-          {showInternalFields ? (
+          {isStaff ? (
             <div className="space-y-2">
               <Label htmlFor="status">Statut</Label>
               <select
@@ -185,7 +215,7 @@ export function ChildForm({
               defaultValue={child?.allergies ?? ""}
             />
           </div>
-          {showInternalFields ? (
+          {isStaff ? (
             <div className="space-y-2">
               <Label htmlFor="medical_notes">Notes médicales (interne)</Label>
               <Textarea
@@ -231,7 +261,7 @@ export function ChildForm({
             />
             <span className="text-sm">Droit à l&apos;image accordé</span>
           </label>
-          {showInternalFields ? (
+          {isStaff ? (
             <div className="space-y-2">
               <Label htmlFor="image_rights_date">Date droit à l&apos;image</Label>
               <Input
@@ -251,7 +281,7 @@ export function ChildForm({
             />
             <span className="text-sm">Autorisation de sortie accordée</span>
           </label>
-          {showInternalFields ? (
+          {isStaff ? (
             <div className="space-y-2">
               <Label htmlFor="outing_auth_date">Date autorisation sortie</Label>
               <Input
@@ -265,10 +295,13 @@ export function ChildForm({
         </CardContent>
       </Card>
 
-      {showInternalFields ? (
+      {showGuardian ? (
         <Card>
           <CardHeader>
             <CardTitle>Parent / tuteur principal</CardTitle>
+            {variant === "parent" ? (
+              <CardDescription>Tes coordonnées pour cette inscription</CardDescription>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -276,7 +309,7 @@ export function ChildForm({
               <select
                 id="guardian_relation"
                 name="guardian_relation"
-                defaultValue={primaryGuardian?.relation ?? "MERE"}
+                defaultValue={guardianRelation}
                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
               >
                 {Object.entries(GUARDIAN_RELATION_LABELS).map(([value, label]) => (
@@ -292,7 +325,7 @@ export function ChildForm({
                 <Input
                   id="guardian_first_name"
                   name="guardian_first_name"
-                  defaultValue={primaryGuardian?.first_name ?? ""}
+                  defaultValue={guardianFirstName}
                   required
                 />
                 <FieldError
@@ -305,7 +338,7 @@ export function ChildForm({
                 <Input
                   id="guardian_last_name"
                   name="guardian_last_name"
-                  defaultValue={primaryGuardian?.last_name ?? ""}
+                  defaultValue={guardianLastName}
                   required
                 />
                 <FieldError
@@ -321,7 +354,7 @@ export function ChildForm({
                   id="guardian_phone"
                   name="guardian_phone"
                   type="tel"
-                  defaultValue={primaryGuardian?.phone ?? ""}
+                  defaultValue={guardianPhone}
                   required
                 />
                 <FieldError
@@ -335,7 +368,7 @@ export function ChildForm({
                   id="guardian_email"
                   name="guardian_email"
                   type="email"
-                  defaultValue={primaryGuardian?.email ?? ""}
+                  defaultValue={guardianEmail}
                 />
                 <FieldError
                   id="guardian_email-error"
@@ -356,7 +389,7 @@ export function ChildForm({
         </Card>
       ) : null}
 
-      {showInternalFields ? (
+      {isStaff ? (
         <Card>
           <CardHeader>
             <CardTitle>Notes internes</CardTitle>
@@ -384,7 +417,7 @@ export function ChildForm({
       <SubmitButton label={submitLabel} />
 
       <Button asChild variant="outline" className="w-full">
-        <Link href={child ? `/enfants/${child.id}` : "/enfants"}>Annuler</Link>
+        <Link href={backHref}>Annuler</Link>
       </Button>
     </form>
   );

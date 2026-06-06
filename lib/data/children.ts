@@ -53,7 +53,10 @@ export async function getChildById(
     .order("is_primary", { ascending: false });
 
   if (guardiansError) {
-    throw new Error("Impossible de charger les parents/tuteurs.");
+    return {
+      ...(child as Child),
+      guardians: [],
+    };
   }
 
   return {
