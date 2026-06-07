@@ -1,6 +1,6 @@
 # AsblOS
 
-Application web de gestion pour ASBL belges — simple, sécurisée, en français.
+Application web de gestion pour ASBL belges — simple, sécurisée, en français. Test automation Cursor — juin 2026
 
 ## Prérequis
 
@@ -70,3 +70,4 @@ Ouvre [http://localhost:3000](http://localhost:3000) dans ton navigateur.
 - Tailwind CSS + shadcn/ui
 - Supabase (Auth + Database)
 - Zod + Server Actions
+
