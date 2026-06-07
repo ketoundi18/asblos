@@ -1,6 +1,6 @@
 # AsblOS
 
-Application web de gestion pour ASBL belges — simple, sécurisée, en français. Test automation Cursor — juin 2026
+Application web de gestion pour ASBL belges — simple, sécurisée, en français. 
 
 ## Prérequis
 
