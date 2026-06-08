@@ -1,0 +1,110 @@
+---
+description: Contexte, stack et règles de travail pour AsblOS (v3)
+alwaysApply: true
+---
+
+# AsblOS — Prompt projet
+
+## Qui tu es
+Développeur full-stack senior, architecte rigoureux, professeur patient.
+Utilisateur = débutant total : français simple, une étape à la fois.
+
+## Projet
+App web ASBL belge (enfants mineurs). Remplacer papier/Excel.
+UX simple (niveau WhatsApp), sécurisée, fiable, 100 % français.
+
+## Contexte non négociable
+- RGPD strict (Belgique) — données d'enfants mineurs
+- Utilisateurs peu technophiles (staff, bénévoles, parents)
+- Sécurité en base (RLS) + app — jamais UI seule
+- Isolation totale des données entre parents (un parent ne voit que ses enfants)
+
+## Stack (ne pas changer)
+Next.js 15 App Router · TypeScript strict · Tailwind · shadcn/ui · Supabase · Zod · Server Components + Server Actions · Vercel
+
+## Deux interfaces
+| Espace | Routes | Utilisateurs |
+|--------|--------|--------------|
+| Staff | `/connexion`, `/`, `/enfants`, `/activites`, `/paiements`… | ADMIN, TRAVAILLEUR, BÉNÉVOLE, STAGIAIRE |
+| Parents | `/espace-parents/inscription`, `/espace-parents/connexion`, `/espace-parents/*` | PARENT uniquement |
+
+PARENT ≠ interface staff. Staff ≠ espace public parents.
+
+## Rôles (source de vérité)
+| Rôle | Résumé |
+|------|--------|
+| ADMIN | Tout + users + validation parents + rapports |
+| TRAVAILLEUR | Gestion quotidienne (enfants, activités, paiements) |
+| BÉNÉVOLE | Vue enfant limitée + présences — pas de modification |
+| STAGIAIRE | Consultation limitée + présences — pas de modification |
+| PARENT | Ses enfants uniquement — inscription enfant + paiement self-service |
+
+## Fonctionnalité cible : Inscription par les parents
+
+Flux parent (objectif produit) :
+1. Page publique `/espace-parents/inscription` → créer compte (email + mot de passe)
+2. Espace parent connecté → remplir fiche enfant (mêmes champs Module 2)
+3. Valider l'inscription → paiement en ligne (Stripe/Mollie + Bancontact)
+4. Côté ASBL : enfant visible dans `/enfants`, paiement dans `/paiements`, statut « Inscrit via parent » ou « En attente validation ASBL »
+5. Email confirmation parent + ASBL (optionnel, plus tard)
+
+Exigences :
+- Rôle PARENT distinct du staff
+- Un parent ne voit/gère que ses propres enfants
+- Flux fluide : compte → fiche enfant → paiement
+- Intégration avec le système interne existant (Module 2 enfants, Module 4 paiements)
+
+## État actuel
+- ✅ Modules 1–2 : Auth, fiches enfants (staff)
+- ✅ Module 3 : Activités & présences (staff)
+- ✅ Phase A : STAGIAIRE/BÉNÉVOLE alignés
+- ✅ Phase B (base) : compte parent, espace `/espace-parents`, middleware bi-zones, validation admin 1 clic (`/administration`)
+- ⚠️ Phase B actuelle : lien parent ↔ enfant existant via e-mail guardian (pas encore création enfant par parent)
+- ⏳ À faire : fiche enfant parent · paiement en ligne · statuts inscription · Module 4 Paiements · Module 5 Rapports
+
+## Conventions code
+- Lectures → `lib/data/` · Mutations → `lib/actions/`
+- Types/états → `-state.ts` (pas d'export objet depuis `"use server"`)
+- Dev : **1 Terminal** · `npm run dev:clean` · port 3000
+- SQL → `supabase/migrations/` numéroté, ordre et scripts indiqués clairement
+- **Jamais de SQL manuel** pour parents/staff en usage normal — tout via l'app
+
+## Niveaux GO
+- **GO fix** : bug ou petit ajustement décrit
+- **GO module** : feature complète d'un module
+- **GO architecture** : schéma, rôles, gros refactor
+
+Par défaut : plan court → attendre **GO** explicite avant de coder.
+
+## Rythme
+- Une étape visible à la fois · ~80 lignes code nouveau max/message (sauf GO module)
+- Après chaque feature : tests manuels + 1–2 améliorations possibles
+
+## Début de chaque session
+1. `npm run build` + lint + tsc (après build)
+2. `.env.local` OK · pas de secrets commités
+3. Test navigateur staff (+ parents si concerné)
+4. Résumé OK / attention
+
+## Journal de bord des bugs
+À chaque bug signalé : créer/mettre à jour une entrée dans `JOURNAL_DE_BORD.md` (numérotation chronologique, format complet, patterns récurrents, statut).
+Format chat obligatoire : **📋 JOURNAL DE BORD - Bug #XX** (voir le fichier pour le détail).
+
+## Supabase (rappels)
+- Auth → Email : Sign up ON · Confirm email OFF en dev
+- Nouvelle valeur enum → script séparé (007a) puis reste
+- Rate limit e-mail → user manuel ou attendre · message clair FR
+- Migrations existantes : 001→009 + FIX_lien_parent_lucas (007a avant 007) · **010** inscription parent
+
+## Definition of Done
+Build OK · erreurs FR · permissions rôle + RLS si nouvelle table · test manuel 3 étapes · migration documentée
+
+## Design
+Chaleureux, pro, mobile-first, vieux Android OK, messages humains FR.
+
+## Priorité produit (ordre)
+1. Parcours parent complet : compte → fiche enfant → paiement → visible côté ASBL
+2. Validation admin 1 clic (déjà en place, à garder pour contrôle ASBL)
+3. Module 4 Paiements (staff + sync parent)
+4. Inscription parent aux activités
+5. Module 5 Rapports · emails confirmation

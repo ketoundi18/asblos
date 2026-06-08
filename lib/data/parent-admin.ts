@@ -57,23 +57,6 @@ export async function getParentLinksForAdmin(): Promise<{
   const parentIds = [...new Set(linkRows.map((r) => r.parent_id))];
   const childIds = [...new Set(linkRows.map((r) => r.child_id))];
 
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone")
-    .in("id", parentIds);
-
-  let childrenQuery = await supabase
-    .from("children")
-    .select("id, first_name, last_name, created_via, enrollment_status")
-    .in("id", childIds);
-
-  if (childrenQuery.error) {
-    childrenQuery = await supabase
-      .from("children")
-      .select("id, first_name, last_name")
-      .in("id", childIds);
-  }
-
   type ProfileRow = {
     id: string;
     full_name: string;
@@ -88,12 +71,32 @@ export async function getParentLinksForAdmin(): Promise<{
     enrollment_status?: string | null;
   };
 
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, phone")
+    .in("id", parentIds);
+
+  let childrenData: ChildRow[] = [];
+
+  const { data: fullChildren, error: fullChildrenError } = await supabase
+    .from("children")
+    .select("id, first_name, last_name, created_via, enrollment_status")
+    .in("id", childIds);
+
+  if (fullChildrenError) {
+    const { data: fallbackChildren } = await supabase
+      .from("children")
+      .select("id, first_name, last_name")
+      .in("id", childIds);
+    childrenData = (fallbackChildren ?? []) as ChildRow[];
+  } else {
+    childrenData = (fullChildren ?? []) as ChildRow[];
+  }
+
   const profileMap = new Map(
     ((profiles ?? []) as ProfileRow[]).map((p) => [p.id, p])
   );
-  const childMap = new Map(
-    ((childrenQuery.data ?? []) as ChildRow[]).map((c) => [c.id, c])
-  );
+  const childMap = new Map(childrenData.map((c) => [c.id, c]));
 
   const schoolYear = getCurrentSchoolYear();
   const { data: membershipRows } = await supabase
@@ -133,7 +136,7 @@ export async function getParentLinksForAdmin(): Promise<{
   const partialData =
     linkRows.length > 0 &&
     (profileMap.size === 0 || childMap.size === 0) &&
-    (profilesError || childrenQuery.error);
+    (profilesError || fullChildrenError);
 
   if (partialData) {
     return {

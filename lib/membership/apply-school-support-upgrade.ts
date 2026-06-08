@@ -3,6 +3,10 @@ import { getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/d
 import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
+import type { Database } from "@/types/database";
+
+type ChildEnrollmentStatus =
+  Database["public"]["Enums"]["child_enrollment_status"];
 
 export type SchoolSupportUpgradeResult =
   | { ok: true; needsPayment: boolean; alreadyUpgraded: boolean }
@@ -92,7 +96,7 @@ async function upgradeViaAdminClient(
   childId: string,
   feeCents: number,
   newStatus: MembershipStatus,
-  newEnrollmentStatus: string
+  newEnrollmentStatus: ChildEnrollmentStatus
 ): Promise<{ ok: boolean; detail: string }> {
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
@@ -105,10 +109,10 @@ async function upgradeViaAdminClient(
         fee_cents: feeCents,
         status: newStatus,
         asbl_validated_at: null,
-      } as never)
+      })
       .eq("id", membershipId)
       .eq("parent_id", parentId)
-      .eq("plan", "BASE" as never)
+      .eq("plan", "BASE")
       .select("id")
       .maybeSingle<{ id: string }>();
 
@@ -118,7 +122,7 @@ async function upgradeViaAdminClient(
 
     await admin
       .from("children")
-      .update({ enrollment_status: newEnrollmentStatus } as never)
+      .update({ enrollment_status: newEnrollmentStatus })
       .eq("id", childId);
 
     return { ok: true, detail: "" };

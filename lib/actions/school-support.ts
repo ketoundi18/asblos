@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageActivities } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
+import type { Database } from "@/types/database";
+
+type ProgramUpdate =
+  Database["public"]["Tables"]["school_support_programs"]["Update"];
 
 export async function createSchoolSupportProgramAction(formData: FormData) {
   const profile = await requireProfile();
@@ -41,7 +45,7 @@ export async function createSchoolSupportProgramAction(formData: FormData) {
       status: "DRAFT",
       parent_registration_open: false,
       created_by: profile.id,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -81,7 +85,7 @@ export async function addSchoolSupportSlotAction(programId: string, formData: Fo
     end_time: typeof endTime === "string" && endTime ? endTime : null,
     location: typeof location === "string" && location.trim() ? location.trim() : null,
     label: typeof label === "string" && label.trim() ? label.trim() : null,
-  } as never);
+  });
 
   if (error) {
     redirect(`/soutien-scolaire/${programId}?error=slot-save`);
@@ -103,7 +107,7 @@ export async function updateSchoolSupportProgramAction(
   const status = formData.get("status");
   const parentOpen = formData.get("parent_registration_open") === "on";
 
-  const updates: Record<string, unknown> = {
+  const updates: ProgramUpdate = {
     updated_by: profile.id,
     parent_registration_open: parentOpen,
   };
@@ -119,7 +123,7 @@ export async function updateSchoolSupportProgramAction(
   const supabase = await createClient();
   const { error } = await supabase
     .from("school_support_programs")
-    .update(updates as never)
+    .update(updates)
     .eq("id", programId)
     .is("deleted_at", null);
 
@@ -144,7 +148,7 @@ export async function publishSchoolSupportProgramAction(programId: string) {
       status: "OPEN",
       parent_registration_open: true,
       updated_by: profile.id,
-    } as never)
+    })
     .eq("id", programId)
     .is("deleted_at", null);
 

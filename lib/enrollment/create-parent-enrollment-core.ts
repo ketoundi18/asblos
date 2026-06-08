@@ -61,7 +61,7 @@ async function createViaRpc(
     p_fee_cents: quote.totalCents,
     p_membership_status: quote.membershipStatus,
     p_school_year: schoolYear,
-  } as never);
+  });
 
   if (error) {
     if (
@@ -101,7 +101,7 @@ async function createViaSteps(
       ...child,
       created_by: profileId,
       created_via: "PARENT",
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -117,7 +117,7 @@ async function createViaSteps(
 
   const { data: createdGuardian, error: guardianError } = await supabase
     .from("guardians")
-    .insert({ ...guardian, child_id: childId } as never)
+    .insert({ ...guardian, child_id: childId })
     .select("id")
     .single<{ id: string }>();
 
@@ -134,7 +134,7 @@ async function createViaSteps(
     parent_id: profileId,
     child_id: childId,
     guardian_id: createdGuardian.id,
-  } as never);
+  });
 
   if (linkError) {
     await rollbackPartialParentEnrollment(childId);
@@ -153,7 +153,7 @@ async function createViaSteps(
       plan: quote.membershipPlan,
       fee_cents: quote.totalCents,
       status: quote.membershipStatus,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 

@@ -101,7 +101,7 @@ export async function enrollChildInSchoolSupportAction(
     membership_id: eligibility.membership.id,
     status: "ACTIVE",
     enrolled_by: profile.id,
-  } as never);
+  });
 
   if (error) {
     if (error.message.includes("unique") || error.code === "23505") {

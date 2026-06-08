@@ -152,7 +152,7 @@ export async function getChildOverview(childId: string): Promise<ChildOverview> 
       type ChosenRow = {
         school_support_slots: SchoolSupportSlot | null;
       };
-      const chosen = ((chosenRows ?? []) as ChosenRow[])
+      const chosen = ((chosenRows ?? []) as unknown as ChosenRow[])
         .map((r) => r.school_support_slots)
         .filter((s): s is SchoolSupportSlot => s != null);
 

@@ -38,7 +38,7 @@ acquire_dev_lock() {
   echo $$ > "$DEV_LOCK"
 }
 
-trap 'release_locks; exit 0' INT TERM
+trap 'release_locks; free_port "${PORT:-3000}" 2>/dev/null || true; exit 0' INT TERM
 trap 'release_locks' EXIT
 
 if [ ! -x "$NEXT_BIN" ]; then
@@ -50,6 +50,7 @@ acquire_dev_lock
 
 echo "→ Préparation du serveur..."
 stop_all_dev_servers
+stop_next_orphans
 sleep 0.5
 
 PORT=$(pick_dev_port) || {
@@ -103,15 +104,26 @@ while [ "$attempt" -lt "$MAX_RESTARTS" ]; do
 
   if [ "$exit_code" -eq 130 ]; then
     echo ""
+    echo "→ Arrêt en cours..."
+    free_port "$PORT" || true
     echo "✓ Serveur arrêté."
     exit 0
   fi
 
-  # Processus tué ou crash : nettoyer les orphelins sur le port
+  # Next.js 15 peut quitter le processus parent alors que le serveur écoute encore.
+  # Dans ce cas : attendre, ne pas tuer le port ni relancer en boucle.
   if port_is_listening "$PORT"; then
+    if [ "$duration" -lt 8 ]; then
+      echo ""
+      echo "✓ Serveur prêt sur http://localhost:${PORT}"
+      echo "  (Ctrl+C dans ce Terminal pour arrêter)"
+    fi
+    while port_is_listening "$PORT"; do
+      sleep 2
+    done
     echo ""
-    echo "→ Nettoyage du port ${PORT} (processus orphelin)..."
-    free_port "$PORT" || true
+    echo "✓ Serveur arrêté."
+    exit 0
   fi
 
   if [ "$exit_code" -eq 0 ] && [ "$duration" -ge 8 ]; then

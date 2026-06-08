@@ -98,7 +98,7 @@ export async function registerParentChildToActivityAction(
     child_id: childId,
     registered_by: profile.id,
     payment_status: paymentStatus,
-  } as never);
+  });
 
   if (error) {
     if (error.message.includes("payment_status")) {

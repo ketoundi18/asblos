@@ -70,7 +70,7 @@ export async function syncMolliePaymentByProviderId(
         status: nextStatus,
         paid_at: paidAt,
         method,
-      } as never)
+      })
       .eq("id", payment.id);
 
     if (updateError) {

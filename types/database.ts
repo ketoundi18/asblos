@@ -25,8 +25,10 @@ export type Database = {
           id: string;
           email: string;
           full_name: string;
-          role?: "ADMIN" | "TRAVAILLEUR" | "STAGIAIRE" | "BENEVOLE";
+          role?: "ADMIN" | "TRAVAILLEUR" | "STAGIAIRE" | "BENEVOLE" | "PARENT";
           is_active?: boolean;
+          phone?: string | null;
+          signup_source?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,8 +36,10 @@ export type Database = {
           id?: string;
           email?: string;
           full_name?: string;
-          role?: "ADMIN" | "TRAVAILLEUR" | "STAGIAIRE" | "BENEVOLE";
+          role?: "ADMIN" | "TRAVAILLEUR" | "STAGIAIRE" | "BENEVOLE" | "PARENT";
           is_active?: boolean;
+          phone?: string | null;
+          signup_source?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -232,6 +236,7 @@ export type Database = {
           id: string;
           school_year: string;
           enrollment_fee_cents: number;
+          school_support_fee_cents: number;
           currency: string;
           effective_from: string;
           updated_by: string | null;
@@ -242,6 +247,7 @@ export type Database = {
           id?: string;
           school_year: string;
           enrollment_fee_cents?: number;
+          school_support_fee_cents?: number;
           currency?: string;
           effective_from?: string;
           updated_by?: string | null;
@@ -252,6 +258,7 @@ export type Database = {
           id?: string;
           school_year?: string;
           enrollment_fee_cents?: number;
+          school_support_fee_cents?: number;
           currency?: string;
           effective_from?: string;
           updated_by?: string | null;
@@ -354,7 +361,15 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "guardians_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "children";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       activities: {
         Row: {
@@ -456,7 +471,22 @@ export type Database = {
             | "PAID"
             | "WAIVED";
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "activity_registrations_activity_id_fkey";
+            columns: ["activity_id"];
+            isOneToOne: false;
+            referencedRelation: "activities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_registrations_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "children";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       activity_attendance: {
         Row: {
@@ -486,7 +516,201 @@ export type Database = {
           marked_by?: string | null;
           marked_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "activity_attendance_activity_id_fkey";
+            columns: ["activity_id"];
+            isOneToOne: false;
+            referencedRelation: "activities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "activity_attendance_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "children";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      school_support_programs: {
+        Row: {
+          id: string;
+          school_year: string;
+          title: string;
+          description: string | null;
+          max_participants: number | null;
+          status: "DRAFT" | "OPEN" | "CLOSED";
+          parent_registration_open: boolean;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+          deleted_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          school_year: string;
+          title: string;
+          description?: string | null;
+          max_participants?: number | null;
+          status?: "DRAFT" | "OPEN" | "CLOSED";
+          parent_registration_open?: boolean;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          school_year?: string;
+          title?: string;
+          description?: string | null;
+          max_participants?: number | null;
+          status?: "DRAFT" | "OPEN" | "CLOSED";
+          parent_registration_open?: boolean;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          deleted_at?: string | null;
+        };
         Relationships: [];
+      };
+      school_support_slots: {
+        Row: {
+          id: string;
+          program_id: string;
+          day_of_week: number;
+          start_time: string;
+          end_time: string | null;
+          location: string | null;
+          label: string | null;
+          max_participants: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          day_of_week: number;
+          start_time: string;
+          end_time?: string | null;
+          location?: string | null;
+          label?: string | null;
+          max_participants?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          day_of_week?: number;
+          start_time?: string;
+          end_time?: string | null;
+          location?: string | null;
+          label?: string | null;
+          max_participants?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "school_support_slots_program_id_fkey";
+            columns: ["program_id"];
+            isOneToOne: false;
+            referencedRelation: "school_support_programs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      school_support_enrollments: {
+        Row: {
+          id: string;
+          program_id: string;
+          child_id: string;
+          parent_id: string;
+          membership_id: string | null;
+          status: "PENDING" | "ACTIVE" | "CANCELLED";
+          enrolled_by: string | null;
+          enrolled_at: string;
+          cancelled_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          child_id: string;
+          parent_id: string;
+          membership_id?: string | null;
+          status?: "PENDING" | "ACTIVE" | "CANCELLED";
+          enrolled_by?: string | null;
+          enrolled_at?: string;
+          cancelled_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          child_id?: string;
+          parent_id?: string;
+          membership_id?: string | null;
+          status?: "PENDING" | "ACTIVE" | "CANCELLED";
+          enrolled_by?: string | null;
+          enrolled_at?: string;
+          cancelled_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "school_support_enrollments_program_id_fkey";
+            columns: ["program_id"];
+            isOneToOne: false;
+            referencedRelation: "school_support_programs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "school_support_enrollments_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "children";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      school_support_enrollment_slots: {
+        Row: {
+          id: string;
+          enrollment_id: string;
+          slot_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          enrollment_id: string;
+          slot_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          enrollment_id?: string;
+          slot_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "school_support_enrollment_slots_enrollment_id_fkey";
+            columns: ["enrollment_id"];
+            isOneToOne: false;
+            referencedRelation: "school_support_enrollments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "school_support_enrollment_slots_slot_id_fkey";
+            columns: ["slot_id"];
+            isOneToOne: false;
+            referencedRelation: "school_support_slots";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       parent_child_links: {
         Row: {
@@ -513,10 +737,27 @@ export type Database = {
           verified_at?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "parent_child_links_parent_id_fkey";
+            columns: ["parent_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "parent_child_links_child_id_fkey";
+            columns: ["child_id"];
+            isOneToOne: false;
+            referencedRelation: "children";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      [_ in never]: never;
+    };
     Functions: {
       get_my_role: {
         Args: Record<string, never>;
@@ -528,6 +769,49 @@ export type Database = {
       };
       request_school_support_upgrade: {
         Args: { p_child_id: string };
+        Returns: null;
+      };
+      create_parent_enrollment_core: {
+        Args: {
+          p_first_name: string;
+          p_last_name: string;
+          p_birth_date: string;
+          p_school_name: string;
+          p_school_class: string;
+          p_allergies: string;
+          p_image_rights: boolean;
+          p_outing_authorization: boolean;
+          p_emergency_contact_name: string;
+          p_emergency_contact_phone: string;
+          p_guardian_relation: "MERE" | "PERE" | "TUTEUR" | "AUTRE";
+          p_guardian_first_name: string;
+          p_guardian_last_name: string;
+          p_guardian_email: string;
+          p_guardian_phone: string;
+          p_guardian_can_pickup: boolean;
+          p_enrollment_status:
+            | "BROUILLON"
+            | "EN_ATTENTE_PAIEMENT"
+            | "PAYE_EN_ATTENTE_ASBL"
+            | "VALIDE"
+            | "REFUSE";
+          p_membership_plan: "BASE" | "SCHOOL_SUPPORT";
+          p_fee_cents: number;
+          p_membership_status:
+            | "AWAITING_PAYMENT"
+            | "AWAITING_ASBL"
+            | "ACTIVE"
+            | "REJECTED"
+            | "CANCELLED";
+          p_school_year: string;
+        };
+        Returns: Json;
+      };
+      sync_enrollment_paid: {
+        Args: {
+          p_child_id: string;
+          p_membership_id?: string | null;
+        };
         Returns: null;
       };
     };
@@ -554,6 +838,17 @@ export type Database = {
         | "CANCELLED";
       membership_plan: "BASE" | "SCHOOL_SUPPORT";
       activity_status: "PLANIFIEE" | "EN_COURS" | "TERMINEE" | "ANNULEE";
+      school_support_program_status: "DRAFT" | "OPEN" | "CLOSED";
+      school_support_enrollment_status: "PENDING" | "ACTIVE" | "CANCELLED";
+      registration_payment_status:
+        | "NOT_REQUIRED"
+        | "PENDING"
+        | "DEFERRED"
+        | "PAID"
+        | "WAIVED";
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 };

@@ -8,7 +8,7 @@ export async function activatePendingSchoolSupportEnrollments(
 ) {
   await supabase
     .from("school_support_enrollments")
-    .update({ status: "ACTIVE" } as never)
+    .update({ status: "ACTIVE" })
     .eq("child_id", childId)
     .eq("status", "PENDING")
     .is("cancelled_at", null);
@@ -22,7 +22,7 @@ export async function verifyParentLinkForChild(
 ) {
   await supabase
     .from("parent_child_links")
-    .update({ verified_at: verifiedAt } as never)
+    .update({ verified_at: verifiedAt })
     .eq("child_id", childId)
     .is("verified_at", null);
 }

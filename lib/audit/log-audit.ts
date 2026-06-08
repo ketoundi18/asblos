@@ -61,7 +61,7 @@ export async function logAuditEvent(input: LogAuditInput): Promise<void> {
       entity_id: input.entityId,
       metadata: (input.metadata ?? {}) as Json,
       ip_hash: input.ipHash ?? null,
-    } as never);
+    });
 
     if (error) {
       console.error("[audit] insert failed:", input.action, error.message);

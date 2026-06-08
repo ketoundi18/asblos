@@ -1,0 +1,98 @@
+import { test, expect } from "@playwright/test";
+import { getParentCredentials, loginAsParent } from "./helpers/parent-auth";
+
+function uniqueChildName() {
+  const suffix = Date.now().toString(36).slice(-6);
+  return { firstName: `E2E${suffix}`, lastName: "Playwright" };
+}
+
+test.describe("Parcours parent — inscription wizard", () => {
+  test.beforeEach(() => {
+    test.skip(!getParentCredentials(), "E2E_PARENT_EMAIL / E2E_PARENT_PASSWORD requis");
+  });
+
+  test("inscription BASE (gratuite) jusqu'à la confirmation", async ({ page }) => {
+    const { firstName, lastName } = uniqueChildName();
+
+    await loginAsParent(page);
+    await page.goto("/espace-parents/inscrire");
+
+    await expect(page.getByRole("heading", { name: /Inscrire un enfant/i })).toBeVisible();
+
+    // Étape 1 — enfant (IDs explicites : l'étape 2 est cachée mais reste dans le DOM)
+    await page.locator("#first_name").fill(firstName);
+    await page.locator("#last_name").fill(lastName);
+    await page.locator("#birth_date").fill("2015-09-01");
+    await page.getByRole("button", { name: /Continuer — Formule/i }).click();
+
+    // Étape 2 — formule BASE (défaut)
+    await expect(page.getByText("Étape 2 — Parent & formule")).toBeVisible();
+    await page.getByRole("radio", { name: /Inscription simple à l'ASBL/i }).check();
+
+    const phone = page.locator("#guardian_phone");
+    if ((await phone.inputValue()) === "") {
+      await phone.fill("0470123456");
+    }
+
+    await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+
+    // Étape terminée (BASE gratuit → pas de paiement)
+    await expect(page.getByText("Inscription enregistrée")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(firstName).first()).toBeVisible();
+
+    await page.getByRole("link", { name: /Retour — Mes enfants/i }).click();
+    await expect(page).toHaveURL(/\/espace-parents\/?$/);
+    await expect(
+      page.getByRole("heading", { name: `${firstName} ${lastName}` })
+    ).toBeVisible();
+  });
+
+  test("inscription SCHOOL_SUPPORT + simulation paiement si disponible", async ({
+    page,
+  }) => {
+    const { firstName, lastName } = uniqueChildName();
+
+    await loginAsParent(page);
+    await page.goto("/espace-parents/inscrire");
+
+    await page.locator("#first_name").fill(firstName);
+    await page.locator("#last_name").fill(lastName);
+    await page.locator("#birth_date").fill("2014-03-15");
+    await page.getByRole("button", { name: /Continuer — Formule/i }).click();
+
+    await page.getByRole("radio", { name: /Inscription \+ soutien scolaire/i }).check();
+
+    const phone = page.locator("#guardian_phone");
+    if ((await phone.inputValue()) === "") {
+      await phone.fill("0470987654");
+    }
+
+    await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+
+    // Jours (optionnel) ou paiement ou terminé selon config ASBL
+    const simulateBtn = page.getByRole("button", {
+      name: /Simuler le paiement Bancontact/i,
+    });
+    const skipDaysBtn = page.getByRole("button", { name: /Passer — choisir plus tard/i });
+    const doneHeading = page.getByText("Inscription enregistrée");
+
+    await expect(simulateBtn.or(skipDaysBtn).or(doneHeading)).toBeVisible({
+      timeout: 30_000,
+    });
+
+    if (await skipDaysBtn.isVisible()) {
+      await skipDaysBtn.click();
+    }
+
+    if (await simulateBtn.isVisible()) {
+      await simulateBtn.click();
+      await expect(page.getByText("Inscription enregistrée")).toBeVisible({
+        timeout: 30_000,
+      });
+    } else {
+      await expect(doneHeading).toBeVisible();
+    }
+
+    await expect(page.getByText(firstName).first()).toBeVisible();
+  });
+});

@@ -276,6 +276,150 @@ Pousser le code sur GitHub → onglet **Actions** du repo.
 
 ---
 
+## Session 2026-06-06 (fin) — Merge main + correctifs P1/P2
+
+**Contexte :** Commit session GO A/B + fixes audit, merge `test-automation-cursor` → `main` (PR #1 fermée).
+
+### Livré
+
+| Domaine | Avant | Après | Preuve |
+|---------|-------|-------|--------|
+| Branche principale | `main` @ `0726db1` (Module 2) | `main` @ `afb3c03` (CI + soutien + wizard + audit) | GitHub `ketoundi18/asblos` |
+| Correctifs parent P1 | 5 bugs UX ouverts | Corrigés (créneaux, paiement BASE, wizard, toast) | commits `afb3c03` |
+| Correctifs staff P2 | 3 bugs ouverts | Corrigés (validation admin, nav TRAVAILLEUR, global-error parent) | idem |
+| Migration 026 Supabase | ⚠️ manuel | ✅ Confirmée appliquée par l'utilisateur | — |
+| Build / lint / tsc | OK sur branche | OK sur `main` | CI locale `CI=true npm run build` |
+
+### Non livré / dettes (inchangées ou nouvelles)
+
+| Sujet | Statut |
+|-------|--------|
+| Tests automatisés (unit/e2e) | ❌ 0 fichier |
+| `types/database.ts` vs migrations 017–026 | ❌ ~61× `as never`, tables `school_support_*` absentes du typage |
+| Double modèle `enrollment_status` + `memberships` | ❌ Atténué par RPC 026, pas unifié |
+| RGPD export / anonymisation UI | ❌ |
+| README à jour | ❌ s'arrête au Module 1 |
+| Sentry / monitoring prod | ❌ |
+| `loading.tsx` | ❌ 0 fichier |
+| Paiements offline V1 | ❌ reporté |
+| Barre mobile espace **parent** | ❌ menu haut seulement (confusion utilisateur) |
+| Nav mobile ADMIN sans Paiements/Soutien | ⚠️ compromis 5 slots |
+
+### Score progression
+
+| Axe | Audit #2 (08-06) | Après merge + P1/P2 |
+|-----|------------------|---------------------|
+| Parcours parent | 7/10 | **8/10** |
+| Parcours staff | 7/10 | **7,5/10** |
+| Sécurité / RLS | 7/10 | **7/10** |
+| Maintenabilité | 5/10 | **5,5/10** |
+| RGPD opérationnel | 4/10 | **4/10** |
+| **Prod-ready global** | **6/10** | **7/10** |
+
+### Prochaine session
+
+1. Régénérer `types/database.ts` depuis Supabase
+2. 5–10 tests e2e parcours parent critique
+3. UI RGPD minimale (export + anonymisation enfant)
+4. README migrations 001→026
+
+---
+
+## Session 2026-06-06 (fin) — Audit complet #3 (post-merge)
+
+**Contexte :** Reprise audit senior demandée par l'utilisateur — comparaison stricte vs audit #2.
+
+### Δ depuis audit #2
+
+| Domaine | Audit #2 | Audit #3 | Δ |
+|---------|----------|----------|---|
+| CI stable + merge main | PR ouverte | ✅ `main` à jour | ↑ |
+| Wizard inscription parent | Absent | ✅ 5 étapes | ↑ |
+| Page demandes soutien staff | Embarquée admin | ✅ Page dédiée + filtres | ↑ |
+| Bugs P1 parent | 5 ouverts | ✅ Corrigés | ↑ |
+| Bugs P2 staff | 3 ouverts | ✅ Corrigés | ↑ |
+| Migration 026 | Manuel | ✅ Appliquée (user) | ↑ |
+| Tests auto | 0 | 0 | = |
+| Types DB | En retard | En retard | = |
+| RGPD UI | Absent | Absent | = |
+
+### Prochaine session recommandée (post-audit #3)
+
+1. **GO types** — `supabase gen types` + retirer `as never`
+2. **GO e2e** — Playwright : inscription → paiement simulé → validation staff
+3. **GO RGPD V1** — export JSON enfant + bouton anonymiser (admin)
+4. **GO UX parent mobile** — barre basse ou FAB « Inscrire »
+
+---
+
+## Session 2026-06-08 (fin) — GO types
+
+**Contexte :** Dette typage Supabase (~61× `as never`) identifiée à l'audit #3.
+
+### Livré
+
+| Élément | Détail |
+|---------|--------|
+| `types/database.ts` | Tables `school_support_*`, `school_support_fee_cents`, enums, RPC `create_parent_enrollment_core` + `sync_enrollment_paid`, relations FK pour jointures |
+| `types/supabase-helpers.ts` | Helpers `Tables`, `TablesInsert`, `TablesUpdate`, `Enums` |
+| `as never` | **0** dans `lib/` (supprimés dans ~19 fichiers) |
+| `@supabase/ssr` | `0.6.1` → `0.10.3` (typage client serveur compatible supabase-js 2.49) |
+| Script npm | `gen:types` (nécessite `supabase login` ou `SUPABASE_ACCESS_TOKEN`) |
+| CI local | `typecheck` + `lint` OK |
+
+### Non livré / dettes
+
+- Régénération auto depuis Supabase CLI (token non configuré en local) — typage étendu **manuellement** depuis migrations 017–026
+- Tests e2e, RGPD UI, README migrations (inchangés)
+
+### Score progression
+
+- Types DB : ❌ → ✅ (typage aligné migrations, plus de contournements `as never`)
+- Prod-ready estimé : **7/10 → 7,5/10**
+
+### Prochaine session
+
+1. **GO e2e** — Playwright parcours parent
+2. **GO RGPD V1** — export + anonymisation
+3. `supabase login` puis `npm run gen:types` pour resync future
+
+---
+
+## Session 2026-06-08 (fin) — GO e2e
+
+**Contexte :** Tests automatiques Playwright sur le parcours parent (audit #3).
+
+### Livré
+
+| Élément | Détail |
+|---------|--------|
+| Playwright | `@playwright/test` + config `playwright.config.ts` |
+| Tests | `e2e/parent-login.spec.ts` (connexion + garde auth) |
+| Tests | `e2e/parent-enrollment.spec.ts` (wizard BASE + SCHOOL_SUPPORT / simulate) |
+| Helper | `e2e/helpers/parent-auth.ts` |
+| Scripts | `npm run test:e2e`, `test:e2e:ui`, `test:e2e:report` |
+| Env | `E2E_PARENT_EMAIL`, `E2E_PARENT_PASSWORD` dans `.env.local.example` |
+
+### Lancer les tests
+
+```bash
+# .env.local : E2E_PARENT_EMAIL + E2E_PARENT_PASSWORD (compte parent Supabase)
+npm run dev:clean   # ou laisse tourner — Playwright réutilise le serveur
+npm run test:e2e
+```
+
+### Non livré / dettes
+
+- Job CI GitHub avec secrets Supabase réels (tests locaux / manuels pour l'instant)
+- Test staff (validation demande soutien)
+
+### Prochaine session
+
+1. **GO RGPD V1** — export + anonymisation
+2. CI e2e optionnelle (secrets `E2E_*` + Supabase dev)
+
+---
+
 ## Modèle d'entrée (sessions futures)
 
 ```markdown

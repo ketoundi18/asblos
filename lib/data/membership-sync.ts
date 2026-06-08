@@ -93,7 +93,7 @@ export async function ensureMembershipForChild(
       fee_cents: inferred.fee_cents,
       status: inferred.status,
       asbl_validated_at: inferred.status === "ACTIVE" ? child.asbl_validated_at : null,
-    } as never)
+    })
     .select("id, child_id, parent_id, school_year, plan, fee_cents, status, asbl_validated_at")
     .single<Membership & { plan?: MembershipPlan }>();
 

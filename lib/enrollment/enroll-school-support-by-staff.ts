@@ -71,7 +71,7 @@ export async function enrollSchoolSupportByStaff(
       membership_id: membershipId,
       status: "ACTIVE",
       enrolled_by: enrolledByStaffId,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -93,7 +93,7 @@ export async function enrollSchoolSupportByStaff(
       slot_id: slotId,
     }));
 
-    await supabase.from("school_support_enrollment_slots").insert(rows as never);
+    await supabase.from("school_support_enrollment_slots").insert(rows);
   }
 
   return { ok: true, enrollmentId: enrollment.id };

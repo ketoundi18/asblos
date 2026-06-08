@@ -19,6 +19,7 @@ if [ -f "$DEV_LOCK" ]; then
 fi
 
 stop_all_dev_servers
+stop_next_orphans
 rm -f "$DEV_LOCK" .next/.dev-server.lock
 
 sleep 0.5

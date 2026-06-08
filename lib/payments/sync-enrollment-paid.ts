@@ -9,11 +9,11 @@ export async function syncEnrollmentPaid(
   const admin = createAdminClient();
 
   const { error: rpcError } = await admin.rpc(
-    "sync_enrollment_paid" as never,
+    "sync_enrollment_paid",
     {
       p_child_id: childId,
       p_membership_id: membershipId,
-    } as never
+    }
   );
 
   if (!rpcError) {
@@ -29,7 +29,7 @@ export async function syncEnrollmentPaid(
 
   const { error: childError } = await admin
     .from("children")
-    .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" } as never)
+    .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" })
     .eq("id", childId);
 
   if (childError) {
@@ -39,7 +39,7 @@ export async function syncEnrollmentPaid(
   if (membershipId) {
     const { error: membershipError } = await admin
       .from("memberships")
-      .update({ status: "AWAITING_ASBL" } as never)
+      .update({ status: "AWAITING_ASBL" })
       .eq("id", membershipId)
       .eq("status", "AWAITING_PAYMENT");
 

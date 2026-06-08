@@ -59,7 +59,7 @@ export async function validateParentLinkAction(
 
   const { error } = await supabase
     .from("parent_child_links")
-    .update({ verified_at: verifiedAt } as never)
+    .update({ verified_at: verifiedAt })
     .eq("id", linkId)
     .is("verified_at", null);
 
@@ -73,7 +73,7 @@ export async function validateParentLinkAction(
       .update({
         enrollment_status: "VALIDE",
         asbl_validated_at: verifiedAt,
-      } as never)
+      })
       .eq("id", link.child_id)
       .eq("created_via", "PARENT");
 
@@ -82,7 +82,7 @@ export async function validateParentLinkAction(
       .update({
         status: "ACTIVE",
         asbl_validated_at: verifiedAt,
-      } as never)
+      })
       .eq("child_id", link.child_id)
       .eq("school_year", getCurrentSchoolYear())
       .in("status", ["AWAITING_ASBL", "AWAITING_PAYMENT"]);
@@ -141,13 +141,13 @@ export async function rejectParentLinkAction(linkId: string) {
   if (link?.child_id) {
     await supabase
       .from("children")
-      .update({ enrollment_status: "REFUSE" } as never)
+      .update({ enrollment_status: "REFUSE" })
       .eq("id", link.child_id)
       .eq("created_via", "PARENT");
 
     await supabase
       .from("memberships")
-      .update({ status: "REJECTED" } as never)
+      .update({ status: "REJECTED" })
       .eq("child_id", link.child_id)
       .eq("school_year", getCurrentSchoolYear());
 

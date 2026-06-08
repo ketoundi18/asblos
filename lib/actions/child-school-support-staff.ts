@@ -70,7 +70,7 @@ export async function staffEnrollChildSchoolSupportAction(
           fee_cents: feeCents,
           status: newStatus,
           asbl_validated_at: verifiedAt,
-        } as never)
+        })
         .eq("id", existingMembership.id);
 
       if (upgradeError) {
@@ -93,7 +93,7 @@ export async function staffEnrollChildSchoolSupportAction(
         fee_cents: feeCents,
         status: newStatus,
         asbl_validated_at: verifiedAt,
-      } as never)
+      })
       .select("id")
       .single<{ id: string }>();
 
@@ -173,7 +173,7 @@ export async function staffUpdateSchoolSupportSlotsAction(
     }));
     const { error } = await supabase
       .from("school_support_enrollment_slots")
-      .insert(rows as never);
+      .insert(rows);
 
     if (error) {
       redirect(childPath(childId, "error=soutien-slots"));
@@ -212,7 +212,7 @@ export async function staffActivateSchoolSupportAction(childId: string) {
         .update({
           status: "ACTIVE",
           asbl_validated_at: verifiedAt,
-        } as never)
+        })
         .eq("id", membership.id);
     }
   }
@@ -222,7 +222,7 @@ export async function staffActivateSchoolSupportAction(childId: string) {
     .update({
       enrollment_status: "VALIDE",
       asbl_validated_at: verifiedAt,
-    } as never)
+    })
     .eq("id", childId);
 
   await activatePendingSchoolSupportEnrollments(supabase, childId);
@@ -250,7 +250,7 @@ export async function staffCancelSchoolSupportAction(
     .update({
       status: "CANCELLED",
       cancelled_at: now,
-    } as never)
+    })
     .eq("id", enrollmentId)
     .eq("child_id", childId);
 

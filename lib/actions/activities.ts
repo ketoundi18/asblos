@@ -87,7 +87,7 @@ export async function createActivityAction(
 
   const { data: activity, error } = await supabase
     .from("activities")
-    .insert(payload as never)
+    .insert(payload)
     .select("id")
     .single<{ id: string }>();
 
@@ -132,7 +132,7 @@ export async function toggleParentRegistrationAction(activityId: string) {
     .update({
       parent_registration_open: !current.parent_registration_open,
       updated_by: profile.id,
-    } as never)
+    })
     .eq("id", activityId);
 
   if (error) {
@@ -165,7 +165,7 @@ export async function registerChildAction(
     activity_id: activityId,
     child_id: childId,
     registered_by: profile.id,
-  } as never);
+  });
 
   if (error) {
     redirect(`/activites/${activityId}?error=inscription`);
@@ -203,7 +203,7 @@ export async function markAttendanceAction(
         is_present: isPresent,
         marked_by: profile.id,
         marked_at: new Date().toISOString(),
-      } as never)
+      })
       .eq("id", existing.id);
   } else {
     await supabase.from("activity_attendance").insert({
@@ -211,7 +211,7 @@ export async function markAttendanceAction(
       child_id: childId,
       is_present: isPresent,
       marked_by: profile.id,
-    } as never);
+    });
   }
 
   revalidatePath(`/activites/${activityId}`);

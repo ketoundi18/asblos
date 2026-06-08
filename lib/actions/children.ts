@@ -135,7 +135,7 @@ async function attachStaffEnrollmentOnCreate(
     child_id: childId,
     guardian_id: guardianId,
     verified_at: verifiedAt,
-  } as never);
+  });
 
   if (linkError && !linkError.message.includes("unique")) {
     return {
@@ -151,12 +151,12 @@ async function attachStaffEnrollmentOnCreate(
       .update({
         enrollment_status: "VALIDE",
         asbl_validated_at: verifiedAt,
-      } as never)
+      })
       .eq("id", childId);
   } else if (quote.enrollmentStatus === "EN_ATTENTE_PAIEMENT") {
     await supabase
       .from("children")
-      .update({ enrollment_status: "EN_ATTENTE_PAIEMENT" } as never)
+      .update({ enrollment_status: "EN_ATTENTE_PAIEMENT" })
       .eq("id", childId);
   }
 
@@ -170,7 +170,7 @@ async function attachStaffEnrollmentOnCreate(
       fee_cents: quote.totalCents,
       status: quote.membershipStatus,
       asbl_validated_at: verifiedAt,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -276,7 +276,7 @@ export async function createChildAction(
 
   const { data: child, error: childError } = await supabase
     .from("children")
-    .insert(childPayload as never)
+    .insert(childPayload)
     .select("id")
     .single<{ id: string }>();
 
@@ -298,7 +298,7 @@ export async function createChildAction(
       phone: data.guardian_phone.trim(),
       is_primary: true,
       can_pickup: data.guardian_can_pickup,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -398,7 +398,7 @@ export async function updateChildAction(
 
   const { error: childError } = await supabase
     .from("children")
-    .update(childUpdate as never)
+    .update(childUpdate)
     .eq("id", childId);
 
   if (childError) {
@@ -427,7 +427,7 @@ export async function updateChildAction(
   if (primaryGuardian?.id) {
     await supabase
       .from("guardians")
-      .update(guardianPayload as never)
+      .update(guardianPayload)
       .eq("id", primaryGuardian.id);
   } else {
     const guardianInsert: GuardianInsert = {
@@ -440,7 +440,7 @@ export async function updateChildAction(
       is_primary: true,
       can_pickup: data.guardian_can_pickup,
     };
-    await supabase.from("guardians").insert(guardianInsert as never);
+    await supabase.from("guardians").insert(guardianInsert);
   }
 
   revalidatePath("/enfants");
@@ -466,7 +466,7 @@ export async function archiveChildAction(
       status: "ARCHIVE",
       deleted_at: new Date().toISOString(),
       updated_by: profile.id,
-    } as never)
+    })
     .eq("id", childId);
 
   if (error) {

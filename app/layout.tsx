@@ -4,6 +4,10 @@ import { Toaster } from "sonner";
 import { FlashToastHandler } from "@/components/ui/flash-toast-handler";
 import { fontBody, fontVariables } from "@/lib/fonts";
 import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
   title: "AsblOS — Gestion ASBL",
@@ -17,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" className={cn("font-sans", geist.variable)}>
       <body className={`${fontVariables} ${fontBody.className} min-h-screen font-sans`}>
         {children}
         <Suspense fallback={null}>

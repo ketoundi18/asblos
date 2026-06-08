@@ -4,36 +4,9 @@ import { getChildrenList } from "@/lib/data/children";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { canCreateChild, canViewFullChildProfile } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CHILD_STATUS_LABELS } from "@/lib/validations/child";
-import {
-  getChildAge,
-  getChildFullName,
-  type Child,
-} from "@/types/child";
-
-function statusVariant(status: Child["status"]) {
-  if (status === "ACTIF") return "success";
-  if (status === "INACTIF") return "warning";
-  return "muted";
-}
-
-function enrollmentLabel(child: Child) {
-  if (child.created_via === "PARENT") {
-    if (child.enrollment_status === "EN_ATTENTE_PAIEMENT") {
-      return { text: "Inscrit via parent · paiement", variant: "warning" as const };
-    }
-    if (
-      child.enrollment_status === "PAYE_EN_ATTENTE_ASBL" ||
-      !child.asbl_validated_at
-    ) {
-      return { text: "Inscrit via parent · attente ASBL", variant: "warning" as const };
-    }
-    return { text: "Inscrit via parent", variant: "success" as const };
-  }
-  return null;
-}
+import { ChildrenListTable } from "@/components/enfants/children-list-table";
+import type { Child } from "@/types/child";
 
 export default async function EnfantsPage() {
   const profile = await getCurrentProfile();
@@ -89,43 +62,7 @@ export default async function EnfantsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
-          {children.map((child) => {
-            const c = child as Child;
-            const parentBadge = enrollmentLabel(c);
-            return (
-            <Link key={child.id} href={`/enfants/${child.id}`}>
-              <Card className="transition-colors hover:border-primary/40">
-                <CardContent className="flex items-center gap-4 p-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-                    {child.first_name.charAt(0)}
-                    {child.last_name.charAt(0)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate font-semibold">
-                        {getChildFullName(c)}
-                      </p>
-                      <Badge variant={statusVariant(c.status)}>
-                        {CHILD_STATUS_LABELS[c.status]}
-                      </Badge>
-                      {parentBadge ? (
-                        <Badge variant={parentBadge.variant}>{parentBadge.text}</Badge>
-                      ) : null}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {getChildAge(child.birth_date)} ans
-                      {fullListView && child.school_name
-                        ? ` · ${child.school_name}`
-                        : ""}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-            );
-          })}
-        </div>
+        <ChildrenListTable items={children as Child[]} fullListView={fullListView} />
       )}
     </div>
   );

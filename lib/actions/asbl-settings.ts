@@ -39,7 +39,7 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
         school_support_fee_cents,
         enrollment_fee_cents: school_support_fee_cents,
         updated_by: profile.id,
-      } as never)
+      })
       .eq("id", existing.id);
 
     if (error) {
@@ -64,7 +64,7 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
       school_support_fee_cents,
       enrollment_fee_cents: school_support_fee_cents,
       updated_by: profile.id,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -123,7 +123,7 @@ export async function updateEnrollmentFeeAction(formData: FormData) {
         enrollment_fee_cents: school_support_fee_cents,
         school_support_fee_cents,
         updated_by: profile.id,
-      } as never)
+      })
       .eq("id", existing.id);
 
     if (error) {
@@ -135,7 +135,7 @@ export async function updateEnrollmentFeeAction(formData: FormData) {
       enrollment_fee_cents: school_support_fee_cents,
       school_support_fee_cents,
       updated_by: profile.id,
-    } as never);
+    });
 
     if (error) {
       redirect("/administration?error=fee-save");

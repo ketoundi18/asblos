@@ -71,7 +71,7 @@ export async function confirmSchoolSupportMembershipAction(
         plan: "SCHOOL_SUPPORT",
         status: "ACTIVE",
         asbl_validated_at: verifiedAt,
-      } as never)
+      })
       .eq("id", membership.id);
 
     if (error) {
@@ -101,7 +101,7 @@ export async function confirmSchoolSupportMembershipAction(
       fee_cents: feeCents,
       status: "ACTIVE",
       asbl_validated_at: verifiedAt,
-    } as never);
+    });
 
     if (error) {
       redirect(`${returnTo}?error=soutien-confirm`);
@@ -113,7 +113,7 @@ export async function confirmSchoolSupportMembershipAction(
     .update({
       enrollment_status: "VALIDE",
       asbl_validated_at: verifiedAt,
-    } as never)
+    })
     .eq("id", childId);
 
   await verifyParentLinkForChild(supabase, childId, verifiedAt);

@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/auth/session";
 import { canExportReports } from "@/lib/auth/permissions";
 import { getAuditLogs } from "@/lib/data/audit-logs";
 import { AuditLogPanel } from "@/components/admin/audit-log-panel";
+import { AuditLogFilterForm } from "@/components/admin/audit-log-filter-form";
 import { AUDIT_ACTION_OPTIONS } from "@/lib/audit/audit-labels";
 import type { AuditAction } from "@/lib/audit/log-audit";
 import { friendlyLoadError } from "@/lib/messages/flash-messages";
@@ -51,38 +52,7 @@ export default async function RapportsPage({ searchParams }: RapportsPageProps) 
             </p>
           </div>
 
-          <form method="get" className="flex flex-wrap items-center gap-2">
-            <label htmlFor="audit-action-filter" className="sr-only">
-              Filtrer par type d&apos;événement
-            </label>
-            <select
-              id="audit-action-filter"
-              name="action"
-              defaultValue={actionFilter ?? ""}
-              className="h-10 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              <option value="">Tous les événements</option>
-              {AUDIT_ACTION_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Filtrer
-            </button>
-            {actionFilter ? (
-              <a
-                href="/rapports"
-                className="inline-flex h-10 items-center rounded-md border px-4 text-sm font-medium hover:bg-muted"
-              >
-                Réinitialiser
-              </a>
-            ) : null}
-          </form>
+          <AuditLogFilterForm currentAction={actionFilter} />
         </div>
 
         {loadError ? (

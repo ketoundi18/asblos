@@ -17,7 +17,9 @@ import {
 import { ParentChooseSlotsForm } from "@/components/parent/parent-choose-slots-form";
 import { ParentSimulatePayButton } from "@/components/parent/parent-simulate-pay-button";
 import { ParentPayButtons } from "@/components/parent/parent-pay-buttons";
+import { EnrollmentConfirmDialog } from "@/components/parent/enrollment-confirm-dialog";
 import { Button } from "@/components/ui/button";
+import { FormNativeSelect } from "@/components/ui/form-native-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,10 +69,39 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-destructive">{message}</p>;
 }
 
-function EnrollSubmitButton() {
+function EnrollmentConfirmBridge({
+  open,
+  onOpenChange,
+  onConfirm,
+  childSummary,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  childSummary: string;
+}) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" className="w-full sm:flex-1" disabled={pending}>
+    <EnrollmentConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onConfirm={onConfirm}
+      pending={pending}
+      childSummary={childSummary}
+    />
+  );
+}
+
+function EnrollSubmitButton({ onOpenConfirm }: { onOpenConfirm: () => void }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button
+      type="button"
+      size="lg"
+      className="w-full sm:flex-1"
+      disabled={pending}
+      onClick={onOpenConfirm}
+    >
       {pending ? (
         <>
           <LoadingSpinner />
@@ -102,6 +133,8 @@ export function ParentEnrollmentWizard({
   const [childName, setChildName] = useState(initialChildName ?? "");
   const [schoolSupport, setSchoolSupport] = useState(initialSchoolSupport);
   const [needsPayment, setNeedsPayment] = useState(initialNeedsPayment);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmSummary, setConfirmSummary] = useState("");
 
   const [enrollState, enrollAction] = useFormState(
     createParentEnrollmentAction,
@@ -113,6 +146,7 @@ export function ParentEnrollmentWizard({
   useEffect(() => {
     if (!enrollState.success || !enrollState.childId) return;
 
+    setConfirmOpen(false);
     setChildId(enrollState.childId);
     setChildName(enrollState.childFirstName ?? "votre enfant");
     const support = enrollState.schoolSupport ?? false;
@@ -153,8 +187,7 @@ export function ParentEnrollmentWizard({
     return true;
   }
 
-  function validateStep2(event: React.FormEvent<HTMLFormElement>) {
-    const form = event.currentTarget;
+  function validateStep2Form(form: HTMLFormElement): boolean {
     const required = [
       "guardian_first_name",
       "guardian_last_name",
@@ -163,15 +196,41 @@ export function ParentEnrollmentWizard({
     for (const name of required) {
       const el = form.elements.namedItem(name) as HTMLInputElement | null;
       if (!el?.value.trim()) {
-        event.preventDefault();
         el?.focus();
-        return;
+        return false;
       }
     }
     const plan = (
       form.querySelector('input[name="membership_plan"]:checked') as HTMLInputElement | null
     )?.value;
     setSchoolSupport(plan === "SCHOOL_SUPPORT");
+    return true;
+  }
+
+  function validateStep2(event: React.FormEvent<HTMLFormElement>) {
+    if (!validateStep2Form(event.currentTarget)) {
+      event.preventDefault();
+    }
+  }
+
+  function openEnrollmentConfirm() {
+    const form = formRef.current;
+    if (!form || !validateStep2Form(form)) return;
+
+    const firstName = (
+      form.elements.namedItem("first_name") as HTMLInputElement | null
+    )?.value.trim();
+    const lastName = (
+      form.elements.namedItem("last_name") as HTMLInputElement | null
+    )?.value.trim();
+    setConfirmSummary(
+      [firstName, lastName].filter(Boolean).join(" ") || "votre enfant"
+    );
+    setConfirmOpen(true);
+  }
+
+  function confirmEnrollment() {
+    formRef.current?.requestSubmit();
   }
 
   function afterSlotsComplete() {
@@ -318,18 +377,14 @@ export function ParentEnrollmentWizard({
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="guardian_relation">Lien de parenté *</Label>
-                  <select
+                  <FormNativeSelect
                     id="guardian_relation"
                     name="guardian_relation"
                     defaultValue="MERE"
-                    className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
-                  >
-                    {Object.entries(GUARDIAN_RELATION_LABELS).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
+                    options={Object.entries(GUARDIAN_RELATION_LABELS).map(
+                      ([value, label]) => ({ value, label })
+                    )}
+                  />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -410,8 +465,15 @@ export function ParentEnrollmentWizard({
               >
                 Retour
               </Button>
-              <EnrollSubmitButton />
+              <EnrollSubmitButton onOpenConfirm={openEnrollmentConfirm} />
             </div>
+
+            <EnrollmentConfirmBridge
+              open={confirmOpen}
+              onOpenChange={setConfirmOpen}
+              onConfirm={confirmEnrollment}
+              childSummary={confirmSummary}
+            />
           </div>
 
           <Button asChild variant="outline" className="w-full">

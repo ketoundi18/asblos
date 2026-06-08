@@ -71,7 +71,7 @@ export async function enrollSchoolSupportAtSignup(
       membership_id: membershipId,
       status: "PENDING",
       enrolled_by: parentId,
-    } as never)
+    })
     .select("id")
     .single<{ id: string }>();
 
@@ -87,7 +87,7 @@ export async function enrollSchoolSupportAtSignup(
         membership_id: membershipId,
         status: "ACTIVE",
         enrolled_by: parentId,
-      } as never)
+      })
       .select("id")
       .single<{ id: string }>();
 
@@ -120,7 +120,7 @@ export async function enrollSchoolSupportAtSignup(
 
     const { error: slotsError } = await supabase
       .from("school_support_enrollment_slots")
-      .insert(rows as never);
+      .insert(rows);
 
     if (slotsError) {
       // Créneaux optionnels — l'inscription au programme reste valide sans eux

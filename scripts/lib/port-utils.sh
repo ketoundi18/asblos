@@ -46,6 +46,18 @@ stop_all_dev_servers() {
   free_port 3001 || true
 }
 
+# Tue aussi les processus next dev restants (orphelins sans port)
+stop_next_orphans() {
+  local pids
+  pids=$(pgrep -f '[n]ode.*next dev' 2>/dev/null || true)
+  if [ -n "$pids" ]; then
+    echo "→ Arrêt des processus next dev orphelins..."
+    kill $pids 2>/dev/null || true
+    sleep 0.5
+    kill -9 $pids 2>/dev/null || true
+  fi
+}
+
 pick_dev_port() {
   if ! port_is_listening 3000; then
     echo 3000

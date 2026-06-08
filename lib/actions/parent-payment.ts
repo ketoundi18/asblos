@@ -79,7 +79,7 @@ export async function startParentPaymentAction(
 
   const { data: inserted, error: insertError } = await supabase
     .from("payments")
-    .insert(paymentRow as never)
+    .insert(paymentRow)
     .select("id")
     .single<{ id: string }>();
 
@@ -121,7 +121,7 @@ export async function startParentPaymentAction(
     const admin = createAdminClient();
     await admin
       .from("payments")
-      .update({ provider_payment_id: molliePayment.id } as never)
+      .update({ provider_payment_id: molliePayment.id })
       .eq("id", inserted.id);
   } catch {
     redirect(`/espace-parents/paiement/${childId}?error=db`);
@@ -187,7 +187,7 @@ export async function simulateParentPaymentAction(
 
     const { error: insertError } = await supabase
       .from("payments")
-      .insert(paymentRow as never);
+      .insert(paymentRow);
 
     if (insertError) {
       redirect(`/espace-parents/paiement/${childId}?error=db`);
@@ -213,7 +213,7 @@ export async function simulateParentPaymentAction(
           provider_payment_id: `sim_${paymentId}`,
           purpose: "MEMBERSHIP",
           reference_id: context.membership_id,
-        } as never)
+        })
         .eq("id", paymentId);
     } else {
       await admin
@@ -223,7 +223,7 @@ export async function simulateParentPaymentAction(
           paid_at: paidAt,
           purpose: "MEMBERSHIP",
           reference_id: context.membership_id,
-        } as never)
+        })
         .eq("child_id", childId)
         .eq("parent_id", profile.id)
         .eq("status", "PENDING");
