@@ -7,6 +7,10 @@ import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import {
+  activatePendingSchoolSupportEnrollments,
+} from "@/lib/enrollment/activate-pending-enrollments";
+import { logAuditEvent } from "@/lib/audit/log-audit";
 
 export async function validateParentLinkAction(linkId: string) {
   const profile = await requireProfile();
@@ -78,12 +82,24 @@ export async function validateParentLinkAction(linkId: string) {
       .eq("child_id", link.child_id)
       .eq("school_year", getCurrentSchoolYear())
       .in("status", ["AWAITING_ASBL", "AWAITING_PAYMENT"]);
+
+    await activatePendingSchoolSupportEnrollments(supabase, link.child_id);
+
+    await logAuditEvent({
+      action: "CHILD_VALIDATED",
+      entityType: "children",
+      entityId: link.child_id,
+      actorId: profile.id,
+      actorRole: profile.role,
+      metadata: { link_id: linkId, source: "parent_admin_validate" },
+    });
   }
 
+  revalidatePath("/");
   revalidatePath("/administration");
   revalidatePath("/espace-parents");
   revalidatePath("/enfants");
-  redirect("/administration?success=validated");
+  redirect("/?success=validated");
 }
 
 export async function rejectParentLinkAction(linkId: string) {
@@ -122,6 +138,15 @@ export async function rejectParentLinkAction(linkId: string) {
       .update({ status: "REJECTED" } as never)
       .eq("child_id", link.child_id)
       .eq("school_year", getCurrentSchoolYear());
+
+    await logAuditEvent({
+      action: "CHILD_REJECTED",
+      entityType: "children",
+      entityId: link.child_id,
+      actorId: profile.id,
+      actorRole: profile.role,
+      metadata: { link_id: linkId },
+    });
   }
 
   revalidatePath("/administration");

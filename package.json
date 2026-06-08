@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "dev:clean": "bash scripts/dev.sh",
+    "dev:stop": "bash scripts/stop-dev.sh",
     "dev:stable": "bash scripts/dev.sh",
     "build": "bash scripts/prebuild.sh && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mollie/api-client": "^4.5.0",
@@ -22,6 +24,7 @@
     "next": "^15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "zod": "^3.24.2"

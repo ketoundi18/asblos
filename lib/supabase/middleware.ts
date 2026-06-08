@@ -7,15 +7,25 @@ const PARENT_PUBLIC = [
   "/espace-parents/inscription",
 ];
 
+/** Routes API sans session (webhooks, sonde santé). */
+const PUBLIC_API_PREFIXES = ["/api/webhooks/mollie", "/api/health"];
+
 function isAuthCallback(pathname: string) {
   return pathname.startsWith("/auth/");
+}
+
+function isPublicApiRoute(pathname: string) {
+  return PUBLIC_API_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 function isPublicRoute(pathname: string) {
   return (
     STAFF_PUBLIC.includes(pathname) ||
     PARENT_PUBLIC.includes(pathname) ||
-    isAuthCallback(pathname)
+    isAuthCallback(pathname) ||
+    isPublicApiRoute(pathname)
   );
 }
 
@@ -66,9 +76,19 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, is_active")
       .eq("id", user.id)
-      .single<{ role: string }>();
+      .single<{ role: string; is_active: boolean }>();
+
+    if (profile && profile.is_active === false) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = parentRoute
+        ? "/espace-parents/connexion"
+        : "/connexion";
+      url.searchParams.set("error", "inactive");
+      return NextResponse.redirect(url);
+    }
 
     const role = profile?.role;
     const isParent = role === "PARENT";

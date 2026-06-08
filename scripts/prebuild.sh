@@ -1,8 +1,13 @@
 #!/bin/bash
 # Empêche npm run build pendant que le serveur dev tourne (évite cache corrompu)
+# En CI (GitHub Actions), cette vérification est ignorée.
 
 set -e
 cd "$(dirname "$0")/.."
+
+if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+  exit 0
+fi
 
 LOCK_FILE=".next/.dev-server.lock"
 
