@@ -1,10 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Activity } from "@/types/activity";
-import { normalizeActivity } from "@/types/activity";
+import { getLocalTodayISO } from "@/lib/date-utils";
+import { getMembershipsForParentDashboard } from "@/lib/data/memberships";
+import {
+  resolveActivityRegistrationEligibility,
+  type ActivityRegistrationEligibility,
+} from "@/lib/parent/activity-eligibility";
+import type { Activity, ActivityRegistrationPaymentStatus } from "@/types/activity";
+import { normalizeActivity, normalizeRegistrationPaymentStatus } from "@/types/activity";
+
+export type ParentChildForRegistration = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  eligibility: ActivityRegistrationEligibility;
+};
 
 export type ParentActivityListItem = Activity & {
   registration_count: number;
   my_registered_child_ids: string[];
+  my_registrations?: ParentChildRegistration[];
+};
+
+export type ParentChildRegistration = {
+  child_id: string;
+  payment_status: ActivityRegistrationPaymentStatus;
 };
 
 export async function getParentActivities(): Promise<{
@@ -19,7 +38,7 @@ export async function getParentActivities(): Promise<{
     .eq("parent_registration_open", true)
     .in("status", ["PLANIFIEE", "EN_COURS"])
     .is("deleted_at", null)
-    .gte("activity_date", new Date().toISOString().slice(0, 10))
+    .gte("activity_date", getLocalTodayISO())
     .order("activity_date", { ascending: true });
 
   if (error) {
@@ -96,21 +115,28 @@ export async function getParentActivityById(
 
   const { data: regs } = await supabase
     .from("activity_registrations")
-    .select("child_id")
+    .select("child_id, payment_status")
     .eq("activity_id", id)
     .is("cancelled_at", null);
 
-  const myIds = ((regs ?? []) as { child_id: string }[]).map((r) => r.child_id);
+  type RegRow = { child_id: string; payment_status?: string | null };
+  const regRows = (regs ?? []) as RegRow[];
+  const myIds = regRows.map((r) => r.child_id);
+  const myRegistrations: ParentChildRegistration[] = regRows.map((r) => ({
+    child_id: r.child_id,
+    payment_status: normalizeRegistrationPaymentStatus(r.payment_status),
+  }));
 
   return {
     ...activity,
     registration_count: myIds.length,
     my_registered_child_ids: myIds,
+    my_registrations: myRegistrations,
   };
 }
 
 export async function getParentVerifiedChildrenForRegistration(): Promise<
-  { id: string; first_name: string; last_name: string }[]
+  ParentChildForRegistration[]
 > {
   const supabase = await createClient();
 
@@ -127,9 +153,27 @@ export async function getParentVerifiedChildrenForRegistration(): Promise<
 
   const { data: children } = await supabase
     .from("children")
-    .select("id, first_name, last_name")
+    .select("id, first_name, last_name, enrollment_status, created_via")
     .in("id", childIds)
     .is("deleted_at", null);
 
-  return (children ?? []) as { id: string; first_name: string; last_name: string }[];
+  const childRows = (children ?? []) as {
+    id: string;
+    first_name: string;
+    last_name: string;
+    enrollment_status: string | null;
+    created_via: string | null;
+  }[];
+
+  const membershipMap = await getMembershipsForParentDashboard();
+
+  return childRows.map((child) => ({
+    id: child.id,
+    first_name: child.first_name,
+    last_name: child.last_name,
+    eligibility: resolveActivityRegistrationEligibility(
+      membershipMap.get(child.id) ?? null,
+      child
+    ),
+  }));
 }

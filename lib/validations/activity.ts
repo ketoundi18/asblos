@@ -7,6 +7,8 @@ export const activityStatusSchema = z.enum([
   "ANNULEE",
 ]);
 
+import { isEndTimeAfterStart } from "@/lib/date-utils";
+
 export const activityFormSchema = z
   .object({
     title: z.string().min(1, "Le titre est obligatoire"),
@@ -25,17 +27,30 @@ export const activityFormSchema = z
     status: activityStatusSchema.default("PLANIFIEE"),
     is_paid: z.coerce.boolean().default(false),
     price_euros: z.string().optional(),
-    parent_registration_open: z.coerce.boolean().default(false),
+    parent_registration_open: z.coerce.boolean().default(true),
   })
   .superRefine((data, ctx) => {
-    if (!data.is_paid) return;
-    const raw = data.price_euros?.trim().replace(",", ".") ?? "";
-    const amount = Number(raw);
-    if (!raw || Number.isNaN(amount) || amount <= 0) {
+    if (data.is_paid) {
+      const raw = data.price_euros?.trim().replace(",", ".") ?? "";
+      const amount = Number(raw);
+      if (!raw || Number.isNaN(amount) || amount <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Indique un prix en euros (ex. 15 ou 15,50)",
+          path: ["price_euros"],
+        });
+      }
+    }
+
+    if (
+      data.start_time?.trim() &&
+      data.end_time?.trim() &&
+      !isEndTimeAfterStart(data.start_time, data.end_time)
+    ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Indique un prix en euros (ex. 15 ou 15,50)",
-        path: ["price_euros"],
+        message: "L'heure de fin doit être après l'heure de début",
+        path: ["end_time"],
       });
     }
   });

@@ -9,6 +9,13 @@ import type { Database } from "@/types/database";
 import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import type { ParentEnrollmentState } from "@/lib/actions/parent-enrollment-state";
+import {
+  buildEnrollmentQuote,
+  parseMembershipPlan,
+  parseProgramId,
+  parseSelectedSlotIds,
+} from "@/lib/enrollment/build-enrollment-quote";
+import { enrollSchoolSupportAtSignup } from "@/lib/enrollment/enroll-school-support-at-signup";
 
 type ChildInsert = Database["public"]["Tables"]["children"]["Insert"];
 type GuardianInsert = Database["public"]["Tables"]["guardians"]["Insert"];
@@ -82,11 +89,12 @@ export async function createParentEnrollmentAction(
   const supabase = await createClient();
 
   const { settings } = await getAsblSettingsForCurrentYear();
-  const feeCents = settings?.enrollment_fee_cents ?? 0;
-  const needsPayment = feeCents > 0;
-  const enrollmentStatus = needsPayment
-    ? ("EN_ATTENTE_PAIEMENT" as const)
-    : ("PAYE_EN_ATTENTE_ASBL" as const);
+  const plan = parseMembershipPlan(formData.get("membership_plan"));
+  const quote = buildEnrollmentQuote(plan, settings);
+  const programId = parseProgramId(formData.get("school_support_program_id"));
+  const slotIds = parseSelectedSlotIds(formData);
+
+  const enrollmentStatus = quote.enrollmentStatus;
 
   const childRow: ChildInsert = {
     first_name: data.first_name.trim(),
@@ -142,7 +150,7 @@ export async function createParentEnrollmentAction(
   if (guardianError || !guardian) {
     const detail = guardianError?.message ?? "erreur inconnue";
     return {
-      error: `Impossible d'enregistrer tes coordonnées (${detail}). Réessaie.`,
+      error: `Impossible d'enregistrer vos coordonnées (${detail}). Réessayez.`,
       fieldErrors: {},
     };
   }
@@ -161,29 +169,59 @@ export async function createParentEnrollmentAction(
     };
   }
 
-  const membershipStatus = needsPayment ? "AWAITING_PAYMENT" : "AWAITING_ASBL";
-  const { error: membershipError } = await supabase.from("memberships").insert({
-    child_id: child.id,
-    parent_id: profile.id,
-    school_year: getCurrentSchoolYear(),
-    fee_cents: feeCents,
-    status: membershipStatus,
-  } as never);
+  const membershipStatus = quote.membershipStatus;
+  const { data: membership, error: membershipError } = await supabase
+    .from("memberships")
+    .insert({
+      child_id: child.id,
+      parent_id: profile.id,
+      school_year: getCurrentSchoolYear(),
+      plan: quote.membershipPlan,
+      fee_cents: quote.totalCents,
+      status: membershipStatus,
+    } as never)
+    .select("id")
+    .single<{ id: string }>();
 
-  if (membershipError) {
-    const detail = membershipError.message ?? "erreur inconnue";
+  if (membershipError || !membership) {
+    const detail = membershipError?.message ?? "erreur inconnue";
     return {
       error: `Adhésion non enregistrée (${detail}). Lance 014_memberships_v2.sql dans Supabase.`,
       fieldErrors: {},
     };
   }
 
+  if (plan === "SCHOOL_SUPPORT" && programId) {
+    const enrollResult = await enrollSchoolSupportAtSignup(supabase, {
+      childId: child.id,
+      parentId: profile.id,
+      membershipId: membership.id,
+      programId,
+      slotIds,
+    });
+
+    // Ne pas bloquer l'inscription enfant si le programme échoue (parent pourra réessayer)
+    if (!enrollResult.ok) {
+      revalidatePath("/espace-parents");
+      revalidatePath("/espace-parents/soutien-scolaire");
+      return {
+        error: null,
+        fieldErrors: {},
+        success: true,
+        childId: child.id,
+        needsPayment: quote.needsPayment,
+        enrollmentWarning: enrollResult.error,
+      };
+    }
+  }
+
   revalidatePath("/espace-parents");
+  revalidatePath("/espace-parents/soutien-scolaire");
   return {
     error: null,
     fieldErrors: {},
     success: true,
     childId: child.id,
-    needsPayment,
+    needsPayment: quote.needsPayment,
   };
 }

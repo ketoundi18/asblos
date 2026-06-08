@@ -1,12 +1,14 @@
+import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSchoolYear } from "@/lib/school-year";
+import {
+  type AsblSettingsSnapshot,
+  formatEnrollmentFeeLabel,
+  getSchoolSupportFeeCents,
+} from "@/lib/asbl/fee-utils";
 
-export type AsblSettings = {
-  id: string;
-  school_year: string;
-  enrollment_fee_cents: number;
-  currency: string;
-};
+export type AsblSettings = AsblSettingsSnapshot;
+export { formatEnrollmentFeeLabel, getSchoolSupportFeeCents };
 
 export async function getAsblSettingsForCurrentYear(): Promise<{
   settings: AsblSettings | null;
@@ -17,7 +19,7 @@ export async function getAsblSettingsForCurrentYear(): Promise<{
 
   const { data, error } = await supabase
     .from("asbl_settings")
-    .select("id, school_year, enrollment_fee_cents, currency")
+    .select("id, school_year, enrollment_fee_cents, school_support_fee_cents, currency")
     .eq("school_year", schoolYear)
     .maybeSingle<AsblSettings>();
 
@@ -40,16 +42,9 @@ export async function getAsblSettingsForCurrentYear(): Promise<{
       id: "",
       school_year: schoolYear,
       enrollment_fee_cents: 0,
+      school_support_fee_cents: 0,
       currency: "EUR",
     },
     loadError: null,
   };
-}
-
-export function formatEnrollmentFeeLabel(cents: number): string {
-  if (cents <= 0) return "Gratuit";
-  return new Intl.NumberFormat("fr-BE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
 }

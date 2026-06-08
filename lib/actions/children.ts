@@ -12,6 +12,17 @@ import {
 import { childFormSchema } from "@/lib/validations/child";
 import type { Database } from "@/types/database";
 import type { ChildFormState } from "@/lib/actions/children-state";
+import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
+import { getCurrentSchoolYear } from "@/lib/school-year";
+import {
+  buildStaffEnrollmentQuote,
+  parseMembershipPlan,
+  parseProgramId,
+  parseSelectedSlotIds,
+} from "@/lib/asbl/fee-utils";
+import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
+import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
+import { logAuditEvent } from "@/lib/audit/log-audit";
 
 type ChildInsert = Database["public"]["Tables"]["children"]["Insert"];
 type ChildUpdate = Database["public"]["Tables"]["children"]["Update"];
@@ -62,6 +73,134 @@ function emptyToNull(value?: string) {
   return value && value.trim() !== "" ? value.trim() : null;
 }
 
+type StaffEnrollmentAttachResult = {
+  fieldErrors?: Record<string, string>;
+  enrollmentWarning?: string;
+};
+
+function validateStaffEnrollmentInput(
+  formData: FormData,
+  guardianEmailInput?: string
+): Record<string, string> | null {
+  const plan = parseMembershipPlan(formData.get("membership_plan"));
+  const guardianEmail = emptyToNull(guardianEmailInput);
+
+  if (plan === "SCHOOL_SUPPORT" && !guardianEmail) {
+    return {
+      guardian_email:
+        "Indiquez l'e-mail du parent pour inscrire au soutien scolaire.",
+    };
+  }
+
+  return null;
+}
+
+async function attachStaffEnrollmentOnCreate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  staffProfileId: string,
+  formData: FormData,
+  childId: string,
+  guardianId: string,
+  guardianEmailInput?: string
+): Promise<StaffEnrollmentAttachResult> {
+  const plan = parseMembershipPlan(formData.get("membership_plan"));
+  const guardianEmail = emptyToNull(guardianEmailInput);
+
+  if (!guardianEmail) {
+    return {};
+  }
+
+  const parent = await resolveParentProfileByEmail(supabase, guardianEmail);
+  if (!parent) {
+    if (plan === "SCHOOL_SUPPORT") {
+      return {
+        fieldErrors: {
+          guardian_email:
+            "Aucun compte parent actif avec cet e-mail. Créez d'abord le compte parent.",
+        },
+      };
+    }
+    return {};
+  }
+  const paymentReceived = formData.get("membership_payment_received") === "on";
+  const { settings } = await getAsblSettingsForCurrentYear();
+  const quote = buildStaffEnrollmentQuote(plan, settings, paymentReceived);
+  const programId = parseProgramId(formData.get("school_support_program_id"));
+  const slotIds = parseSelectedSlotIds(formData);
+  const verifiedAt =
+    quote.membershipStatus === "ACTIVE" ? new Date().toISOString() : null;
+
+  const { error: linkError } = await supabase.from("parent_child_links").insert({
+    parent_id: parent.id,
+    child_id: childId,
+    guardian_id: guardianId,
+    verified_at: verifiedAt,
+  } as never);
+
+  if (linkError && !linkError.message.includes("unique")) {
+    return {
+      fieldErrors: {
+        guardian_email: `Lien parent impossible (${linkError.message}).`,
+      },
+    };
+  }
+
+  if (quote.enrollmentStatus === "VALIDE") {
+    await supabase
+      .from("children")
+      .update({
+        enrollment_status: "VALIDE",
+        asbl_validated_at: verifiedAt,
+      } as never)
+      .eq("id", childId);
+  } else if (quote.enrollmentStatus === "EN_ATTENTE_PAIEMENT") {
+    await supabase
+      .from("children")
+      .update({ enrollment_status: "EN_ATTENTE_PAIEMENT" } as never)
+      .eq("id", childId);
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("memberships")
+    .insert({
+      child_id: childId,
+      parent_id: parent.id,
+      school_year: getCurrentSchoolYear(),
+      plan: quote.membershipPlan,
+      fee_cents: quote.totalCents,
+      status: quote.membershipStatus,
+      asbl_validated_at: verifiedAt,
+    } as never)
+    .select("id")
+    .single<{ id: string }>();
+
+  if (membershipError || !membership) {
+    const detail = membershipError?.message ?? "erreur inconnue";
+    return {
+      fieldErrors: {
+        guardian_email: `Adhésion non enregistrée (${detail}). Lance 022_memberships_staff_insert.sql dans Supabase.`,
+      },
+    };
+  }
+
+  if (plan === "SCHOOL_SUPPORT" && programId) {
+    const enrollResult = await enrollSchoolSupportByStaff(supabase, {
+      childId,
+      parentId: parent.id,
+      membershipId: membership.id,
+      programId,
+      slotIds,
+      enrolledByStaffId: staffProfileId,
+    });
+
+    if (!enrollResult.ok) {
+      return { enrollmentWarning: enrollResult.error };
+    }
+  }
+
+  return {};
+}
+
 export async function createChildAction(
   _prevState: ChildFormState,
   formData: FormData
@@ -85,6 +224,35 @@ export async function createChildAction(
 
   const data = parsed.data;
   const supabase = await createClient();
+
+  const planField = formData.get("membership_plan");
+  if (planField !== null) {
+    const enrollmentFieldErrors = validateStaffEnrollmentInput(
+      formData,
+      data.guardian_email
+    );
+    if (enrollmentFieldErrors) {
+      return {
+        error: null,
+        fieldErrors: enrollmentFieldErrors,
+      };
+    }
+
+    const plan = parseMembershipPlan(planField);
+    const guardianEmail = emptyToNull(data.guardian_email);
+    if (plan === "SCHOOL_SUPPORT" && guardianEmail) {
+      const parent = await resolveParentProfileByEmail(supabase, guardianEmail);
+      if (!parent) {
+        return {
+          error: null,
+          fieldErrors: {
+            guardian_email:
+              "Aucun compte parent actif avec cet e-mail. Créez d'abord le compte parent.",
+          },
+        };
+      }
+    }
+  }
 
   const childPayload: ChildInsert = {
     first_name: data.first_name.trim(),
@@ -119,22 +287,65 @@ export async function createChildAction(
     };
   }
 
-  const { error: guardianError } = await supabase.from("guardians").insert({
-    child_id: child.id,
-    relation: data.guardian_relation,
-    first_name: data.guardian_first_name.trim(),
-    last_name: data.guardian_last_name.trim(),
-    email: emptyToNull(data.guardian_email),
-    phone: data.guardian_phone.trim(),
-    is_primary: true,
-    can_pickup: data.guardian_can_pickup,
-  } as never);
+  const { data: guardian, error: guardianError } = await supabase
+    .from("guardians")
+    .insert({
+      child_id: child.id,
+      relation: data.guardian_relation,
+      first_name: data.guardian_first_name.trim(),
+      last_name: data.guardian_last_name.trim(),
+      email: emptyToNull(data.guardian_email),
+      phone: data.guardian_phone.trim(),
+      is_primary: true,
+      can_pickup: data.guardian_can_pickup,
+    } as never)
+    .select("id")
+    .single<{ id: string }>();
 
-  if (guardianError) {
+  if (guardianError || !guardian) {
     return {
       error: "Enfant créé, mais le parent/tuteur n'a pas pu être enregistré.",
       fieldErrors: {},
     };
+  }
+
+  await logAuditEvent({
+    action: "CHILD_CREATED",
+    entityType: "children",
+    entityId: child.id,
+    actorId: profile.id,
+    actorRole: profile.role,
+    metadata: { created_via: "STAFF" },
+  });
+
+  if (planField !== null) {
+    const enrollmentResult = await attachStaffEnrollmentOnCreate(
+      supabase,
+      profile.id,
+      formData,
+      child.id,
+      guardian.id,
+      data.guardian_email
+    );
+
+    if (enrollmentResult.fieldErrors) {
+      return {
+        error:
+          "Fiche enfant créée, mais l'adhésion n'a pas pu être enregistrée. Modifiez la fiche ou contactez l'administrateur.",
+        fieldErrors: enrollmentResult.fieldErrors,
+      };
+    }
+
+    revalidatePath("/enfants");
+    revalidatePath("/");
+    revalidatePath("/soutien-scolaire");
+    revalidatePath("/administration");
+
+    const warning = enrollmentResult.enrollmentWarning
+      ? `?warning=${encodeURIComponent(enrollmentResult.enrollmentWarning)}`
+      : "";
+
+    redirect(`/enfants/${child.id}${warning}`);
   }
 
   revalidatePath("/enfants");

@@ -3,88 +3,75 @@ import { getCurrentProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
 import { getParentLinksForAdmin } from "@/lib/data/parent-admin";
+import { getSchoolSupportAdminQueue } from "@/lib/data/school-support-admin";
 import { AsblSettingsPanel } from "@/components/admin/asbl-settings-panel";
 import { ParentLinksPanel } from "@/components/admin/parent-links-panel";
+import { SchoolSupportAdminPanel } from "@/components/admin/school-support-admin-panel";
+import { friendlyLoadError } from "@/lib/messages/flash-messages";
 
-export default async function AdministrationPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string; success?: string }>;
-}) {
+export default async function AdministrationPage() {
   const profile = await getCurrentProfile();
-  const { error, success } = await searchParams;
 
   if (!profile || !canManageUsers(profile.role)) {
     redirect("/");
   }
 
-  const { links, loadError } = await getParentLinksForAdmin();
-  const { settings, loadError: settingsError } = await getAsblSettingsForCurrentYear();
+  const [{ links, loadError }, { requests: schoolSupportRequests, loadError: soutienError }, { settings, loadError: settingsError }] =
+    await Promise.all([
+      getParentLinksForAdmin(),
+      getSchoolSupportAdminQueue(),
+      getAsblSettingsForCurrentYear(),
+    ]);
+
+  const pendingCount =
+    links.filter((l) => !l.verified).length +
+    schoolSupportRequests.filter((r) => r.can_confirm).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Administration</h1>
+        <h1 className="text-2xl font-bold">Familles & réglages</h1>
         <p className="text-muted-foreground">
-          Valide les comptes parents — un clic, sans SQL.
+          {pendingCount > 0
+            ? `${pendingCount} dossier${pendingCount > 1 ? "s" : ""} à traiter — ou consulte l'historique ci-dessous.`
+            : "Tout est à jour. Les réglages rares sont en bas de page."}
         </p>
       </div>
 
-      {error === "permission" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Tu n&apos;as pas la permission pour cette action.
-        </div>
-      ) : null}
-      {error === "payment-required" ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Ce parent n&apos;a pas encore payé. Attends le paiement avant de valider.
-        </div>
-      ) : null}
-      {error === "validate" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Impossible de valider ce lien. Réessaie.
-        </div>
-      ) : null}
-      {error === "reject" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Impossible de refuser ce lien. Lance 009_parent_links_delete.sql dans Supabase.
-        </div>
-      ) : null}
-      {success === "validated" ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">
-          Lien parent validé. Le parent voit maintenant son enfant.
-        </div>
-      ) : null}
-      {success === "rejected" ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">
-          Demande refusée et supprimée.
-        </div>
-      ) : null}
       {loadError ? (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {loadError}
+          {friendlyLoadError(loadError, "staff")}
+        </div>
+      ) : null}
+      {soutienError ? (
+        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {friendlyLoadError(soutienError, "staff")}
         </div>
       ) : null}
 
-      {success === "fee-updated" ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-900">
-          Cotisation annuelle mise à jour.
-        </div>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">À traiter aujourd&apos;hui</h2>
+        <SchoolSupportAdminPanel requests={schoolSupportRequests} embedded />
+        <ParentLinksPanel links={links.filter((l) => !l.verified)} pendingOnly />
+      </section>
+
+      {links.some((l) => l.verified) ? (
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-muted-foreground">Historique — familles validées</h2>
+          <ParentLinksPanel links={links.filter((l) => l.verified)} validatedOnly />
+        </section>
       ) : null}
-      {error === "fee" || error === "fee-save" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Impossible d&apos;enregistrer la cotisation. Lance 014_memberships_v2.sql dans Supabase.
-        </div>
-      ) : null}
+
       {settingsError ? (
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {settingsError}
+          {friendlyLoadError(settingsError, "staff")}
         </div>
       ) : null}
 
-      {settings ? <AsblSettingsPanel settings={settings} /> : null}
-
-      <ParentLinksPanel links={links} />
+      <section className="space-y-4 border-t pt-8">
+        <h2 className="text-lg font-semibold text-muted-foreground">Réglages (rarement modifié)</h2>
+        {settings ? <AsblSettingsPanel settings={settings} /> : null}
+      </section>
     </div>
   );
 }

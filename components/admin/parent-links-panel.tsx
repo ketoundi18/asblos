@@ -10,22 +10,38 @@ import { CheckCircle2, XCircle } from "lucide-react";
 
 type ParentLinksPanelProps = {
   links: AdminParentLink[];
+  /** Afficher uniquement les demandes en attente */
+  pendingOnly?: boolean;
+  /** Afficher uniquement les familles déjà validées */
+  validatedOnly?: boolean;
 };
 
-export function ParentLinksPanel({ links }: ParentLinksPanelProps) {
+export function ParentLinksPanel({
+  links,
+  pendingOnly = false,
+  validatedOnly = false,
+}: ParentLinksPanelProps) {
   const pending = links.filter((l) => !l.verified);
   const validated = links.filter((l) => l.verified);
 
+  const showPending = !validatedOnly && pending.length > 0;
+  const showValidated = !pendingOnly && validated.length > 0;
+
   if (links.length === 0) {
+    if (pendingOnly) {
+      return (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            <p>Aucune famille en attente pour l&apos;instant.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+    if (validatedOnly) return null;
     return (
       <Card>
-        <CardContent className="space-y-3 py-8 text-center text-sm text-muted-foreground">
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
           <p>Aucune demande de lien parent pour l&apos;instant.</p>
-          <p className="text-xs">
-            Si un parent voit déjà un enfant « En attente ASBL », lance le script{" "}
-            <code className="rounded bg-muted px-1">FIX_lien_parent_lucas.sql</code>{" "}
-            dans Supabase pour créer le lien en base.
-          </p>
         </CardContent>
       </Card>
     );
@@ -33,22 +49,26 @@ export function ParentLinksPanel({ links }: ParentLinksPanelProps) {
 
   return (
     <div className="space-y-6">
-      {pending.length > 0 ? (
+      {showPending ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-            En attente ({pending.length})
-          </h2>
+          {!pendingOnly ? (
+            <h3 className="text-sm font-semibold text-amber-800">
+              Familles à accueillir ({pending.length})
+            </h3>
+          ) : null}
           {pending.map((link) => (
             <LinkCard key={link.link_id} link={link} showActions />
           ))}
         </section>
       ) : null}
 
-      {validated.length > 0 ? (
+      {showValidated ? (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Validés ({validated.length})
-          </h2>
+          {!validatedOnly ? (
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              Validées ({validated.length})
+            </h3>
+          ) : null}
           {validated.map((link) => (
             <LinkCard key={link.link_id} link={link} />
           ))}
@@ -112,7 +132,7 @@ function LinkCard({
           </span>
           {link.child_created_via === "PARENT" ? (
             <Badge variant="warning" className="ml-2">
-              Inscription parent
+              Inscription en ligne
             </Badge>
           ) : null}
           {statusInfo ? (
@@ -125,7 +145,7 @@ function LinkCard({
           <div className="grid grid-cols-2 gap-2">
             {paymentBlocked ? (
               <p className="col-span-2 text-xs text-amber-700">
-                En attente du paiement Bancontact du parent.
+                En attente du paiement du parent — sans pression.
               </p>
             ) : null}
             <form action={validate}>

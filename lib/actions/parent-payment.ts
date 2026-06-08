@@ -8,6 +8,7 @@ import {
   childNeedsMembershipPayment,
   getChildPaymentContext,
 } from "@/lib/data/parent-payments";
+import { markMembershipPaidAsAdmin } from "@/lib/payments/mark-membership-paid";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
@@ -16,25 +17,6 @@ import type { Database } from "@/types/database";
 type PayMethod = "BANCONTACT" | "CARD";
 
 type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
-
-async function markMembershipPaid(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  childId: string,
-  membershipId: string | null
-) {
-  await supabase
-    .from("children")
-    .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" } as never)
-    .eq("id", childId);
-
-  if (membershipId) {
-    await supabase
-      .from("memberships")
-      .update({ status: "AWAITING_ASBL" } as never)
-      .eq("id", membershipId)
-      .eq("status", "AWAITING_PAYMENT");
-  }
-}
 
 export async function startParentPaymentAction(
   childId: string,
@@ -102,9 +84,7 @@ export async function startParentPaymentAction(
     .single<{ id: string }>();
 
   if (insertError || !inserted) {
-    redirect(
-      `/espace-parents/paiement/${childId}?error=db&detail=${encodeURIComponent(insertError?.message ?? "insert")}`
-    );
+    redirect(`/espace-parents/paiement/${childId}?error=db`);
   }
 
   const mollieMethod =
@@ -132,10 +112,8 @@ export async function startParentPaymentAction(
       },
     });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : "Erreur Mollie";
-    redirect(
-      `/espace-parents/paiement/${childId}?error=mollie&detail=${encodeURIComponent(detail)}`
-    );
+    void err;
+    redirect(`/espace-parents/paiement/${childId}?error=mollie`);
   }
 
   try {
@@ -146,7 +124,7 @@ export async function startParentPaymentAction(
       .update({ provider_payment_id: molliePayment.id } as never)
       .eq("id", inserted.id);
   } catch {
-    redirect(`/espace-parents/paiement/${childId}?error=db&detail=service_role`);
+    redirect(`/espace-parents/paiement/${childId}?error=db`);
   }
 
   const checkoutUrl = molliePayment.getCheckoutUrl();
@@ -208,13 +186,14 @@ export async function simulateParentPaymentAction(childId: string) {
       .insert(paymentRow as never);
 
     if (insertError) {
-      redirect(
-        `/espace-parents/paiement/${childId}?error=db&detail=${encodeURIComponent(insertError.message)}`
-      );
+      redirect(`/espace-parents/paiement/${childId}?error=db`);
     }
   }
 
-  await markMembershipPaid(supabase, childId, context.membership_id);
+  const paid = await markMembershipPaidAsAdmin(childId, context.membership_id);
+  if (!paid.ok) {
+    redirect(`/espace-parents/paiement/${childId}?error=membership-paid`);
+  }
 
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");

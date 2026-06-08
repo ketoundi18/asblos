@@ -4,7 +4,7 @@ import type {
   ActivityWithDetails,
   RegisteredChild,
 } from "@/types/activity";
-import { normalizeActivity } from "@/types/activity";
+import { normalizeActivity, normalizeRegistrationPaymentStatus } from "@/types/activity";
 
 export async function getActivitiesList(): Promise<{
   activities: Activity[];
@@ -62,6 +62,7 @@ export async function getActivityById(
       id,
       child_id,
       cancelled_at,
+      payment_status,
       children (
         first_name,
         last_name,
@@ -106,6 +107,7 @@ export async function getActivityById(
   type RegistrationRow = {
     id: string;
     child_id: string;
+    payment_status?: string | null;
     children: {
       first_name: string;
       last_name: string;
@@ -125,6 +127,7 @@ export async function getActivityById(
         allergies: r.children.allergies,
         is_present: att ? att.is_present : null,
         attendance_id: att?.id ?? null,
+        payment_status: normalizeRegistrationPaymentStatus(r.payment_status),
       };
     })
     .sort((a, b) => a.last_name.localeCompare(b.last_name, "fr"));

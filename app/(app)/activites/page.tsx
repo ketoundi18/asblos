@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ACTIVITY_STATUS_LABELS } from "@/lib/validations/activity";
+import { getLocalTodayISO } from "@/lib/date-utils";
 import {
   formatActivityDate,
   formatActivityTime,
@@ -28,7 +29,7 @@ export default async function ActivitesPage() {
   const { activities, loadError } = await getActivitiesList();
   const canCreate = profile ? canManageActivities(profile.role) : false;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalTodayISO();
   const upcoming = activities.filter((a) => a.activity_date >= today);
   const past = activities.filter((a) => a.activity_date < today);
 
@@ -127,8 +128,10 @@ function ActivityCard({ activity }: { activity: Activity }) {
                   {formatActivityPrice(activity.price_cents)}
                 </Badge>
                 {activity.parent_registration_open ? (
-                  <Badge variant="default">Parents</Badge>
-                ) : null}
+                  <Badge variant="success">Visible parents</Badge>
+                ) : (
+                  <Badge variant="warning">Interne</Badge>
+                )}
               </div>
               <p className="text-sm text-muted-foreground">
                 {formatActivityDate(activity.activity_date)}

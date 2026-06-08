@@ -1,34 +1,41 @@
-import { updateEnrollmentFeeAction } from "@/lib/actions/asbl-settings";
+import { updateSchoolSupportFeeAction } from "@/lib/actions/asbl-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatEnrollmentFeeLabel, type AsblSettings } from "@/lib/data/asbl-settings";
+import {
+  formatEnrollmentFeeLabel,
+  getSchoolSupportFeeCents,
+  type AsblSettingsSnapshot,
+} from "@/lib/asbl/fee-utils";
 
 type Props = {
-  settings: AsblSettings;
+  settings: AsblSettingsSnapshot;
 };
 
 export function AsblSettingsPanel({ settings }: Props) {
-  const eurosDefault = (settings.enrollment_fee_cents / 100).toFixed(2);
+  const feeCents = getSchoolSupportFeeCents(settings);
+  const eurosDefault = (feeCents / 100).toFixed(2);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Cotisation annuelle ({settings.school_year})</CardTitle>
+        <CardTitle className="text-lg">
+          Cotisation soutien scolaire ({settings.school_year})
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={updateEnrollmentFeeAction} className="space-y-4">
+        <form action={updateSchoolSupportFeeAction} className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Montant actuel :{" "}
-            <strong>{formatEnrollmentFeeLabel(settings.enrollment_fee_cents)}</strong>
-            {" "}— mets <strong>0</strong> si ton ASBL n&apos;a pas de cotisation.
+            Montant actuel : <strong>{formatEnrollmentFeeLabel(feeCents)}</strong>
+            {" "}par enfant et par année — inclut le droit au soutien scolaire.
+            Mets <strong>0</strong> si gratuit.
           </p>
           <div className="space-y-2">
-            <Label htmlFor="enrollment_fee_euros">Nouveau montant (€)</Label>
+            <Label htmlFor="school_support_fee_euros">Nouveau montant (€)</Label>
             <Input
-              id="enrollment_fee_euros"
-              name="enrollment_fee_euros"
+              id="school_support_fee_euros"
+              name="school_support_fee_euros"
               type="number"
               min={0}
               step={0.01}
@@ -37,7 +44,7 @@ export function AsblSettingsPanel({ settings }: Props) {
             />
           </div>
           <Button type="submit" size="sm">
-            Enregistrer la cotisation
+            Enregistrer le tarif
           </Button>
         </form>
       </CardContent>

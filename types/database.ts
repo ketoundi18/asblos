@@ -191,6 +191,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      logs_audit: {
+        Row: {
+          id: string;
+          occurred_at: string;
+          actor_id: string | null;
+          actor_role: string | null;
+          action: string;
+          entity_type: string;
+          entity_id: string;
+          metadata: Json;
+          ip_hash: string | null;
+        };
+        Insert: {
+          id?: string;
+          occurred_at?: string;
+          actor_id?: string | null;
+          actor_role?: string | null;
+          action: string;
+          entity_type: string;
+          entity_id: string;
+          metadata?: Json;
+          ip_hash?: string | null;
+        };
+        Update: {
+          id?: string;
+          occurred_at?: string;
+          actor_id?: string | null;
+          actor_role?: string | null;
+          action?: string;
+          entity_type?: string;
+          entity_id?: string;
+          metadata?: Json;
+          ip_hash?: string | null;
+        };
+        Relationships: [];
+      };
       asbl_settings: {
         Row: {
           id: string;
@@ -230,6 +266,7 @@ export type Database = {
           child_id: string;
           parent_id: string;
           school_year: string;
+          plan: "BASE" | "SCHOOL_SUPPORT";
           fee_cents: number;
           status:
             | "AWAITING_PAYMENT"
@@ -246,6 +283,7 @@ export type Database = {
           child_id: string;
           parent_id: string;
           school_year: string;
+          plan?: "BASE" | "SCHOOL_SUPPORT";
           fee_cents?: number;
           status:
             | "AWAITING_PAYMENT"
@@ -262,6 +300,7 @@ export type Database = {
           child_id?: string;
           parent_id?: string;
           school_year?: string;
+          plan?: "BASE" | "SCHOOL_SUPPORT";
           fee_cents?: number;
           status?:
             | "AWAITING_PAYMENT"
@@ -382,6 +421,12 @@ export type Database = {
           registered_by: string | null;
           registered_at: string;
           cancelled_at: string | null;
+          payment_status:
+            | "NOT_REQUIRED"
+            | "PENDING"
+            | "DEFERRED"
+            | "PAID"
+            | "WAIVED";
         };
         Insert: {
           id?: string;
@@ -390,6 +435,12 @@ export type Database = {
           registered_by?: string | null;
           registered_at?: string;
           cancelled_at?: string | null;
+          payment_status?:
+            | "NOT_REQUIRED"
+            | "PENDING"
+            | "DEFERRED"
+            | "PAID"
+            | "WAIVED";
         };
         Update: {
           id?: string;
@@ -398,6 +449,12 @@ export type Database = {
           registered_by?: string | null;
           registered_at?: string;
           cancelled_at?: string | null;
+          payment_status?:
+            | "NOT_REQUIRED"
+            | "PENDING"
+            | "DEFERRED"
+            | "PAID"
+            | "WAIVED";
         };
         Relationships: [];
       };
@@ -469,6 +526,10 @@ export type Database = {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      request_school_support_upgrade: {
+        Args: { p_child_id: string };
+        Returns: null;
+      };
     };
     Enums: {
       user_role: "ADMIN" | "TRAVAILLEUR" | "STAGIAIRE" | "BENEVOLE" | "PARENT";
@@ -491,6 +552,7 @@ export type Database = {
         | "ACTIVE"
         | "REJECTED"
         | "CANCELLED";
+      membership_plan: "BASE" | "SCHOOL_SUPPORT";
       activity_status: "PLANIFIEE" | "EN_COURS" | "TERMINEE" | "ANNULEE";
     };
   };

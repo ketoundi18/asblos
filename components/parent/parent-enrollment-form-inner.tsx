@@ -20,8 +20,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  SchoolSupportEnrollmentSection,
+  type OpenSchoolSupportProgram,
+} from "@/components/enrollment/school-support-enrollment-section";
 
 type Props = {
+  schoolSupportFeeLabel: string;
+  schoolSupportFeeCents: number;
+  openPrograms: OpenSchoolSupportProgram[];
   guardianDefaults: {
     first_name: string;
     last_name: string;
@@ -51,7 +58,12 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-sm text-destructive">{message}</p>;
 }
 
-export function ParentEnrollmentFormInner({ guardianDefaults }: Props) {
+export function ParentEnrollmentFormInner({
+  schoolSupportFeeLabel,
+  schoolSupportFeeCents,
+  openPrograms,
+  guardianDefaults,
+}: Props) {
   const router = useRouter();
   const [state, formAction] = useFormState(
     createParentEnrollmentAction,
@@ -60,14 +72,19 @@ export function ParentEnrollmentFormInner({ guardianDefaults }: Props) {
 
   useEffect(() => {
     if (state.success && state.childId) {
+      const warning = state.enrollmentWarning
+        ? `&warning=${encodeURIComponent(state.enrollmentWarning)}`
+        : "";
       if (state.needsPayment) {
-        router.push(`/espace-parents/paiement/${state.childId}`);
+        router.push(`/espace-parents/paiement/${state.childId}${warning ? `?${warning.slice(1)}` : ""}`);
       } else {
-        router.push("/espace-parents?success=inscription");
+        router.push(
+          `/espace-parents?success=inscription${state.enrollmentWarning ? warning : ""}`
+        );
       }
       router.refresh();
     }
-  }, [state.success, state.childId, state.needsPayment, router]);
+  }, [state.success, state.childId, state.needsPayment, state.enrollmentWarning, router]);
 
   return (
     <form action={formAction} className="space-y-6">
@@ -155,7 +172,7 @@ export function ParentEnrollmentFormInner({ guardianDefaults }: Props) {
       <Card>
         <CardHeader>
           <CardTitle>Parent / tuteur principal</CardTitle>
-          <CardDescription>Tes coordonnées pour cette inscription</CardDescription>
+          <CardDescription>Vos coordonnées pour cette inscription</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -229,6 +246,12 @@ export function ParentEnrollmentFormInner({ guardianDefaults }: Props) {
           </label>
         </CardContent>
       </Card>
+
+      <SchoolSupportEnrollmentSection
+        programs={openPrograms}
+        schoolSupportFeeCents={schoolSupportFeeCents}
+        schoolSupportFeeLabel={schoolSupportFeeLabel}
+      />
 
       {state.error ? (
         <div

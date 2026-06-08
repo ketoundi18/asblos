@@ -5,6 +5,23 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
+import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { resolveActivityRegistrationEligibility } from "@/lib/parent/activity-eligibility";
+import type { ActivityRegistrationPaymentStatus } from "@/types/activity";
+import { isActivityPaid } from "@/types/activity";
+
+function resolvePaymentStatus(
+  priceCents: number,
+  paymentTiming: string | null
+): ActivityRegistrationPaymentStatus {
+  if (!isActivityPaid(priceCents)) {
+    return "NOT_REQUIRED";
+  }
+  if (paymentTiming === "now") {
+    return "PENDING";
+  }
+  return "DEFERRED";
+}
 
 export async function registerParentChildToActivityAction(
   activityId: string,
@@ -21,33 +38,84 @@ export async function registerParentChildToActivityAction(
     redirect(`/espace-parents/activites/${activityId}?error=child`);
   }
 
+  const paymentTiming = formData.get("payment_timing");
+  const timing =
+    typeof paymentTiming === "string" ? paymentTiming : "defer";
+
   const supabase = await createClient();
 
   const { data: activity } = await supabase
     .from("activities")
     .select("price_cents, max_participants, parent_registration_open")
     .eq("id", activityId)
-    .single<{ price_cents: number; max_participants: number | null; parent_registration_open: boolean }>();
+    .single<{
+      price_cents: number;
+      max_participants: number | null;
+      parent_registration_open: boolean;
+    }>();
 
   if (!activity?.parent_registration_open) {
     redirect(`/espace-parents/activites/${activityId}?error=closed`);
   }
 
-  if ((activity.price_cents ?? 0) > 0) {
-    redirect(`/espace-parents/activites/${activityId}?error=payment`);
+  const { data: link } = await supabase
+    .from("parent_child_links")
+    .select("id")
+    .eq("child_id", childId)
+    .not("verified_at", "is", null)
+    .maybeSingle();
+
+  if (!link) {
+    redirect(`/espace-parents/activites/${activityId}?error=not-verified`);
   }
+
+  const [{ data: child }, membership] = await Promise.all([
+    supabase
+      .from("children")
+      .select("enrollment_status, created_via")
+      .eq("id", childId)
+      .is("deleted_at", null)
+      .maybeSingle<{ enrollment_status: string | null; created_via: string | null }>(),
+    getMembershipForChildCurrentYear(childId),
+  ]);
+
+  const eligibility = resolveActivityRegistrationEligibility(membership, child ?? null);
+  if (!eligibility.allowed) {
+    const errorCode =
+      eligibility.reason === "awaiting_payment"
+        ? "cotisation"
+        : eligibility.reason === "rejected"
+          ? "cotisation-refused"
+          : "cotisation-pending";
+    redirect(`/espace-parents/activites/${activityId}?error=${errorCode}`);
+  }
+
+  const priceCents = activity.price_cents ?? 0;
+  const paymentStatus = resolvePaymentStatus(priceCents, timing);
 
   const { error } = await supabase.from("activity_registrations").insert({
     activity_id: activityId,
     child_id: childId,
     registered_by: profile.id,
+    payment_status: paymentStatus,
   } as never);
 
   if (error) {
+    if (error.message.includes("payment_status")) {
+      redirect(`/espace-parents/activites/${activityId}?error=migration`);
+    }
     redirect(`/espace-parents/activites/${activityId}?error=inscription`);
   }
 
   revalidatePath("/espace-parents/activites");
   revalidatePath(`/espace-parents/activites/${activityId}`);
+  revalidatePath("/espace-parents");
+
+  if (paymentStatus === "PENDING") {
+    redirect(
+      `/espace-parents/activites/${activityId}?success=inscription&payment=pending`
+    );
+  }
+
   redirect(`/espace-parents/activites/${activityId}?success=inscription`);
 }

@@ -1,6 +1,7 @@
 import { PaymentMethod } from "@mollie/api-client";
 import { getMollieClient } from "@/lib/mollie/client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logAuditEvent } from "@/lib/audit/log-audit";
 import type { Database } from "@/types/database";
 
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
@@ -91,6 +92,32 @@ export async function syncMolliePaymentByProviderId(
           .eq("id", payment.reference_id)
           .eq("status", "AWAITING_PAYMENT");
       }
+
+      await logAuditEvent({
+        action: "PAYMENT_PAID",
+        entityType: "payments",
+        entityId: payment.id,
+        metadata: {
+          child_id: payment.child_id,
+          provider_payment_id: molliePaymentId,
+          purpose: payment.purpose,
+          reference_id: payment.reference_id,
+          source: "mollie_webhook",
+        },
+      });
+    }
+
+    if (nextStatus === "FAILED") {
+      await logAuditEvent({
+        action: "PAYMENT_FAILED",
+        entityType: "payments",
+        entityId: payment.id,
+        metadata: {
+          child_id: payment.child_id,
+          provider_payment_id: molliePaymentId,
+          source: "mollie_webhook",
+        },
+      });
     }
 
     return { ok: true, status: nextStatus };

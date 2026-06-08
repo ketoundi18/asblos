@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/espace-parents", label: "Mes enfants" },
+  { href: "/espace-parents/soutien-scolaire", label: "Soutien" },
   { href: "/espace-parents/activites", label: "Activités" },
 ];
 

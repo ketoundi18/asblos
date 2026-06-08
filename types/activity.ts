@@ -23,6 +23,13 @@ export type Activity = {
   parent_registration_open: boolean;
 };
 
+export type ActivityRegistrationPaymentStatus =
+  | "NOT_REQUIRED"
+  | "PENDING"
+  | "DEFERRED"
+  | "PAID"
+  | "WAIVED";
+
 export type ActivityRegistration = {
   id: string;
   activity_id: string;
@@ -30,6 +37,7 @@ export type ActivityRegistration = {
   registered_by: string | null;
   registered_at: string;
   cancelled_at: string | null;
+  payment_status: ActivityRegistrationPaymentStatus;
 };
 
 export type ActivityAttendance = {
@@ -50,6 +58,7 @@ export type RegisteredChild = {
   allergies: string | null;
   is_present: boolean | null;
   attendance_id: string | null;
+  payment_status: ActivityRegistrationPaymentStatus;
 };
 
 export type ActivityWithDetails = Activity & {
@@ -59,7 +68,9 @@ export type ActivityWithDetails = Activity & {
 };
 
 export function formatActivityDate(date: string): string {
-  return new Date(`${date}T12:00:00`).toLocaleDateString("fr-BE", {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m || !d) return date;
+  return new Date(y, m - 1, d, 12, 0, 0).toLocaleDateString("fr-BE", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -69,7 +80,24 @@ export function formatActivityDate(date: string): string {
 
 export function formatActivityTime(time: string | null): string {
   if (!time) return "";
-  return time.slice(0, 5);
+  const match = time.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return "";
+  const hours = match[1].padStart(2, "0");
+  const minutes = match[2];
+  return `${hours}h${minutes}`;
+}
+
+export function formatActivitySchedule(
+  date: string,
+  startTime: string | null,
+  endTime: string | null
+): string {
+  const datePart = formatActivityDate(date);
+  const start = formatActivityTime(startTime);
+  const end = formatActivityTime(endTime);
+  if (start && end) return `${datePart} · ${start} – ${end}`;
+  if (start) return `${datePart} · ${start}`;
+  return datePart;
 }
 
 export function isActivityPaid(priceCents: number | null | undefined): boolean {
@@ -91,4 +119,61 @@ export function normalizeActivity<T extends Partial<Activity>>(row: T): Activity
     price_cents: row.price_cents ?? 0,
     parent_registration_open: row.parent_registration_open ?? false,
   };
+}
+
+export function normalizeRegistrationPaymentStatus(
+  value: string | null | undefined
+): ActivityRegistrationPaymentStatus {
+  if (
+    value === "PENDING" ||
+    value === "DEFERRED" ||
+    value === "PAID" ||
+    value === "WAIVED"
+  ) {
+    return value;
+  }
+  return "NOT_REQUIRED";
+}
+
+/** Message discret côté parent — jamais stigmatisant. */
+export function getParentParticipationHint(
+  status: ActivityRegistrationPaymentStatus
+): string | null {
+  if (status === "DEFERRED" || status === "PENDING") {
+    return "Participation à régler quand vous le pourrez.";
+  }
+  return null;
+}
+
+/** Libellés internes staff uniquement. */
+export function getStaffPaymentStatusLabel(
+  status: ActivityRegistrationPaymentStatus
+): string {
+  switch (status) {
+    case "DEFERRED":
+      return "Report";
+    case "PENDING":
+      return "Paiement en attente";
+    case "PAID":
+      return "Payé";
+    case "WAIVED":
+      return "Pris en charge ASBL";
+    default:
+      return "Gratuit";
+  }
+}
+
+export function getStaffPaymentStatusVariant(
+  status: ActivityRegistrationPaymentStatus
+): "success" | "warning" | "muted" | "default" {
+  switch (status) {
+    case "PAID":
+    case "WAIVED":
+      return "success";
+    case "DEFERRED":
+    case "PENDING":
+      return "warning";
+    default:
+      return "muted";
+  }
 }

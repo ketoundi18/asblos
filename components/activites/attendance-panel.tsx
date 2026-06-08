@@ -10,15 +10,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { RegisteredChild } from "@/types/activity";
+import {
+  getStaffPaymentStatusLabel,
+  getStaffPaymentStatusVariant,
+} from "@/types/activity";
 
 type AttendancePanelProps = {
   activityId: string;
   registrations: RegisteredChild[];
+  showPaymentStatus?: boolean;
 };
 
 export function AttendancePanel({
   activityId,
   registrations,
+  showPaymentStatus = false,
 }: AttendancePanelProps) {
   if (registrations.length === 0) {
     return (
@@ -62,13 +68,20 @@ export function AttendancePanel({
                   </p>
                 ) : null}
               </div>
-              {child.is_present === true ? (
-                <Badge variant="success">Présent</Badge>
-              ) : child.is_present === false ? (
-                <Badge variant="muted">Absent</Badge>
-              ) : (
-                <Badge variant="warning">Non marqué</Badge>
-              )}
+              <div className="flex flex-col items-end gap-1">
+                {child.is_present === true ? (
+                  <Badge variant="success">Présent</Badge>
+                ) : child.is_present === false ? (
+                  <Badge variant="muted">Absent</Badge>
+                ) : (
+                  <Badge variant="warning">Non marqué</Badge>
+                )}
+                {showPaymentStatus && child.payment_status !== "NOT_REQUIRED" ? (
+                  <Badge variant={getStaffPaymentStatusVariant(child.payment_status)}>
+                    {getStaffPaymentStatusLabel(child.payment_status)}
+                  </Badge>
+                ) : null}
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <form action={markPresent}>

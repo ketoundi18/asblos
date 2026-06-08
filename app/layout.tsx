@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { FlashToastHandler } from "@/components/ui/flash-toast-handler";
+import { fontBody, fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,9 +18,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className="min-h-screen">
+      <body className={`${fontVariables} ${fontBody.className} min-h-screen font-sans`}>
         {children}
-        <Toaster position="top-center" richColors closeButton />
+        <Suspense fallback={null}>
+          <FlashToastHandler />
+        </Suspense>
+        <Toaster position="top-center" richColors closeButton duration={5000} />
       </body>
     </html>
   );

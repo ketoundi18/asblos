@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { Clock, Users } from "lucide-react";
 import type { ActivityFormState } from "@/lib/actions/activities-state";
 import { ACTIVITY_STATUS_LABELS } from "@/lib/validations/activity";
 import type { Activity } from "@/types/activity";
+import { normalizeTimeValue } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,13 +53,20 @@ export function ActivityForm({
   activity,
   submitLabel,
 }: ActivityFormProps) {
+  const isNew = !activity;
   const [state, formAction] = useFormState(action, initialState);
   const defaultPaid = (activity?.price_cents ?? 0) > 0;
   const [isPaid, setIsPaid] = useState(defaultPaid);
+  const [parentOpen, setParentOpen] = useState(
+    activity?.parent_registration_open ?? true
+  );
   const defaultPriceEuros =
     defaultPaid && activity?.price_cents
       ? (activity.price_cents / 100).toFixed(2).replace(".", ",")
       : "";
+
+  const defaultStart = normalizeTimeValue(activity?.start_time ?? null) ?? "";
+  const defaultEnd = normalizeTimeValue(activity?.end_time ?? null) ?? "";
 
   return (
     <form action={formAction} className="space-y-6">
@@ -86,6 +95,7 @@ export function ActivityForm({
               <p className="text-sm text-destructive">{state.fieldErrors.title}</p>
             ) : null}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="activity_date">Date *</Label>
             <Input
@@ -96,26 +106,42 @@ export function ActivityForm({
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="start_time">Début</Label>
-              <Input
-                id="start_time"
-                name="start_time"
-                type="time"
-                defaultValue={activity?.start_time?.slice(0, 5) ?? ""}
-              />
+
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Clock className="h-4 w-4 text-primary" />
+              Horaires (optionnel)
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_time">Fin</Label>
-              <Input
-                id="end_time"
-                name="end_time"
-                type="time"
-                defaultValue={activity?.end_time?.slice(0, 5) ?? ""}
-              />
+            <p className="text-xs text-muted-foreground">
+              Format 24 h — ex. 14:30 pour 14 h 30. Laisse vide si pas d&apos;horaire fixe.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="start_time">Début</Label>
+                <Input
+                  id="start_time"
+                  name="start_time"
+                  type="time"
+                  step={300}
+                  defaultValue={defaultStart}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_time">Fin</Label>
+                <Input
+                  id="end_time"
+                  name="end_time"
+                  type="time"
+                  step={300}
+                  defaultValue={defaultEnd}
+                />
+                {state.fieldErrors.end_time ? (
+                  <p className="text-sm text-destructive">{state.fieldErrors.end_time}</p>
+                ) : null}
+              </div>
             </div>
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="location">Lieu</Label>
             <Input
@@ -132,6 +158,7 @@ export function ActivityForm({
               name="description"
               defaultValue={activity?.description ?? ""}
               rows={3}
+              placeholder="Détails pour l'équipe et les parents…"
             />
           </div>
           <div className="space-y-2">
@@ -142,6 +169,7 @@ export function ActivityForm({
               type="number"
               min={1}
               defaultValue={activity?.max_participants ?? ""}
+              placeholder="Illimité si vide"
             />
           </div>
           <div className="space-y-2">
@@ -162,16 +190,19 @@ export function ActivityForm({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={parentOpen ? "border-green-300 bg-green-50/40" : undefined}>
         <CardHeader>
-          <CardTitle>Tarif &amp; espace parents</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Tarif &amp; espace parents
+          </CardTitle>
           <CardDescription>
-            L&apos;ASBL décide si l&apos;activité est gratuite ou payante, et si
-            les parents peuvent s&apos;inscrire en ligne.
+            Coche « Visible pour les parents » pour que l&apos;activité apparaisse dans
+            l&apos;espace parent.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <label className="flex items-center gap-3 rounded-lg border p-3">
+          <label className="flex items-center gap-3 rounded-lg border bg-background p-3">
             <input
               type="checkbox"
               checked={isPaid}
@@ -200,18 +231,35 @@ export function ActivityForm({
               ) : null}
             </div>
           ) : null}
-          <label className="flex items-center gap-3 rounded-lg border p-3">
+
+          <label
+            className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
+              parentOpen
+                ? "border-green-400 bg-green-50"
+                : "border-amber-300 bg-amber-50"
+            }`}
+          >
             <input
               type="checkbox"
               name="parent_registration_open"
-              defaultChecked={activity?.parent_registration_open ?? false}
-              className="h-4 w-4"
+              checked={parentOpen}
+              onChange={(e) => setParentOpen(e.target.checked)}
+              className="mt-1 h-4 w-4"
             />
-            <div className="text-sm">
-              <span className="font-medium">Ouverte aux parents</span>
+            <div className="text-sm space-y-1">
+              <span className="font-semibold">
+                Visible dans l&apos;espace parents
+              </span>
               <p className="text-muted-foreground">
-                Visible dans l&apos;espace parent (inscription en ligne — bientôt)
+                {parentOpen
+                  ? "Les parents pourront voir cette activité et inscrire leurs enfants."
+                  : "⚠️ Activité interne uniquement — les parents ne la verront pas."}
               </p>
+              {isNew && parentOpen ? (
+                <p className="text-xs text-green-800">
+                  Recommandé : coché par défaut pour les nouvelles activités.
+                </p>
+              ) : null}
             </div>
           </label>
         </CardContent>

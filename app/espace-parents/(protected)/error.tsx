@@ -13,7 +13,7 @@ export default function EspaceParentsError({
     <ErrorRecoveryPanel
       error={error}
       reset={reset}
-      title="Une erreur est survenue"
+      title="Oups — un petit souci technique"
     />
   );
 }

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, ArrowLeft } from "lucide-react";
+import { MapPin, ArrowLeft, Clock } from "lucide-react";
 import {
   getParentActivityById,
   getParentVerifiedChildrenForRegistration,
 } from "@/lib/data/parent-activities";
-import { registerParentChildToActivityAction } from "@/lib/actions/parent-activities";
+import { ParentActivityRegisterForm } from "@/components/parent/parent-activity-register-form";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,17 +14,15 @@ import {
   formatActivityTime,
   formatActivityPrice,
   isActivityPaid,
+  getParentParticipationHint,
 } from "@/types/activity";
 
 export default async function ParentActiviteDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; success?: string }>;
 }) {
   const { id } = await params;
-  const { error, success } = await searchParams;
   const activity = await getParentActivityById(id);
 
   if (!activity) notFound();
@@ -32,6 +30,10 @@ export default async function ParentActiviteDetailPage({
   const children = await getParentVerifiedChildrenForRegistration();
   const registeredIds = new Set(activity.my_registered_child_ids);
   const availableChildren = children.filter((c) => !registeredIds.has(c.id));
+  const eligibleCount = availableChildren.filter((c) => c.eligibility.allowed).length;
+  const registrationByChild = new Map(
+    (activity.my_registrations ?? []).map((r) => [r.child_id, r.payment_status])
+  );
 
   const timeLabel = [
     formatActivityTime(activity.start_time),
@@ -58,39 +60,14 @@ export default async function ParentActiviteDetailPage({
           </Badge>
         </div>
         <h1 className="text-2xl font-bold">{activity.title}</h1>
-        <p className="text-muted-foreground">
-          {formatActivityDate(activity.activity_date)}
-          {timeLabel ? ` · ${timeLabel}` : ""}
-        </p>
+        <p className="text-muted-foreground">{formatActivityDate(activity.activity_date)}</p>
+        {timeLabel ? (
+          <p className="mt-1 flex items-center gap-1.5 text-sm font-medium">
+            <Clock className="h-4 w-4 text-primary" />
+            {timeLabel}
+          </p>
+        ) : null}
       </div>
-
-      {success === "inscription" ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
-          Inscription enregistrée.
-        </div>
-      ) : null}
-      {error === "payment" ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Cette activité est payante. Le paiement en ligne arrive bientôt — contacte
-          l&apos;ASBL pour t&apos;inscrire.
-        </div>
-      ) : null}
-      {error === "inscription" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Impossible de t&apos;inscrire. Lance 013_parent_activities_rls.sql dans Supabase,
-          ou l&apos;enfant est déjà inscrit.
-        </div>
-      ) : null}
-      {error === "child" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Choisis un enfant.
-        </div>
-      ) : null}
-      {error === "closed" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Cette activité n&apos;est plus ouverte aux parents.
-        </div>
-      ) : null}
 
       <Card>
         <CardHeader>
@@ -122,32 +99,43 @@ export default async function ParentActiviteDetailPage({
           <CardContent className="space-y-2">
             {children
               .filter((c) => registeredIds.has(c.id))
-              .map((c) => (
-                <p key={c.id} className="font-medium">
-                  {c.first_name} {c.last_name} — <span className="text-green-700">Inscrit</span>
-                </p>
-              ))}
+              .map((c) => {
+                const status = registrationByChild.get(c.id) ?? "NOT_REQUIRED";
+                const hint = getParentParticipationHint(status);
+                return (
+                  <div key={c.id}>
+                    <p className="font-medium">
+                      {c.first_name} {c.last_name} —{" "}
+                      <span className="text-green-700">Inscrit</span>
+                    </p>
+                    {hint ? (
+                      <p className="text-sm text-muted-foreground">{hint}</p>
+                    ) : null}
+                  </div>
+                );
+              })}
           </CardContent>
         </Card>
       ) : null}
 
-      {!isPaid && availableChildren.length > 0 ? (
+      {availableChildren.length > 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>Inscrire un enfant</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {availableChildren.map((child) => {
-              const action = registerParentChildToActivityAction.bind(null, id);
-              return (
-                <form key={child.id} action={action} className="flex gap-2">
-                  <input type="hidden" name="child_id" value={child.id} />
-                  <Button type="submit" className="w-full">
-                    Inscrire {child.first_name} {child.last_name}
-                  </Button>
-                </form>
-              );
-            })}
+          <CardContent>
+            {eligibleCount === 0 ? (
+              <p className="mb-4 text-sm text-muted-foreground">
+                Vos enfants sont bien enregistrés, mais l&apos;inscription aux activités
+                sera possible dès que l&apos;ASBL aura validé le dossier (ou la cotisation si
+                applicable).
+              </p>
+            ) : null}
+            <ParentActivityRegisterForm
+              activityId={id}
+              priceCents={activity.price_cents}
+              availableChildren={availableChildren}
+            />
           </CardContent>
         </Card>
       ) : null}
@@ -156,13 +144,6 @@ export default async function ParentActiviteDetailPage({
         <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Aucun enfant validé. L&apos;ASBL doit valider le lien parent-enfant dans
           Administration.
-        </div>
-      ) : null}
-
-      {isPaid && availableChildren.length > 0 ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Activité payante ({formatActivityPrice(activity.price_cents)}). Paiement en
-          ligne bientôt disponible — contacte l&apos;ASBL.
         </div>
       ) : null}
     </div>

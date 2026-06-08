@@ -3,27 +3,43 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ROLE_LABELS, isParentRole } from "@/lib/auth/roles";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { Home, Users, Calendar, CreditCard, FileText, Settings } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { StaffDesktopNav, StaffMobileNav } from "@/components/staff/staff-nav";
 import type { UserRole } from "@/lib/auth/roles";
 
 const navItems: {
   href: string;
   label: string;
-  icon: typeof Home;
   roles?: UserRole[];
 }[] = [
-  { href: "/", label: "Accueil", icon: Home },
-  { href: "/enfants", label: "Enfants", icon: Users },
-  { href: "/activites", label: "Activités", icon: Calendar },
-  { href: "/paiements", label: "Paiements", icon: CreditCard, roles: ["ADMIN", "TRAVAILLEUR"] },
-  { href: "/rapports", label: "Rapports", icon: FileText, roles: ["ADMIN"] },
-  { href: "/administration", label: "Admin", icon: Settings, roles: ["ADMIN"] },
+  { href: "/", label: "Ma journée" },
+  { href: "/enfants", label: "Enfants" },
+  { href: "/planning", label: "Planning" },
+  { href: "/activites", label: "Activités" },
+  { href: "/soutien-scolaire", label: "Soutien", roles: ["ADMIN", "TRAVAILLEUR"] },
+  { href: "/paiements", label: "Paiements", roles: ["ADMIN", "TRAVAILLEUR"] },
+  { href: "/rapports", label: "Rapports", roles: ["ADMIN"] },
+  { href: "/administration", label: "Familles", roles: ["ADMIN"] },
 ];
 
 function canSeeItem(role: UserRole, roles?: UserRole[]) {
   if (!roles) return true;
   return roles.includes(role);
+}
+
+function buildMobileNavItems(
+  visibleNav: { href: string; label: string }[],
+  role: UserRole
+) {
+  if (role === "ADMIN") {
+    return [
+      visibleNav.find((i) => i.href === "/")!,
+      visibleNav.find((i) => i.href === "/enfants")!,
+      visibleNav.find((i) => i.href === "/planning")!,
+      visibleNav.find((i) => i.href === "/administration")!,
+      visibleNav.find((i) => i.href === "/paiements")!,
+    ].filter(Boolean);
+  }
+  return visibleNav.slice(0, 5);
 }
 
 export default async function AppLayout({
@@ -48,50 +64,28 @@ export default async function AppLayout({
   const visibleNav = navItems.filter((item) =>
     canSeeItem(profile.role, item.roles)
   );
-
-  const mobileNav =
-    profile.role === "ADMIN"
-      ? [
-          visibleNav.find((i) => i.href === "/")!,
-          visibleNav.find((i) => i.href === "/enfants")!,
-          visibleNav.find((i) => i.href === "/activites")!,
-          visibleNav.find((i) => i.href === "/administration")!,
-          visibleNav.find((i) => i.href === "/paiements")!,
-        ].filter(Boolean)
-      : visibleNav.slice(0, 5);
+  const mobileNav = buildMobileNavItems(visibleNav, profile.role);
 
   return (
     <div className="flex min-h-screen flex-col pb-20 md:pb-0">
       <header className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold">AsblOS</p>
-            <p className="text-xs text-muted-foreground">
-              {profile.full_name} · {ROLE_LABELS[profile.role]}
-            </p>
+        <div className="mx-auto max-w-5xl">
+          <div className="flex items-center justify-between px-4 py-3">
+            <Link href="/" className="min-w-0">
+              <p className="text-sm font-semibold">AsblOS</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {profile.full_name} · {ROLE_LABELS[profile.role]}
+              </p>
+            </Link>
+            <LogoutButton />
           </div>
-          <LogoutButton />
+          <StaffDesktopNav items={visibleNav} />
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card md:hidden">
-        <div className="mx-auto flex max-w-lg justify-around px-2 py-2">
-          {mobileNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-primary"
-              )}
-            >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <StaffMobileNav items={mobileNav} />
     </div>
   );
 }

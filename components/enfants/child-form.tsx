@@ -19,11 +19,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  SchoolSupportEnrollmentSection,
+  type OpenSchoolSupportProgram,
+} from "@/components/enrollment/school-support-enrollment-section";
 
 type FormState = {
   error: string | null;
   fieldErrors: Record<string, string>;
   success?: boolean;
+  enrollmentWarning?: string;
+};
+
+type EnrollmentOptions = {
+  programs: OpenSchoolSupportProgram[];
+  schoolSupportFeeCents: number;
+  schoolSupportFeeLabel: string;
+  mode: "parent" | "staff";
 };
 
 type ChildFormProps = {
@@ -42,6 +54,8 @@ type ChildFormProps = {
     email?: string;
     phone?: string;
   };
+  /** Bloc adhésion / soutien scolaire (création uniquement) */
+  enrollment?: EnrollmentOptions;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -84,6 +98,7 @@ export function ChildForm({
   variant = "staff",
   cancelHref,
   guardianDefaults,
+  enrollment,
 }: ChildFormProps) {
   const [state, formAction] = useFormState(action, initialState);
   const isStaff =
@@ -387,6 +402,15 @@ export function ChildForm({
             </label>
           </CardContent>
         </Card>
+      ) : null}
+
+      {!child && enrollment ? (
+        <SchoolSupportEnrollmentSection
+          programs={enrollment.programs}
+          schoolSupportFeeCents={enrollment.schoolSupportFeeCents}
+          schoolSupportFeeLabel={enrollment.schoolSupportFeeLabel}
+          mode={enrollment.mode}
+        />
       ) : null}
 
       {isStaff ? (

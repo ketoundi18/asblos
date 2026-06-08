@@ -33,7 +33,7 @@ export default async function PaiementsPage() {
       <div>
         <h1 className="text-2xl font-bold">Paiements</h1>
         <p className="text-muted-foreground">
-          Inscriptions parent et paiements en ligne (Mollie · Bancontact)
+          Cotisations et paiements en ligne reçus des parents
         </p>
       </div>
 

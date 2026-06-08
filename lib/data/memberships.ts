@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentSchoolYear } from "@/lib/school-year";
+import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 
 export type MembershipStatus =
   | "AWAITING_PAYMENT"
@@ -8,15 +9,25 @@ export type MembershipStatus =
   | "REJECTED"
   | "CANCELLED";
 
+export type MembershipPlan = "BASE" | "SCHOOL_SUPPORT";
+
 export type Membership = {
   id: string;
   child_id: string;
   parent_id: string;
   school_year: string;
+  plan: MembershipPlan;
   fee_cents: number;
   status: MembershipStatus;
   asbl_validated_at: string | null;
 };
+
+function normalizeMembership(row: Membership & { plan?: MembershipPlan }): Membership {
+  const plan =
+    row.plan ??
+    (row.fee_cents > 0 ? ("SCHOOL_SUPPORT" as const) : ("BASE" as const));
+  return { ...row, plan };
+}
 
 export async function getMembershipForChildCurrentYear(
   childId: string
@@ -26,28 +37,31 @@ export async function getMembershipForChildCurrentYear(
 
   const { data } = await supabase
     .from("memberships")
-    .select("id, child_id, parent_id, school_year, fee_cents, status, asbl_validated_at")
+    .select("id, child_id, parent_id, school_year, plan, fee_cents, status, asbl_validated_at")
     .eq("child_id", childId)
     .eq("school_year", schoolYear)
-    .maybeSingle<Membership>();
+    .maybeSingle<Membership & { plan?: MembershipPlan }>();
 
-  return data ?? null;
+  return data ? normalizeMembership(data) : null;
 }
 
 export async function getMembershipsForParentDashboard(): Promise<
   Map<string, Membership>
 > {
+  await syncMissingMembershipsForCurrentParent();
+
   const supabase = await createClient();
   const schoolYear = getCurrentSchoolYear();
 
   const { data } = await supabase
     .from("memberships")
-    .select("id, child_id, parent_id, school_year, fee_cents, status, asbl_validated_at")
+    .select("id, child_id, parent_id, school_year, plan, fee_cents, status, asbl_validated_at")
     .eq("school_year", schoolYear);
 
   const map = new Map<string, Membership>();
-  for (const row of (data ?? []) as Membership[]) {
-    map.set(row.child_id, row);
+  for (const row of (data ?? []) as (Membership & { plan?: MembershipPlan })[]) {
+    const m = normalizeMembership(row);
+    map.set(m.child_id, m);
   }
   return map;
 }

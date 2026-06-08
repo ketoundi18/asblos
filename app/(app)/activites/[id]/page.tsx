@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, Smartphone } from "lucide-react";
 import {
   getActivityById,
   getActiveChildrenForRegistration,
 } from "@/lib/data/activities";
 import { getCurrentProfile } from "@/lib/auth/session";
-import { canRegisterChildToActivity } from "@/lib/auth/permissions";
+import { canRegisterChildToActivity, canManageActivities, canMarkAttendance } from "@/lib/auth/permissions";
 import { AttendancePanel } from "@/components/activites/attendance-panel";
 import { RegisterChildForm } from "@/components/activites/register-child-form";
+import { ParentVisibilityToggle } from "@/components/activites/parent-visibility-toggle";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,19 +28,18 @@ import {
 
 export default async function ActiviteDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
   const profile = await getCurrentProfile();
   const activity = await getActivityById(id);
 
   if (!activity || !profile) notFound();
 
   const canRegister = canRegisterChildToActivity(profile.role);
+  const canManage = canManageActivities(profile.role);
+  const canTerrain = canMarkAttendance(profile.role);
   const allChildren = canRegister ? await getActiveChildrenForRegistration() : [];
   const registeredIds = new Set(activity.registrations.map((r) => r.child_id));
   const availableChildren = allChildren.filter((c) => !registeredIds.has(c.id));
@@ -74,17 +74,6 @@ export default async function ActiviteDetailPage({
         </p>
       </div>
 
-      {error === "permission" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Tu n&apos;as pas la permission pour cette action.
-        </div>
-      ) : null}
-      {error === "inscription" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Impossible d&apos;inscrire cet enfant. Il est peut-être déjà inscrit.
-        </div>
-      ) : null}
-
       <Card>
         <CardHeader>
           <CardTitle>Détails</CardTitle>
@@ -110,11 +99,31 @@ export default async function ActiviteDetailPage({
         </CardContent>
       </Card>
 
+      {canManage ? (
+        <ParentVisibilityToggle
+          activityId={id}
+          isOpen={activity.parent_registration_open}
+        />
+      ) : null}
+
       {canRegister ? (
         <RegisterChildForm activityId={id} availableChildren={availableChildren} />
       ) : null}
 
-      <AttendancePanel activityId={id} registrations={activity.registrations} />
+      {canTerrain && activity.registrations.length > 0 ? (
+        <Button asChild size="lg" className="w-full h-14 text-base">
+          <Link href={`/activites/${id}/terrain`}>
+            <Smartphone className="h-5 w-5" />
+            Marquer les présences
+          </Link>
+        </Button>
+      ) : null}
+
+      <AttendancePanel
+        activityId={id}
+        registrations={activity.registrations}
+        showPaymentStatus={isActivityPaid(activity.price_cents)}
+      />
 
       <Button asChild variant="outline" className="w-full">
         <Link href="/activites">Retour à la liste</Link>

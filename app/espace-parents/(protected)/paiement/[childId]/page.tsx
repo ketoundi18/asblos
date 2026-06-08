@@ -9,7 +9,10 @@ import {
   formatCentsForDisplay,
   isPaymentSimulationEnabled,
 } from "@/lib/config/payments";
+import { buildEnrollmentQuote } from "@/lib/enrollment/build-enrollment-quote";
 import { getChildPaymentContext } from "@/lib/data/parent-payments";
+import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
 import { isMollieConfigured } from "@/lib/mollie/client";
 
 export default async function ParentPaiementPage({
@@ -22,15 +25,16 @@ export default async function ParentPaiementPage({
   const { childId } = await params;
   const { error, detail } = await searchParams;
   const context = await getChildPaymentContext(childId);
+  const membership = await getMembershipForChildCurrentYear(childId);
 
   if (!context) notFound();
 
-  if (
-    context.paid_payment ||
-    context.membership_status === "AWAITING_ASBL" ||
-    context.membership_status === "ACTIVE"
-  ) {
-    redirect("/espace-parents?success=paiement");
+  if (context.paid_payment || context.membership_status === "AWAITING_ASBL") {
+    redirect("/espace-parents/soutien-scolaire?success=upgrade-soutien");
+  }
+
+  if (context.membership_status === "ACTIVE" && membership?.plan === "BASE") {
+    redirect("/espace-parents/soutien-scolaire?error=upgrade");
   }
 
   if (context.fee_cents <= 0 || context.membership_status !== "AWAITING_PAYMENT") {
@@ -40,6 +44,11 @@ export default async function ParentPaiementPage({
   const feeLabel = formatCentsForDisplay(context.fee_cents);
   const mollieReady = isMollieConfigured();
   const simulationEnabled = isPaymentSimulationEnabled();
+  const { settings } = await getAsblSettingsForCurrentYear();
+  const quote =
+    membership?.plan === "SCHOOL_SUPPORT"
+      ? buildEnrollmentQuote("SCHOOL_SUPPORT", settings)
+      : buildEnrollmentQuote("BASE", settings);
 
   // Ancienne erreur Mollie dans l'URL → on nettoie (Mollie n'est plus utilisé en local)
   if (
@@ -68,43 +77,29 @@ export default async function ParentPaiementPage({
         </p>
       </div>
 
-      {error === "config" && !simulationEnabled ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Mollie n&apos;est pas configuré. Ajoute <code>MOLLIE_API_KEY</code> dans{" "}
-          <code>.env.local</code> ou utilise la simulation ci-dessous.
-        </div>
-      ) : null}
-
-      {error === "simulation" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          La simulation n&apos;est disponible qu&apos;en mode développement local.
-        </div>
-      ) : null}
-
-      {error === "mollie" || (error && detail?.includes("API key")) ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Clé Mollie invalide ou placeholder dans <code>.env.local</code>. En
-          local, utilise le bouton jaune{" "}
-          <strong>« Simuler le paiement Bancontact (test) »</strong> — ou supprime{" "}
-          <code>MOLLIE_API_KEY</code> puis redémarre le serveur.
-        </div>
-      ) : null}
-
-      {error && !["config", "simulation", "mollie"].includes(error ?? "") && !detail?.includes("API key") ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          Impossible de lancer le paiement.
-          {detail ? ` (${decodeURIComponent(detail)})` : null}
-        </div>
-      ) : null}
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            Cotisation d&apos;inscription — {feeLabel}
+            Détail du paiement
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          <ul className="space-y-2 text-sm">
+            {quote.lines.map((line) => (
+              <li key={line.code} className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">{line.label}</span>
+                <span className="font-medium tabular-nums">
+                  {line.cents <= 0 ? "Gratuit" : formatCentsForDisplay(line.cents)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-center justify-between gap-3 border-t pt-3">
+            <span className="font-semibold">Total</span>
+            <span className="text-lg font-bold tabular-nums text-primary">{feeLabel}</span>
+          </div>
+
           <p className="text-sm text-muted-foreground">
             Après paiement, l&apos;ASBL validera l&apos;inscription sous 48 h.
           </p>

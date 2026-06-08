@@ -12,6 +12,7 @@ import {
 import { activityFormSchema } from "@/lib/validations/activity";
 import type { Database } from "@/types/database";
 import type { ActivityFormState } from "@/lib/actions/activities-state";
+import { normalizeTimeForDb } from "@/lib/date-utils";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
@@ -73,8 +74,8 @@ export async function createActivityAction(
     title: data.title.trim(),
     description: emptyToNull(data.description),
     activity_date: data.activity_date,
-    start_time: emptyToNull(data.start_time),
-    end_time: emptyToNull(data.end_time),
+    start_time: normalizeTimeForDb(data.start_time),
+    end_time: normalizeTimeForDb(data.end_time),
     location: emptyToNull(data.location),
     max_participants: data.max_participants ?? null,
     status: data.status,
@@ -103,7 +104,46 @@ export async function createActivityAction(
   }
 
   revalidatePath("/activites");
-  redirect(`/activites/${activity.id}`);
+  revalidatePath("/espace-parents/activites");
+  revalidatePath("/espace-parents", "layout");
+  redirect(`/activites/${activity.id}?created=1`);
+}
+
+export async function toggleParentRegistrationAction(activityId: string) {
+  const profile = await requireProfile();
+  if (!canManageActivities(profile.role)) {
+    redirect(`/activites/${activityId}?error=permission`);
+  }
+
+  const supabase = await createClient();
+  const { data: current } = await supabase
+    .from("activities")
+    .select("parent_registration_open")
+    .eq("id", activityId)
+    .is("deleted_at", null)
+    .single<{ parent_registration_open: boolean }>();
+
+  if (!current) {
+    redirect(`/activites/${activityId}?error=notfound`);
+  }
+
+  const { error } = await supabase
+    .from("activities")
+    .update({
+      parent_registration_open: !current.parent_registration_open,
+      updated_by: profile.id,
+    } as never)
+    .eq("id", activityId);
+
+  if (error) {
+    redirect(`/activites/${activityId}?error=toggle`);
+  }
+
+  revalidatePath("/activites");
+  revalidatePath(`/activites/${activityId}`);
+  revalidatePath("/espace-parents/activites");
+  revalidatePath("/espace-parents", "layout");
+  redirect(`/activites/${activityId}?toggled=parent`);
 }
 
 export async function registerChildAction(
@@ -175,5 +215,12 @@ export async function markAttendanceAction(
   }
 
   revalidatePath(`/activites/${activityId}`);
+  revalidatePath(`/activites/${activityId}/terrain`);
+
+  const returnTo = formData.get("return_to");
+  if (returnTo === "terrain") {
+    redirect(`/activites/${activityId}/terrain?success=attendance`);
+  }
+
   redirect(`/activites/${activityId}`);
 }

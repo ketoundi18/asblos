@@ -4,25 +4,13 @@
 
 set -u
 cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib/port-utils.sh
+source scripts/lib/port-utils.sh
 
-PORT=3000
 MAX_RESTARTS=100
 RESTART_DELAY=2
-LOCK_FILE=".next/.dev-server.lock"
-
-kill_port() {
-  local port=$1
-  for _ in 1 2 3; do
-    local pids
-    pids=$(lsof -ti :"$port" 2>/dev/null || true)
-    if [ -n "$pids" ]; then
-      kill -9 $pids 2>/dev/null || true
-      sleep 0.5
-    else
-      break
-    fi
-  done
-}
+DEV_LOCK=".next/dev-sh.lock"
+NEXT_BIN="./node_modules/.bin/next"
 
 clean_cache() {
   echo "→ Nettoyage du cache .next..."
@@ -30,20 +18,58 @@ clean_cache() {
   mkdir -p .next
 }
 
-echo "→ Arrêt des anciens serveurs sur les ports 3000 et 3001..."
-kill_port 3000
-kill_port 3001
+release_locks() {
+  rm -f "$DEV_LOCK" .next/.dev-server.lock
+}
 
-if lsof -ti :3000 >/dev/null 2>&1; then
-  echo "❌ Le port 3000 est encore occupé. Ferme les autres Terminals puis relance."
+acquire_dev_lock() {
+  mkdir -p .next
+  if [ -f "$DEV_LOCK" ]; then
+    local old_pid
+    old_pid=$(cat "$DEV_LOCK" 2>/dev/null || true)
+    if [ -n "$old_pid" ] && kill -0 "$old_pid" 2>/dev/null; then
+      echo ""
+      echo "❌ Un serveur dev tourne déjà (Terminal PID ${old_pid})."
+      echo "   → Utilise ce Terminal, ou arrête-le avec Ctrl+C"
+      echo "   → Sinon : npm run dev:stop"
+      exit 1
+    fi
+  fi
+  echo $$ > "$DEV_LOCK"
+}
+
+trap 'release_locks; exit 0' INT TERM
+trap 'release_locks' EXIT
+
+if [ ! -x "$NEXT_BIN" ]; then
+  echo "❌ Next.js introuvable. Lance d'abord : npm install"
   exit 1
 fi
+
+acquire_dev_lock
+
+echo "→ Préparation du serveur..."
+stop_all_dev_servers
+sleep 0.5
+
+PORT=$(pick_dev_port) || {
+  echo ""
+  echo "❌ Aucun port disponible (3000 et 3001 occupés)."
+  show_port_process 3000
+  show_port_process 3001
+  echo ""
+  echo "   Ferme les autres Terminals, puis : npm run dev:stop"
+  exit 1
+}
 
 clean_cache
 
 echo ""
 echo "→ Mode stable : redémarrage automatique si le serveur plante"
 echo "  URL : http://localhost:${PORT}"
+if [ "$PORT" != "3000" ]; then
+  echo "  (Le port 3000 était occupé — utilise bien le port ${PORT})"
+fi
 echo "  ⚠️  Un seul Terminal. Ne lance pas 'npm run dev' ailleurs."
 echo "  ⚠️  N'exécute pas 'npm run build' pendant que le serveur tourne."
 echo "  ⚠️  Après un gros changement : Cmd+Shift+R dans le navigateur."
@@ -55,34 +81,58 @@ attempt=0
 while [ "$attempt" -lt "$MAX_RESTARTS" ]; do
   attempt=$((attempt + 1))
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-  echo "→ Démarrage #${attempt} — $(date '+%H:%M:%S')"
+  echo "→ Démarrage #${attempt} — $(date '+%H:%M:%S') — port ${PORT}"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+  if [ "$attempt" -gt 1 ]; then
+    free_port "$PORT" || true
+  fi
+
   mkdir -p .next
-  echo "$$" > "$LOCK_FILE"
+  echo "$$" > .next/.dev-server.lock
+
+  start_ts=$(date +%s)
 
   set +e
-  npx next dev --port "$PORT"
+  "$NEXT_BIN" dev --port "$PORT"
   exit_code=$?
   set -e
 
-  rm -f "$LOCK_FILE"
+  end_ts=$(date +%s)
+  duration=$((end_ts - start_ts))
 
-  # Arrêt volontaire (Ctrl+C) → code 130 ou 0
-  if [ "$exit_code" -eq 0 ] || [ "$exit_code" -eq 130 ]; then
+  if [ "$exit_code" -eq 130 ]; then
+    echo ""
+    echo "✓ Serveur arrêté."
+    exit 0
+  fi
+
+  # Processus tué ou crash : nettoyer les orphelins sur le port
+  if port_is_listening "$PORT"; then
+    echo ""
+    echo "→ Nettoyage du port ${PORT} (processus orphelin)..."
+    free_port "$PORT" || true
+  fi
+
+  if [ "$exit_code" -eq 0 ] && [ "$duration" -ge 8 ]; then
     echo ""
     echo "✓ Serveur arrêté."
     exit 0
   fi
 
   echo ""
-  echo "⚠️  Le serveur s'est arrêté (code ${exit_code})."
-  echo "→ Réparation : nettoyage cache + redémarrage dans ${RESTART_DELAY}s..."
-  sleep "$RESTART_DELAY"
+  if [ "$exit_code" -eq 137 ] || [ "$exit_code" -eq 143 ]; then
+    echo "⚠️  Le serveur a été interrompu brutalement — nouvelle tentative dans ${RESTART_DELAY}s..."
+  elif [ "$duration" -lt 8 ]; then
+    echo "⚠️  Démarrage raté (code ${exit_code}) — nouvelle tentative dans ${RESTART_DELAY}s..."
+  else
+    echo "⚠️  Le serveur s'est arrêté (code ${exit_code})."
+    echo "→ Réparation dans ${RESTART_DELAY}s..."
+  fi
 
-  kill_port 3000
+  sleep "$RESTART_DELAY"
   clean_cache
 done
 
-echo "❌ Trop de redémarrages (${MAX_RESTARTS}). Vérifie les erreurs dans le code."
+echo "❌ Trop de redémarrages (${MAX_RESTARTS})."
 exit 1

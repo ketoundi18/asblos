@@ -2,13 +2,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, Phone, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
 import { getChildById } from "@/lib/data/children";
+import { getChildOverview } from "@/lib/data/child-overview";
 import { archiveChildAction } from "@/lib/actions/children";
 import { getCurrentProfile } from "@/lib/auth/session";
 import {
   canModifyChild,
   canDeleteChild,
   canViewFullChildProfile,
+  canManageUsers,
 } from "@/lib/auth/permissions";
+import { ChildOverviewPanel } from "@/components/enfants/child-overview-panel";
+import { ChildSchoolSupportStaffPanel } from "@/components/enfants/child-school-support-staff-panel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,10 +37,10 @@ export default async function EnfantDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; warning?: string; success?: string }>;
 }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, warning } = await searchParams;
   const profile = await getCurrentProfile();
   const child = await getChildById(id);
 
@@ -45,6 +49,7 @@ export default async function EnfantDetailPage({
   }
 
   const fullView = canViewFullChildProfile(profile.role);
+  const overview = fullView ? await getChildOverview(id) : null;
   const canEdit = canModifyChild(profile.role);
   const canArchive = canDeleteChild(profile.role);
   const primaryGuardian =
@@ -81,6 +86,12 @@ export default async function EnfantDetailPage({
         </div>
       ) : null}
 
+      {warning ? (
+        <div className="rounded-md border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Fiche créée, mais : {decodeURIComponent(warning)}
+        </div>
+      ) : null}
+
       {!fullView ? (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="p-4 text-sm text-amber-900">
@@ -89,6 +100,16 @@ export default async function EnfantDetailPage({
           </CardContent>
         </Card>
       ) : null}
+
+      {fullView && overview ? (
+        <ChildOverviewPanel
+          childId={child.id}
+          overview={overview}
+          showAdminActions={canManageUsers(profile.role)}
+        />
+      ) : null}
+
+      {canEdit ? <ChildSchoolSupportStaffPanel childId={child.id} /> : null}
 
       <Card>
         <CardHeader>
