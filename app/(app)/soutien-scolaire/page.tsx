@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, ClipboardList } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { canManageActivities } from "@/lib/auth/permissions";
 import { getStaffSchoolSupportPrograms } from "@/lib/data/school-support";
+import { getSchoolSupportAdminQueue } from "@/lib/data/school-support-admin";
 import { PROGRAM_STATUS_LABELS } from "@/types/school-support";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,11 @@ export default async function SoutienScolairePage() {
     redirect("/");
   }
 
-  const { programs, loadError } = await getStaffSchoolSupportPrograms();
+  const [{ programs, loadError }, { requests }] = await Promise.all([
+    getStaffSchoolSupportPrograms(),
+    getSchoolSupportAdminQueue(),
+  ]);
+  const pendingRequests = requests.filter((r) => r.can_confirm).length;
 
   return (
     <div className="space-y-6">
@@ -26,12 +31,25 @@ export default async function SoutienScolairePage() {
             Offre récurrente — jours, horaires et inscriptions (séparé des activités ponctuelles).
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/soutien-scolaire/nouveau">
-            <Plus className="h-4 w-4" />
-            Nouveau programme
-          </Link>
-        </Button>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <Button asChild size="sm" variant="outline">
+            <Link href="/soutien-scolaire/demandes">
+              <ClipboardList className="h-4 w-4" />
+              Demandes
+              {pendingRequests > 0 ? (
+                <Badge variant="warning" className="ml-1.5">
+                  {pendingRequests}
+                </Badge>
+              ) : null}
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/soutien-scolaire/nouveau">
+              <Plus className="h-4 w-4" />
+              Nouveau programme
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {loadError ? (

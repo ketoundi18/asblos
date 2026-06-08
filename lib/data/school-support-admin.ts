@@ -2,6 +2,7 @@ import { createStaffReadClient } from "@/lib/supabase/staff-read";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import { formatEnrollmentFeeLabel, getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
+import { formatSlotSchedule, type SchoolSupportSlot } from "@/types/school-support";
 
 export type SchoolSupportAdminRequest = {
   membership_id: string;
@@ -17,6 +18,9 @@ export type SchoolSupportAdminRequest = {
   link_verified: boolean;
   can_confirm: boolean;
   status_label: string;
+  program_title: string | null;
+  slot_labels: string[];
+  enrollment_status: string | null;
 };
 
 function buildRequest(
@@ -30,11 +34,16 @@ function buildRequest(
   },
   childMap: Map<string, { first_name: string; last_name: string }>,
   profileMap: Map<string, { full_name: string; email: string }>,
-  verifiedChildren: Set<string>
+  verifiedChildren: Set<string>,
+  enrollmentByChild: Map<
+    string,
+    { program_title: string | null; slot_labels: string[]; enrollment_status: string | null }
+  >
 ): SchoolSupportAdminRequest {
   const child = childMap.get(m.child_id);
   const parent = profileMap.get(m.parent_id);
   const paymentPending = m.status === "AWAITING_PAYMENT" && m.fee_cents > 0;
+  const enrollment = enrollmentByChild.get(m.child_id);
 
   return {
     membership_id: m.id,
@@ -54,6 +63,9 @@ function buildRequest(
     status_label: paymentPending
       ? "Paiement cotisation en attente"
       : "Soutien scolaire à confirmer",
+    program_title: enrollment?.program_title ?? null,
+    slot_labels: enrollment?.slot_labels ?? [],
+    enrollment_status: enrollment?.enrollment_status ?? null,
   };
 }
 
@@ -196,8 +208,10 @@ export async function getSchoolSupportAdminQueue(): Promise<{
       .map((l) => l.child_id)
   );
 
+  const enrollmentByChild = await loadEnrollmentDetails(supabase, childIds);
+
   const requests = memberships.map((m) =>
-    buildRequest(m, childMap, profileMap, verifiedChildren)
+    buildRequest(m, childMap, profileMap, verifiedChildren, enrollmentByChild)
   );
 
   requests.sort((a, b) => {
@@ -207,4 +221,91 @@ export async function getSchoolSupportAdminQueue(): Promise<{
   });
 
   return { requests, loadError: null };
+}
+
+async function loadEnrollmentDetails(
+  supabase: Awaited<ReturnType<typeof createStaffReadClient>>,
+  childIds: string[]
+): Promise<
+  Map<
+    string,
+    { program_title: string | null; slot_labels: string[]; enrollment_status: string | null }
+  >
+> {
+  const map = new Map<
+    string,
+    { program_title: string | null; slot_labels: string[]; enrollment_status: string | null }
+  >();
+
+  if (childIds.length === 0) return map;
+
+  const { data: enrollRows } = await supabase
+    .from("school_support_enrollments")
+    .select(
+      `
+      id,
+      child_id,
+      status,
+      school_support_programs ( title )
+    `
+    )
+    .in("child_id", childIds)
+    .in("status", ["PENDING", "ACTIVE"])
+    .is("cancelled_at", null);
+
+  type EnrollRow = {
+    id: string;
+    child_id: string;
+    status: string;
+    school_support_programs: { title: string } | null;
+  };
+
+  const enrollments = (enrollRows ?? []) as EnrollRow[];
+  if (enrollments.length === 0) return map;
+
+  const enrollmentIds = enrollments.map((e) => e.id);
+
+  const { data: slotLinkRows } = await supabase
+    .from("school_support_enrollment_slots")
+    .select("enrollment_id, slot_id")
+    .in("enrollment_id", enrollmentIds);
+
+  const slotIds = [
+    ...new Set(((slotLinkRows ?? []) as { slot_id: string }[]).map((r) => r.slot_id)),
+  ];
+
+  let slotMap = new Map<string, SchoolSupportSlot>();
+  if (slotIds.length > 0) {
+    const { data: slotRows } = await supabase
+      .from("school_support_slots")
+      .select("id, program_id, day_of_week, start_time, end_time, location, label")
+      .in("id", slotIds);
+
+    slotMap = new Map(
+      ((slotRows ?? []) as SchoolSupportSlot[]).map((s) => [s.id, s])
+    );
+  }
+
+  const linksByEnrollment = new Map<string, string[]>();
+  for (const link of (slotLinkRows ?? []) as { enrollment_id: string; slot_id: string }[]) {
+    const current = linksByEnrollment.get(link.enrollment_id) ?? [];
+    current.push(link.slot_id);
+    linksByEnrollment.set(link.enrollment_id, current);
+  }
+
+  for (const enroll of enrollments) {
+    const chosenIds = linksByEnrollment.get(enroll.id) ?? [];
+    const slot_labels = chosenIds
+      .map((id) => slotMap.get(id))
+      .filter(Boolean)
+      .map((slot) => formatSlotSchedule(slot!));
+
+    map.set(enroll.child_id, {
+      program_title: enroll.school_support_programs?.title ?? null,
+      slot_labels,
+      enrollment_status: enroll.status,
+    });
+  }
+
+  return map;
 }

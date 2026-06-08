@@ -72,19 +72,14 @@ export function ParentEnrollmentFormInner({
 
   useEffect(() => {
     if (state.success && state.childId) {
-      const warning = state.enrollmentWarning
-        ? `&warning=${encodeURIComponent(state.enrollmentWarning)}`
-        : "";
       if (state.needsPayment) {
-        router.push(`/espace-parents/paiement/${state.childId}${warning ? `?${warning.slice(1)}` : ""}`);
+        router.push(`/espace-parents/paiement/${state.childId}`);
       } else {
-        router.push(
-          `/espace-parents?success=inscription${state.enrollmentWarning ? warning : ""}`
-        );
+        router.push("/espace-parents?success=inscription");
       }
       router.refresh();
     }
-  }, [state.success, state.childId, state.needsPayment, state.enrollmentWarning, router]);
+  }, [state.success, state.childId, state.needsPayment, router]);
 
   return (
     <form action={formAction} className="space-y-6">

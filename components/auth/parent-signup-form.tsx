@@ -37,10 +37,27 @@ export function ParentSignupForm() {
     return (
       <div className="space-y-4 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-900">
         <p className="font-medium">Compte créé !</p>
-        <p>
-          Vérifie ta boîte e-mail si Supabase demande une confirmation, puis
-          connecte-toi. L&apos;ASBL validera le lien avec ton enfant.
-        </p>
+        {state.needsEmailConfirmation ? (
+          <>
+            <p>
+              Supabase demande une <strong>confirmation par e-mail</strong> avant
+              la connexion. Clique le lien reçu, puis reviens ici.
+            </p>
+            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+              <p className="font-medium">En développement (recommandé)</p>
+              <p className="mt-1 text-xs">
+                Supabase → Authentication → Sign In / Providers → Email →
+                désactive <strong>Confirm email</strong>, puis recrée un compte
+                test ou confirme l&apos;e-mail manuellement dans Users.
+              </p>
+            </div>
+          </>
+        ) : (
+          <p>
+            Tu peux te connecter tout de suite. L&apos;ASBL validera le lien avec
+            ton enfant après inscription.
+          </p>
+        )}
         <Button asChild className="w-full">
           <Link href="/espace-parents/connexion">Se connecter</Link>
         </Button>

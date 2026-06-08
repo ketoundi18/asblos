@@ -12,12 +12,17 @@ import {
   verifyParentLinkForChild,
 } from "@/lib/enrollment/activate-pending-enrollments";
 
-export async function confirmSchoolSupportMembershipAction(childId: string) {
+export async function confirmSchoolSupportMembershipAction(
+  childId: string,
+  formData: FormData
+) {
   const profile = await requireProfile();
 
   if (!canManageUsers(profile.role)) {
-    redirect("/administration?error=permission");
+    redirect("/soutien-scolaire/demandes?error=permission");
   }
+
+  const returnTo = safeStaffReturnPath(formData.get("return_to"));
 
   const supabase = await createClient();
   const schoolYear = getCurrentSchoolYear();
@@ -50,14 +55,14 @@ export async function confirmSchoolSupportMembershipAction(childId: string) {
 
   if (!isSchoolSupportPending && !isLegacyPending) {
     if (membership?.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
-      redirect("/administration?error=payment-required");
+      redirect(`${returnTo}?error=payment-required`);
     }
-    redirect("/administration?error=soutien-not-found");
+    redirect(`${returnTo}?error=soutien-not-found`);
   }
 
   if (membership) {
     if (membership.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
-      redirect("/administration?error=payment-required");
+      redirect(`${returnTo}?error=payment-required`);
     }
 
     const { error } = await supabase
@@ -70,7 +75,7 @@ export async function confirmSchoolSupportMembershipAction(childId: string) {
       .eq("id", membership.id);
 
     if (error) {
-      redirect("/administration?error=soutien-confirm");
+      redirect(`${returnTo}?error=soutien-confirm`);
     }
   } else if (isLegacyPending) {
     const { settings } = await getAsblSettingsForCurrentYear();
@@ -85,7 +90,7 @@ export async function confirmSchoolSupportMembershipAction(childId: string) {
       .maybeSingle<{ parent_id: string }>();
 
     if (!link) {
-      redirect("/administration?error=soutien-not-found");
+      redirect(`${returnTo}?error=soutien-not-found`);
     }
 
     const { error } = await supabase.from("memberships").insert({
@@ -99,7 +104,7 @@ export async function confirmSchoolSupportMembershipAction(childId: string) {
     } as never);
 
     if (error) {
-      redirect("/administration?error=soutien-confirm");
+      redirect(`${returnTo}?error=soutien-confirm`);
     }
   }
 
@@ -117,8 +122,17 @@ export async function confirmSchoolSupportMembershipAction(childId: string) {
   revalidatePath("/");
   revalidatePath("/administration");
   revalidatePath("/soutien-scolaire");
+  revalidatePath("/soutien-scolaire/demandes");
   revalidatePath("/espace-parents");
   revalidatePath("/espace-parents/soutien-scolaire");
   revalidatePath(`/enfants/${childId}`);
-  redirect("/?success=soutien-confirmed");
+  redirect(`${returnTo}?success=soutien-confirmed`);
+}
+
+function safeStaffReturnPath(value: FormDataEntryValue | null): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw.split("?")[0] || "/soutien-scolaire/demandes";
+  }
+  return "/soutien-scolaire/demandes";
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { ParentEnrollmentFormInner } from "@/components/parent/parent-enrollment-form-inner";
+import { ParentEnrollmentWizard } from "@/components/parent/parent-enrollment-wizard";
 import type { OpenSchoolSupportProgram } from "@/components/enrollment/school-support-enrollment-section";
 
 type ParentEnrollmentFormProps = {
@@ -13,8 +13,15 @@ type ParentEnrollmentFormProps = {
     email: string;
     phone: string;
   };
+  mollieReady: boolean;
+  simulationEnabled: boolean;
+  initialStep?: string;
+  initialChildId?: string;
+  initialChildName?: string;
+  initialSchoolSupport?: boolean;
+  initialNeedsPayment?: boolean;
 };
 
 export function ParentEnrollmentForm(props: ParentEnrollmentFormProps) {
-  return <ParentEnrollmentFormInner {...props} />;
+  return <ParentEnrollmentWizard {...props} />;
 }

@@ -162,7 +162,7 @@ export function SchoolSupportEnrollmentSection({
           </label>
         </div>
 
-        {plan === "SCHOOL_SUPPORT" && programs.length > 0 ? (
+        {plan === "SCHOOL_SUPPORT" && mode === "staff" && programs.length > 0 ? (
           <div className="space-y-4 rounded-lg border border-dashed p-4">
             {programs.length > 1 ? (
               <div className="space-y-2">
@@ -245,6 +245,12 @@ export function SchoolSupportEnrollmentSection({
               </p>
             ) : null}
           </div>
+        ) : plan === "SCHOOL_SUPPORT" && mode === "parent" ? (
+          <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-3">
+            Vous payez la cotisation soutien scolaire. Les <strong>jours</strong> qui
+            conviennent à votre enfant se choisiront <strong>plus tard</strong>, depuis
+            votre espace parent — quand vous serez prêt(e).
+          </p>
         ) : plan === "SCHOOL_SUPPORT" && programs.length === 0 ? (
           <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-3">
             Aucun programme ouvert pour le moment. Votre demande de soutien scolaire sera

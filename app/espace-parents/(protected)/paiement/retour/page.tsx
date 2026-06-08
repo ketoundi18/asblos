@@ -6,37 +6,6 @@ import { syncMolliePaymentByInternalId } from "@/lib/payments/sync-mollie";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-async function applyMembershipPaidFromPayment(paymentId: string) {
-  const supabase = await createClient();
-  const { data: payment } = await supabase
-    .from("payments")
-    .select("child_id, reference_id, purpose, status")
-    .eq("id", paymentId)
-    .maybeSingle<{
-      child_id: string;
-      reference_id: string | null;
-      purpose: string | null;
-      status: string;
-    }>();
-
-  if (!payment || payment.status !== "PAID") return;
-
-  if (payment.purpose === "MEMBERSHIP" || !payment.purpose) {
-    await supabase
-      .from("children")
-      .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" } as never)
-      .eq("id", payment.child_id);
-
-    if (payment.reference_id) {
-      await supabase
-        .from("memberships")
-        .update({ status: "AWAITING_ASBL" } as never)
-        .eq("id", payment.reference_id)
-        .eq("status", "AWAITING_PAYMENT");
-    }
-  }
-}
-
 export default async function ParentPaiementRetourPage({
   searchParams,
 }: {
@@ -45,16 +14,33 @@ export default async function ParentPaiementRetourPage({
   const { ref } = await searchParams;
 
   let status: "paid" | "pending" | "failed" | "unknown" = "unknown";
+  let childId: string | null = null;
 
   if (ref) {
+    const supabase = await createClient();
+    const { data: paymentRef } = await supabase
+      .from("payments")
+      .select("child_id")
+      .eq("id", ref)
+      .maybeSingle<{ child_id: string }>();
+
+    childId = paymentRef?.child_id ?? null;
+
     const result = await syncMolliePaymentByInternalId(ref);
     if (result.status === "PAID") {
       status = "paid";
-      await applyMembershipPaidFromPayment(ref);
     } else if (result.status === "FAILED") status = "failed";
     else if (result.status === "PENDING") status = "pending";
+
     revalidatePath("/espace-parents");
+    revalidatePath("/administration");
+    revalidatePath("/enfants");
+    revalidatePath("/paiements");
   }
+
+  const retryHref = childId
+    ? `/espace-parents/paiement/${childId}`
+    : "/espace-parents";
 
   return (
     <div className="space-y-6">
@@ -93,11 +79,11 @@ export default async function ParentPaiementRetourPage({
               <div>
                 <p className="text-lg font-semibold">Paiement non abouti</p>
                 <p className="text-sm text-muted-foreground">
-                  Tu peux réessayer depuis Mes enfants.
+                  Vous pouvez réessayer le paiement maintenant.
                 </p>
               </div>
               <Button asChild>
-                <Link href="/espace-parents">Réessayer</Link>
+                <Link href={retryHref}>Réessayer le paiement</Link>
               </Button>
             </>
           ) : (
@@ -106,7 +92,7 @@ export default async function ParentPaiementRetourPage({
               <div>
                 <p className="text-lg font-semibold">Retour du paiement</p>
                 <p className="text-sm text-muted-foreground">
-                  Consulte Mes enfants pour voir le statut mis à jour.
+                  Consultez Mes enfants pour voir le statut mis à jour.
                 </p>
               </div>
               <Button asChild>

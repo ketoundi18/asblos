@@ -239,6 +239,7 @@ export async function parentSignupAction(
     return {
       error: null,
       success: true,
+      needsEmailConfirmation: true,
       fieldErrors: {},
     };
   }

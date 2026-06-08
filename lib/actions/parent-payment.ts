@@ -135,7 +135,11 @@ export async function startParentPaymentAction(
   redirect(checkoutUrl);
 }
 
-export async function simulateParentPaymentAction(childId: string) {
+export async function simulateParentPaymentAction(
+  childId: string,
+  formData: FormData
+) {
+  const wizardMode = formData.get("wizard_mode") === "1";
   const profile = await requireProfile();
 
   if (!isParentRole(profile.role)) {
@@ -233,6 +237,12 @@ export async function simulateParentPaymentAction(childId: string) {
   revalidatePath("/administration");
   revalidatePath("/paiements");
   revalidatePath("/enfants");
+
+  if (wizardMode) {
+    redirect(
+      `/espace-parents/inscrire?step=termine&childId=${encodeURIComponent(childId)}`
+    );
+  }
 
   redirect("/espace-parents?success=paiement");
 }

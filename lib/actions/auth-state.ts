@@ -14,6 +14,8 @@ export const initialLoginState: LoginActionState = {
 export type ParentSignupState = {
   error: string | null;
   success: boolean;
+  /** Compte créé mais Supabase exige une confirmation e-mail avant connexion */
+  needsEmailConfirmation?: boolean;
   fieldErrors: Record<string, string>;
 };
 

@@ -26,18 +26,22 @@ function canSeeItem(role: UserRole, roles?: UserRole[]) {
   return roles.includes(role);
 }
 
+/** 5 entrées max en barre mobile — ordre métier par rôle (évite slice(0,5) qui masquait des liens). */
+const MOBILE_NAV_HREFS: Partial<Record<UserRole, string[]>> = {
+  ADMIN: ["/", "/enfants", "/planning", "/activites", "/administration"],
+  TRAVAILLEUR: ["/", "/enfants", "/soutien-scolaire", "/activites", "/paiements"],
+};
+
 function buildMobileNavItems(
   visibleNav: { href: string; label: string }[],
   role: UserRole
 ) {
-  if (role === "ADMIN") {
-    return [
-      visibleNav.find((i) => i.href === "/")!,
-      visibleNav.find((i) => i.href === "/enfants")!,
-      visibleNav.find((i) => i.href === "/planning")!,
-      visibleNav.find((i) => i.href === "/administration")!,
-      visibleNav.find((i) => i.href === "/paiements")!,
-    ].filter(Boolean);
+  const preferred = MOBILE_NAV_HREFS[role];
+  if (preferred) {
+    const byHref = new Map(visibleNav.map((item) => [item.href, item]));
+    return preferred
+      .map((href) => byHref.get(href))
+      .filter((item): item is { href: string; label: string } => Boolean(item));
   }
   return visibleNav.slice(0, 5);
 }
@@ -67,7 +71,7 @@ export default async function AppLayout({
   const mobileNav = buildMobileNavItems(visibleNav, profile.role);
 
   return (
-    <div className="flex min-h-screen flex-col pb-20 md:pb-0">
+    <div className="flex min-h-screen flex-col pb-20 lg:pb-0">
       <header className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto max-w-5xl">
           <div className="flex items-center justify-between px-4 py-3">

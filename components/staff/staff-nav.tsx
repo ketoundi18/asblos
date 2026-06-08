@@ -41,7 +41,7 @@ export function StaffDesktopNav({ items }: { items: StaffNavItem[] }) {
 
   return (
     <nav
-      className="hidden border-t md:flex md:gap-1 md:px-4 md:py-2"
+      className="hidden border-t lg:flex lg:gap-1 lg:px-4 lg:py-2"
       aria-label="Navigation principale"
     >
       {items.map((item) => {
@@ -72,7 +72,7 @@ export function StaffMobileNav({ items }: { items: StaffNavItem[] }) {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-10 border-t bg-card pb-[env(safe-area-inset-bottom)] lg:hidden"
       aria-label="Navigation principale"
     >
       <div className="mx-auto flex max-w-lg justify-around px-2 py-2">

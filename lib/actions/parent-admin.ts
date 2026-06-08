@@ -12,11 +12,15 @@ import {
 } from "@/lib/enrollment/activate-pending-enrollments";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 
-export async function validateParentLinkAction(linkId: string) {
+export async function validateParentLinkAction(
+  linkId: string,
+  formData: FormData
+) {
   const profile = await requireProfile();
+  const returnTo = safeStaffReturnPath(formData.get("return_to"));
 
   if (!canManageUsers(profile.role)) {
-    redirect("/administration?error=permission");
+    redirect(`${returnTo}?error=permission`);
   }
 
   const supabase = await createClient();
@@ -34,7 +38,7 @@ export async function validateParentLinkAction(linkId: string) {
       membership?.status === "AWAITING_PAYMENT" &&
       membership.fee_cents > 0
     ) {
-      redirect("/administration?error=payment-required");
+      redirect(`${returnTo}?error=payment-required`);
     }
 
     const { data: child } = await supabase
@@ -47,7 +51,7 @@ export async function validateParentLinkAction(linkId: string) {
       child?.created_via === "PARENT" &&
       child.enrollment_status === "EN_ATTENTE_PAIEMENT"
     ) {
-      redirect("/administration?error=payment-required");
+      redirect(`${returnTo}?error=payment-required`);
     }
   }
 
@@ -60,7 +64,7 @@ export async function validateParentLinkAction(linkId: string) {
     .is("verified_at", null);
 
   if (error) {
-    redirect("/administration?error=validate");
+    redirect(`${returnTo}?error=validate`);
   }
 
   if (link?.child_id) {
@@ -99,7 +103,15 @@ export async function validateParentLinkAction(linkId: string) {
   revalidatePath("/administration");
   revalidatePath("/espace-parents");
   revalidatePath("/enfants");
-  redirect("/?success=validated");
+  redirect(`${returnTo}?success=validated`);
+}
+
+function safeStaffReturnPath(value: FormDataEntryValue | null): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw.split("?")[0] || "/administration";
+  }
+  return "/administration";
 }
 
 export async function rejectParentLinkAction(linkId: string) {

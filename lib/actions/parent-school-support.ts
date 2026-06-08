@@ -41,9 +41,23 @@ export async function enrollChildInSchoolSupportAction(
   await syncMissingMembershipsForCurrentParent();
 
   const membership = await getMembershipForChildCurrentYear(childId);
-  const eligibility = resolveSchoolSupportEnrollmentEligibility(membership);
+
+  const { data: existingEnrollment } = await supabase
+    .from("school_support_enrollments")
+    .select("id")
+    .eq("child_id", childId)
+    .is("cancelled_at", null)
+    .maybeSingle<{ id: string }>();
+
+  const eligibility = resolveSchoolSupportEnrollmentEligibility(
+    membership,
+    !!existingEnrollment
+  );
 
   if (!eligibility.allowed) {
+    if (eligibility.reason === "choose_days" && eligibility.actionHref) {
+      redirect(eligibility.actionHref);
+    }
     redirect(`/espace-parents/soutien-scolaire?error=${eligibility.reason}`);
   }
 

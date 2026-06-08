@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
-import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
+import {
+  getAsblSettingsForCurrentYear,
+  getSchoolSupportFeeCents,
+} from "@/lib/data/asbl-settings";
 import type { Database } from "@/types/database";
 
 type PaymentRow = Database["public"]["Tables"]["payments"]["Row"];
@@ -43,7 +46,10 @@ export async function getChildPaymentContext(
   let feeCents = membership?.fee_cents ?? 0;
   if (!membership) {
     const { settings } = await getAsblSettingsForCurrentYear();
-    feeCents = settings?.enrollment_fee_cents ?? 0;
+    feeCents =
+      getSchoolSupportFeeCents(settings) ||
+      settings?.enrollment_fee_cents ||
+      0;
   }
 
   const { data: payments } = await supabase

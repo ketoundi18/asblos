@@ -32,8 +32,9 @@ export function buildChildSerenityView(input: {
   link: ParentChildLink;
   membership: Membership | null;
   activityCount: number;
+  hasSchoolSupportEnrollment?: boolean;
 }): ChildSerenityView {
-  const { link, membership, activityCount } = input;
+  const { link, membership, activityCount, hasSchoolSupportEnrollment = false } = input;
   const firstName = link.first_name;
   const steps: SerenityStep[] = [];
 
@@ -141,6 +142,34 @@ export function buildChildSerenityView(input: {
         title: "Validation ASBL",
         description: "L'équipe ASBL examine le dossier — patience, c'est en cours.",
         state: "current",
+      })
+    );
+  }
+
+  const wantsSchoolSupport = membership?.plan === "SCHOOL_SUPPORT";
+  const paymentDone = !needsPayment && !legacyNeedsPayment;
+
+  if (wantsSchoolSupport && paymentDone && !hasSchoolSupportEnrollment) {
+    steps.push(
+      step({
+        id: "school_support_days",
+        title: "Jours de soutien scolaire",
+        description:
+          "Indiquez les jours qui conviennent à " +
+          firstName +
+          " — quand vous le souhaitez, l'ASBL adaptera le planning.",
+        state: "current",
+        actionLabel: "Choisir les jours",
+        actionHref: `/espace-parents/choisir-creneaux/${link.child_id}`,
+      })
+    );
+  } else if (wantsSchoolSupport && hasSchoolSupportEnrollment) {
+    steps.push(
+      step({
+        id: "school_support_days",
+        title: "Jours de soutien scolaire",
+        description: "Vos jours préférés sont enregistrés — l'ASBL valide le planning.",
+        state: "done",
       })
     );
   }

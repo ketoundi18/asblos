@@ -8,6 +8,9 @@ import {
   getSchoolSupportFeeCents,
 } from "@/lib/data/asbl-settings";
 import { getParentOpenSchoolSupportPrograms } from "@/lib/data/school-support";
+import { isPaymentSimulationEnabled } from "@/lib/config/payments";
+import { isMollieConfigured } from "@/lib/mollie/client";
+import { createClient } from "@/lib/supabase/server";
 import { ArrowLeft } from "lucide-react";
 
 function splitFullName(fullName: string): { first: string; last: string } {
@@ -17,8 +20,16 @@ function splitFullName(fullName: string): { first: string; last: string } {
   return { first: parts[0], last: parts.slice(1).join(" ") };
 }
 
-export default async function ParentInscrireEnfantPage() {
+export default async function ParentInscrireEnfantPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    step?: string;
+    childId?: string;
+  }>;
+}) {
   const profile = await getCurrentProfile();
+  const { step, childId: resumeChildId } = await searchParams;
   const { first, last } = splitFullName(profile?.full_name ?? "");
   const [{ settings }, { programs }] = await Promise.all([
     getAsblSettingsForCurrentYear(),
@@ -26,6 +37,19 @@ export default async function ParentInscrireEnfantPage() {
   ]);
   const supportFee = getSchoolSupportFeeCents(settings);
   const supportFeeLabel = formatEnrollmentFeeLabel(supportFee);
+  const mollieReady = isMollieConfigured();
+  const simulationEnabled = isPaymentSimulationEnabled();
+
+  let initialChildName = "";
+  if (resumeChildId) {
+    const supabase = await createClient();
+    const { data: child } = await supabase
+      .from("children")
+      .select("first_name")
+      .eq("id", resumeChildId)
+      .maybeSingle<{ first_name: string }>();
+    initialChildName = child?.first_name ?? "";
+  }
 
   const openPrograms = programs.map((program) => ({
     id: program.id,
@@ -45,8 +69,8 @@ export default async function ParentInscrireEnfantPage() {
         </Button>
         <h1 className="text-2xl font-bold">Inscrire un enfant</h1>
         <p className="text-muted-foreground">
-          Remplissez la fiche de votre enfant, choisissez le type d&apos;inscription et
-          consultez le total avant de valider.
+          Suivez les étapes pour inscrire votre enfant, choisir la formule et finaliser
+          le paiement si nécessaire.
         </p>
       </div>
 
@@ -60,6 +84,11 @@ export default async function ParentInscrireEnfantPage() {
           email: profile?.email ?? "",
           phone: profile?.phone ?? "",
         }}
+        mollieReady={mollieReady}
+        simulationEnabled={simulationEnabled}
+        initialStep={step}
+        initialChildId={resumeChildId}
+        initialChildName={initialChildName}
       />
     </div>
   );

@@ -25,6 +25,25 @@ async function getActivityCountByChild(
   return map;
 }
 
+async function getSchoolSupportEnrollmentByChild(
+  childIds: string[]
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  if (childIds.length === 0) return set;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("school_support_enrollments")
+    .select("child_id")
+    .in("child_id", childIds)
+    .is("cancelled_at", null);
+
+  for (const row of (data ?? []) as { child_id: string }[]) {
+    set.add(row.child_id);
+  }
+  return set;
+}
+
 export async function getParentSerenityDashboard(): Promise<{
   children: ChildSerenityView[];
   loadError: string | null;
@@ -36,13 +55,17 @@ export async function getParentSerenityDashboard(): Promise<{
 
   const membershipMap = await getMembershipsForParentDashboard();
   const childIds = links.map((l) => l.child_id);
-  const activityCounts = await getActivityCountByChild(childIds);
+  const [activityCounts, schoolSupportEnrolled] = await Promise.all([
+    getActivityCountByChild(childIds),
+    getSchoolSupportEnrollmentByChild(childIds),
+  ]);
 
   const children = links.map((link) =>
     buildChildSerenityView({
       link,
       membership: membershipMap.get(link.child_id) ?? null,
       activityCount: activityCounts.get(link.child_id) ?? 0,
+      hasSchoolSupportEnrollment: schoolSupportEnrolled.has(link.child_id),
     })
   );
 

@@ -3,6 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { ParentPayButtons } from "@/components/parent/parent-pay-buttons";
 import { ParentSimulatePayButton } from "@/components/parent/parent-simulate-pay-button";
+import {
+  ParentEnrollmentStepper,
+  buildEnrollmentWizardSteps,
+} from "@/components/parent/parent-enrollment-stepper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,21 +24,27 @@ export default async function ParentPaiementPage({
   searchParams,
 }: {
   params: Promise<{ childId: string }>;
-  searchParams: Promise<{ error?: string; detail?: string }>;
+  searchParams: Promise<{ error?: string; detail?: string; wizard?: string }>;
 }) {
   const { childId } = await params;
-  const { error, detail } = await searchParams;
+  const { error, detail, wizard } = await searchParams;
+  const wizardMode = wizard === "1";
   const context = await getChildPaymentContext(childId);
   const membership = await getMembershipForChildCurrentYear(childId);
 
   if (!context) notFound();
 
+  const plan = membership?.plan ?? "BASE";
+
   if (context.paid_payment || context.membership_status === "AWAITING_ASBL") {
-    redirect("/espace-parents/soutien-scolaire?success=upgrade-soutien");
+    if (plan === "SCHOOL_SUPPORT") {
+      redirect("/espace-parents?success=paiement");
+    }
+    redirect("/espace-parents?success=inscription");
   }
 
-  if (context.membership_status === "ACTIVE" && membership?.plan === "BASE") {
-    redirect("/espace-parents/soutien-scolaire?error=upgrade");
+  if (membership?.status === "ACTIVE" && plan === "BASE") {
+    redirect("/espace-parents");
   }
 
   if (context.fee_cents <= 0 || context.membership_status !== "AWAITING_PAYMENT") {
@@ -61,11 +71,20 @@ export default async function ParentPaiementPage({
 
   return (
     <div className="space-y-6">
+      {wizardMode ? (
+        <ParentEnrollmentStepper
+          steps={buildEnrollmentWizardSteps({
+            schoolSupport: membership?.plan === "SCHOOL_SUPPORT",
+            needsPayment: true,
+          })}
+          currentKey="paiement"
+        />
+      ) : null}
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2">
-          <Link href="/espace-parents">
+          <Link href={wizardMode ? "/espace-parents/inscrire" : "/espace-parents"}>
             <ArrowLeft className="h-4 w-4" />
-            Mes enfants
+            {wizardMode ? "Retour au parcours" : "Mes enfants"}
           </Link>
         </Button>
         <h1 className="text-2xl font-bold">Finaliser l&apos;inscription</h1>
@@ -109,7 +128,7 @@ export default async function ParentPaiementPage({
               <p className="text-sm font-medium text-amber-800">
                 Mode test (sans Mollie)
               </p>
-              <ParentSimulatePayButton childId={childId} />
+              <ParentSimulatePayButton childId={childId} wizardMode={wizardMode} />
             </div>
           ) : null}
 

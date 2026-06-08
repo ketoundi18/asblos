@@ -2,6 +2,7 @@ import { PaymentMethod } from "@mollie/api-client";
 import { getMollieClient } from "@/lib/mollie/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { syncEnrollmentPaid } from "@/lib/payments/sync-enrollment-paid";
 import type { Database } from "@/types/database";
 
 type PaymentStatus = Database["public"]["Enums"]["payment_status"];
@@ -77,20 +78,14 @@ export async function syncMolliePaymentByProviderId(
     }
 
     if (nextStatus === "PAID") {
-      await admin
-        .from("children")
-        .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" } as never)
-        .eq("id", payment.child_id);
-
-      if (
-        payment.reference_id &&
-        (payment.purpose === "MEMBERSHIP" || !payment.purpose)
-      ) {
-        await admin
-          .from("memberships")
-          .update({ status: "AWAITING_ASBL" } as never)
-          .eq("id", payment.reference_id)
-          .eq("status", "AWAITING_PAYMENT");
+      if (payment.purpose === "MEMBERSHIP" || !payment.purpose) {
+        const synced = await syncEnrollmentPaid(
+          payment.child_id,
+          payment.reference_id
+        );
+        if (!synced.ok) {
+          return { ok: false, error: synced.error };
+        }
       }
 
       await logAuditEvent({

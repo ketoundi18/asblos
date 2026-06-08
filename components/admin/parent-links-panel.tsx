@@ -149,6 +149,7 @@ function LinkCard({
               </p>
             ) : null}
             <form action={validate}>
+              <input type="hidden" name="return_to" value="/administration" />
               <Button
                 type="submit"
                 className="w-full"

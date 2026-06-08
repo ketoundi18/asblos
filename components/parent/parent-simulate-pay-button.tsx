@@ -31,11 +31,18 @@ function SimulateButton() {
   );
 }
 
-export function ParentSimulatePayButton({ childId }: { childId: string }) {
+export function ParentSimulatePayButton({
+  childId,
+  wizardMode,
+}: {
+  childId: string;
+  wizardMode?: boolean;
+}) {
   const action = simulateParentPaymentAction.bind(null, childId);
 
   return (
     <form action={action} className="space-y-2">
+      {wizardMode ? <input type="hidden" name="wizard_mode" value="1" /> : null}
       <SimulateButton />
       <p className="text-center text-xs text-muted-foreground">
         Mode développement — aucun argent réel. Disparaît en production.

@@ -18,8 +18,18 @@ function isCacheCorruptionError(message: string): boolean {
     "Cannot find module",
     "webpack",
     "Server Action",
+    "RSC payload",
+    "development version of React",
+    "production version on the client",
   ];
   return hints.some((h) => message.includes(h));
+}
+
+function isReactVersionMismatch(message: string): boolean {
+  return (
+    message.includes("RSC payload") ||
+    message.includes("development version of React")
+  );
 }
 
 export function ErrorRecoveryPanel({
@@ -56,9 +66,26 @@ export function ErrorRecoveryPanel({
 
       {autoRecover ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          Cache temporairement corrompu — rechargement automatique dans{" "}
-          <strong>{countdown}s</strong>. Le serveur se répare tout seul en
-          arrière-plan.
+          {isReactVersionMismatch(error.message ?? "") ? (
+            <>
+              Le navigateur a gardé une <strong>ancienne version</strong> de
+              l&apos;app (souvent après un <code>npm run build</code> pendant
+              que le serveur dev tourne). Rechargement dans{" "}
+              <strong>{countdown}s</strong>…
+              <br />
+              <span className="mt-2 block text-xs">
+                Si ça revient : Terminal → Ctrl+C →{" "}
+                <code className="rounded bg-amber-100 px-1">npm run dev:clean</code>
+                , puis Cmd+Shift+R dans le navigateur.
+              </span>
+            </>
+          ) : (
+            <>
+              Cache temporairement corrompu — rechargement automatique dans{" "}
+              <strong>{countdown}s</strong>. Le serveur se répare tout seul en
+              arrière-plan.
+            </>
+          )}
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">

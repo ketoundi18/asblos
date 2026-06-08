@@ -36,6 +36,7 @@ function CommandItemRow({ item }: { item: CommandItem }) {
           <p className="text-sm text-muted-foreground truncate">{item.subtitle}</p>
         </div>
         <form action={validate} className="shrink-0">
+          <input type="hidden" name="return_to" value="/" />
           <Button type="submit" size="sm" className="w-full sm:w-auto">
             <CheckCircle2 className="h-4 w-4" />
             {item.actionLabel}
@@ -54,6 +55,7 @@ function CommandItemRow({ item }: { item: CommandItem }) {
           <p className="text-sm text-muted-foreground truncate">{item.subtitle}</p>
         </div>
         <form action={confirm} className="shrink-0">
+          <input type="hidden" name="return_to" value="/" />
           <Button type="submit" size="sm" className="w-full sm:w-auto">
             <CheckCircle2 className="h-4 w-4" />
             {item.actionLabel}

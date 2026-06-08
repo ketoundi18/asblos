@@ -51,7 +51,11 @@ export default async function AdministrationPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">À traiter aujourd&apos;hui</h2>
-        <SchoolSupportAdminPanel requests={schoolSupportRequests} embedded />
+        <SchoolSupportAdminPanel
+          requests={schoolSupportRequests}
+          embedded
+          returnTo="/administration"
+        />
         <ParentLinksPanel links={links.filter((l) => !l.verified)} pendingOnly />
       </section>
 

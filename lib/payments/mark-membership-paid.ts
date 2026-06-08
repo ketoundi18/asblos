@@ -1,5 +1,5 @@
 import "server-only";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { syncEnrollmentPaid } from "@/lib/payments/sync-enrollment-paid";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 
 /** Marque cotisation + enfant payés — service role uniquement (post-Mollie ou simulation). */
@@ -8,27 +8,9 @@ export async function markMembershipPaidAsAdmin(
   membershipId: string | null
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const admin = createAdminClient();
-
-    const { error: childError } = await admin
-      .from("children")
-      .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" } as never)
-      .eq("id", childId);
-
-    if (childError) {
-      return { ok: false, error: childError.message };
-    }
-
-    if (membershipId) {
-      const { error: membershipError } = await admin
-        .from("memberships")
-        .update({ status: "AWAITING_ASBL" } as never)
-        .eq("id", membershipId)
-        .eq("status", "AWAITING_PAYMENT");
-
-      if (membershipError) {
-        return { ok: false, error: membershipError.message };
-      }
+    const synced = await syncEnrollmentPaid(childId, membershipId);
+    if (!synced.ok) {
+      return synced;
     }
 
     await logAuditEvent({
