@@ -43,9 +43,15 @@ SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role
 1. Supabase → **Authentication → Users → Add user**
 2. Entre un e-mail et un mot de passe (8 caractères minimum)
 3. Coche **Auto Confirm User**
-4. Clique **Create user**
-5. Va dans **Table Editor → profiles**
-6. Trouve ton utilisateur et change `role` en **ADMIN**
+4. Dans **App Metadata** (pas User Metadata), colle :
+   ```json
+   {"signup_source":"admin","role":"ADMIN"}
+   ```
+5. Clique **Create user**
+
+> **Important (migration 029)** : sans `app_metadata.signup_source = "admin"`, la création du compte est **refusée** (protection contre l'inscription publique staff). Les parents passent par `/espace-parents/inscription` uniquement.
+
+6. Vérifie dans **Table Editor → profiles** que le rôle est bien **ADMIN**
 
 ### 5. Lancer l'application
 

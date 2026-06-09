@@ -3,9 +3,10 @@
 ## Numérotation migrations connues (ne pas réutiliser)
 
 001 profiles · 004 children · 007/007a parent · 010 enrollment · 023 payments RLS ·
-025 audit · 026 parent flow atomic · 027 security RPC hardening · 028 anonymize_child
+025 audit · 026 parent flow atomic · 027 security RPC hardening · 028 anonymize_child ·
+029 signup parent + RLS verified_at
 
-Prochaine libre : **029+**
+Prochaine libre : **030+**
 
 ## Template RPC sensible (RGPD, paiement, enrollment)
 

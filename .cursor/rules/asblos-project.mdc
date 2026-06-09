@@ -98,8 +98,8 @@ Format chat obligatoire : **📋 JOURNAL DE BORD - Bug #XX** (voir le fichier po
 - Auth → Email : Sign up ON · Confirm email OFF en dev
 - Nouvelle valeur enum → script séparé (007a) puis reste
 - Rate limit e-mail → user manuel ou attendre · message clair FR
-- Migrations : 001→028 · **007a avant 007** · FIX_lien_parent_lucas si besoin legacy
-- Dernière migration notable : **028** `anonymize_child` (RGPD)
+- Migrations : 001→029 · **007a avant 007** · FIX_lien_parent_lucas si besoin legacy
+- Dernières migrations notables : **028** `anonymize_child` (RGPD) · **029** signup parent + RLS verified_at
 
 ## Definition of Done
 Build OK · erreurs FR · permissions rôle + RLS si nouvelle table · test manuel 3 étapes · migration documentée

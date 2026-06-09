@@ -76,7 +76,7 @@ Compte utilisateur de l'application, lié 1:1 à `auth.users` (Supabase Auth). S
 
 ### Règles métier
 
-- À l'inscription : `signup_source = 'parent'` → rôle **PARENT** ; sinon **BENEVOLE** (migration 024 — le rôle client n'est **jamais** accepté).
+- À l'inscription : `signup_source = 'parent'` (user_metadata) → rôle **PARENT** ; comptes staff via **app_metadata** `signup_source = 'admin'` + `role` (migration 029 — signup public sans metadata = **refusé**).
 - Un compte `is_active = false` est bloqué même avec session Auth valide.
 - Trigger `on_profile_link_parent` : si e-mail parent = e-mail d'un `guardian`, création auto d'un `parent_child_links` (non vérifié tant que `verified_at` est NULL).
 
