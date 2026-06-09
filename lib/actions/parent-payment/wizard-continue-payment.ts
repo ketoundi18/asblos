@@ -14,10 +14,7 @@ import {
 } from "@/lib/payments/parent-payment-guards";
 
 /** Vérifie en base (ou sync Mollie) avant l'étape « terminé » du wizard. */
-export async function continueEnrollmentWizardAfterPaymentAction(
-  childId: string,
-  _formData: FormData
-) {
+export async function continueEnrollmentWizardAfterPaymentAction(childId: string) {
   await requireParentProfileOrRedirect();
 
   const context = await requireChildPaymentContextOrRedirect(childId);

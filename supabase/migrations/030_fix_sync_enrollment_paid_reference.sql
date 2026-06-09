@@ -1,5 +1,6 @@
 -- Fix sync_enrollment_paid : reference_id est UUID, pas TEXT (migration 027)
 -- Erreur prod/dev : operator does not exist: uuid = text (42883)
+-- Garde : cotisation MEMBERSHIP uniquement, liée à l'adhésion courante.
 
 CREATE OR REPLACE FUNCTION public.sync_enrollment_paid(
   p_child_id UUID,
@@ -11,15 +12,17 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  IF p_membership_id IS NULL THEN
+    RAISE EXCEPTION 'membership_required';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1
     FROM public.payments p
     WHERE p.child_id = p_child_id
       AND p.status = 'PAID'::payment_status
-      AND (
-        p_membership_id IS NULL
-        OR p.reference_id = p_membership_id
-      )
+      AND p.purpose = 'MEMBERSHIP'::payment_purpose
+      AND p.reference_id = p_membership_id
   ) THEN
     RAISE EXCEPTION 'payment_not_confirmed';
   END IF;
@@ -31,15 +34,13 @@ BEGIN
   WHERE id = p_child_id
     AND deleted_at IS NULL;
 
-  IF p_membership_id IS NOT NULL THEN
-    UPDATE public.memberships
-    SET
-      status = 'AWAITING_ASBL'::membership_status,
-      updated_at = now()
-    WHERE id = p_membership_id
-      AND child_id = p_child_id
-      AND status = 'AWAITING_PAYMENT'::membership_status;
-  END IF;
+  UPDATE public.memberships
+  SET
+    status = 'AWAITING_ASBL'::membership_status,
+    updated_at = now()
+  WHERE id = p_membership_id
+    AND child_id = p_child_id
+    AND status = 'AWAITING_PAYMENT'::membership_status;
 END;
 $$;
 

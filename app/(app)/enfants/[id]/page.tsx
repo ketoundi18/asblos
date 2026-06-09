@@ -36,10 +36,8 @@ import {
 
 export default async function EnfantDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ error?: string; warning?: string; success?: string }>;
 }) {
   const { id } = await params;
   const profile = await getCurrentProfile();

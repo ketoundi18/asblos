@@ -7,6 +7,7 @@ import { EnrollmentStepDays } from "@/components/parent/enrollment-wizard/enroll
 import { EnrollmentStepDone } from "@/components/parent/enrollment-wizard/enrollment-step-done";
 import { EnrollmentStepFormula } from "@/components/parent/enrollment-wizard/enrollment-step-formula";
 import { EnrollmentStepPayment } from "@/components/parent/enrollment-wizard/enrollment-step-payment";
+import { EnrollmentFormError } from "@/components/parent/enrollment-wizard/enrollment-wizard-ui";
 import { useEnrollmentWizard } from "@/components/parent/enrollment-wizard/use-enrollment-wizard";
 import type { EnrollmentWizardProps } from "@/components/parent/enrollment-wizard/types";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,8 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
     <div className="space-y-6">
       <ParentEnrollmentStepper steps={wizard.steps} currentKey={wizard.stepKey} />
 
+      {wizard.resumeError ? <EnrollmentFormError message={wizard.resumeError} /> : null}
+
       {wizard.showEnrollmentForm ? (
         <form
           ref={wizard.formRef}
@@ -51,6 +54,7 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
             <EnrollmentStepChild
               fieldErrors={wizard.enrollState.fieldErrors}
               error={wizard.stepKey === "enfant" ? wizard.enrollState.error : null}
+              localValidationError={wizard.localValidationError}
               onContinue={() => {
                 if (wizard.validateStep1()) wizard.setStepKey("formule");
               }}
@@ -61,6 +65,7 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
             <EnrollmentStepFormula
               fieldErrors={wizard.enrollState.fieldErrors}
               error={wizard.enrollState.error}
+              localValidationError={wizard.localValidationError}
               guardianDefaults={guardianDefaults}
               openPrograms={openPrograms}
               schoolSupportFeeCents={schoolSupportFeeCents}
@@ -100,7 +105,7 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
         />
       ) : null}
 
-      {wizard.stepKey === "termine" ? (
+      {wizard.stepKey === "termine" && wizard.childId ? (
         <EnrollmentStepDone childName={wizard.childName} />
       ) : null}
     </div>

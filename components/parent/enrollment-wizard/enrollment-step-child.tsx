@@ -20,10 +20,16 @@ import {
 type Props = {
   fieldErrors: ParentEnrollmentState["fieldErrors"];
   error: string | null;
+  localValidationError?: string | null;
   onContinue: () => void;
 };
 
-export function EnrollmentStepChild({ fieldErrors, error, onContinue }: Props) {
+export function EnrollmentStepChild({
+  fieldErrors,
+  error,
+  localValidationError,
+  onContinue,
+}: Props) {
   return (
     <>
       <Card>
@@ -35,18 +41,18 @@ export function EnrollmentStepChild({ fieldErrors, error, onContinue }: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="first_name">Prénom *</Label>
-              <Input id="first_name" name="first_name" />
+              <Input id="first_name" name="first_name" required />
               <FieldError message={fieldErrors.first_name} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="last_name">Nom *</Label>
-              <Input id="last_name" name="last_name" />
+              <Input id="last_name" name="last_name" required />
               <FieldError message={fieldErrors.last_name} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="birth_date">Date de naissance *</Label>
-            <Input id="birth_date" name="birth_date" type="date" />
+            <Input id="birth_date" name="birth_date" type="date" required />
             <FieldError message={fieldErrors.birth_date} />
           </div>
           <input type="hidden" name="status" value="ACTIF" />
@@ -106,6 +112,12 @@ export function EnrollmentStepChild({ fieldErrors, error, onContinue }: Props) {
           </label>
         </CardContent>
       </Card>
+
+      {localValidationError ? (
+        <div className="mt-4">
+          <EnrollmentFormError message={localValidationError} />
+        </div>
+      ) : null}
 
       {error ? (
         <div className="mt-4">

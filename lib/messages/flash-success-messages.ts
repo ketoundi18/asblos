@@ -43,6 +43,12 @@ const SUCCESS_MESSAGES: Record<string, FlashToast> = {
     description:
       "L'ASBL va valider le dossier. Vous pourrez ensuite inscrire votre enfant au soutien.",
   },
+  upgrade: {
+    type: "success",
+    title: "Soutien scolaire activé",
+    description:
+      "Finalisez la cotisation pour activer le soutien scolaire de votre enfant.",
+  },
   published: {
     type: "success",
     title: "Publié aux parents",

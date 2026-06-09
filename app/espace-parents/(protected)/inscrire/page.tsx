@@ -36,6 +36,11 @@ export default async function ParentInscrireEnfantPage({
 }) {
   const profile = await getCurrentProfile();
   const { step, childId: resumeChildId } = await searchParams;
+
+  const stepsRequiringChild = new Set(["jours", "paiement", "termine"]);
+  if (step && stepsRequiringChild.has(step) && !resumeChildId) {
+    redirect("/espace-parents/inscrire?step=enfant&error=resume");
+  }
   const { first, last } = splitFullName(profile?.full_name ?? "");
   const [{ settings }, { programs }] = await Promise.all([
     getAsblSettingsForCurrentYear(),

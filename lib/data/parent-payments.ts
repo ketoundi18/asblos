@@ -62,11 +62,9 @@ export async function getChildPaymentContext(
   const membershipPayments = membership
     ? rows.filter(
         (p) =>
-          p.reference_id === membership.id ||
-          (p.purpose === "MEMBERSHIP" && p.reference_id === membership.id) ||
-          (!p.purpose && !p.reference_id)
+          p.purpose === "MEMBERSHIP" && p.reference_id === membership.id
       )
-    : rows;
+    : [];
 
   const paid_payment = membershipPayments.find((p) => p.status === "PAID") ?? null;
   const pending_payment =
