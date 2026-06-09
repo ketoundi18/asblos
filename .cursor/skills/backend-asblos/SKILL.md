@@ -35,11 +35,16 @@ Expert backend pour Next.js 15 + Supabase. Expliquer au user en **français simp
 4. **Validation** : Zod sur toute entrée utilisateur.
 5. **Implémenter** : lecture `lib/data/`, écriture `lib/actions/`.
 6. **SQL si besoin** : migration numérotée + types `types/database.ts` si RPC/table nouvelle.
-7. **Messages** : erreurs en français humain (`redirect(?error=...)`, flash, ou return state).
+7. **Messages** : codes `?error=` / `?success=` **connus** de `lib/messages/flash-messages.ts` → toast Sonner via `FlashToastHandler` (voir section ci-dessous). Pas de bandeau HTML ad hoc ni message technique brut.
 8. **Vérifier** :
    ```bash
-   npm run typecheck && npm run lint && CI=true npm run build
+   npm run typecheck && npm run lint
    ```
+   Puis **seulement si aucun serveur dev ne tourne** (ports 3000/3001 libres, pas de `.asblos-dev.lock`) :
+   ```bash
+   CI=true npm run build
+   ```
+   Ne jamais lancer `npm run build` pendant `npm run dev:clean` / `next dev` — cache `.next` corrompu → CSS 404, page sans style.
 9. **Test manuel** : 3 étapes staff et/ou parent selon le flux.
 
 ## Règles de sécurité (non négociables)
@@ -74,7 +79,7 @@ export async function exampleAction(id: string) {
   }
   // ... mutation ...
   revalidatePath("/enfants");
-  redirect("/enfants?success=done");
+  redirect("/enfants?success=validated");
 }
 ```
 
@@ -85,7 +90,18 @@ Fonctions permissions réelles (`lib/auth/permissions.ts`) :
 - Admin : `canManageUsers`, `canExportReports`, `canManageChildGdpr`
 - Rôles : `isParentRole`, `isStaffRole` (`lib/auth/roles.ts`)
 
-- Préférer `redirect` + query `?error=` / `?success=` pour flux staff/parent simples.
+## Messages flash (obligatoire pour redirects)
+
+Flux staff/parent : `redirect("/chemin?error=code")` ou `?success=code`.
+
+| Règle | Détail |
+|-------|--------|
+| **Source de vérité** | `lib/messages/flash-messages.ts` — réutiliser un code existant ou **ajouter** une entrée dans `resolveSuccessToast` / `resolveErrorToast` |
+| **Affichage** | `FlashToastHandler` (root layout) → toasts **Sonner** — pas de `<div>` alerte custom sur la page |
+| **Codes** | Ex. `permission`, `payment`, `inscription`, `paiement`, `migration_required` — voir les maps parent/staff dans le fichier |
+| **Nouveau code** | 1) ajouter le message FR dans `flash-messages.ts` · 2) utiliser le code dans le `redirect` · 3) tester le toast en navigateur |
+| **Form state** | Erreurs de formulaire inline → `*-state.ts` ; redirect flash seulement pour succès/échec global de l'action |
+
 - `logAuditEvent()` pour : création/validation enfant, paiement, RGPD, changements admin.
 
 ## Patterns migration SQL

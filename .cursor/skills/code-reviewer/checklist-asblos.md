@@ -9,7 +9,8 @@
 
 ## Auth & permissions
 
-- [ ] `requireProfile()` / `canManage*` côté serveur
+- [ ] `requireProfile()` + `can*` réels (`canModifyChild`, etc.) côté serveur
+- [ ] Redirects `?error=` / `?success=` : codes dans `lib/messages/flash-messages.ts` → toast Sonner
 - [ ] PARENT redirigé loin du staff ; staff loin de l'espace parents
 - [ ] Parent ne voit que ses enfants (`parent_child_links`, RLS)
 
@@ -42,7 +43,7 @@
 
 - [ ] `npm run dev:clean` (pas `dev:reset`)
 - [ ] Verrou dev : `.asblos-dev.lock` hors `.next`
-- [ ] CI : lint + typecheck + build passent
+- [ ] CI : lint + typecheck passent ; build seulement si dev arrêté (évite cache `.next` corrompu)
 
 ## PR hygiene
 

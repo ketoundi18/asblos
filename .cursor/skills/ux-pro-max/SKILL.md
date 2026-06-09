@@ -80,7 +80,7 @@ Masquer chrome mobile sur : `/inscrire`, `/paiement`, `/choisir-creneaux` (cf. `
 - [ ] Chargement : skeleton ou spinner + texte (« Chargement… »)
 - [ ] Vide : illustration légère + prochaine action claire
 - [ ] Erreur : message FR + bouton réessayer / retour
-- [ ] Succès : confirmation visible (toast ou bannière)
+- [ ] Succès : confirmation visible (toast Sonner via `?success=` + `flash-messages.ts`)
 - [ ] Mobile 360px : pas de scroll horizontal, pas de bouton caché
 - [ ] Focus clavier / aria-label sur actions icône seules
 ```
@@ -110,4 +110,4 @@ Demander **GO** explicite avant gros refactor multi-pages.
 - Checklist détaillée : [parent-ux-checklist.md](parent-ux-checklist.md)
 - Backend / permissions : skill `backend-asblos`
 - Revue avant merge : skill `code-reviewer`
-- Design composants : skill `frontend-design-senior` (skill 4)
+- Messages utilisateur : `lib/messages/flash-messages.ts` + toasts Sonner (pas de texte inventé hors ce fichier)

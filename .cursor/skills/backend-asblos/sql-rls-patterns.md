@@ -44,7 +44,7 @@ Toute nouvelle table avec PII enfant : **RLS obligatoire** + test policy parent 
 
 ## Erreurs RPC → UI
 
-Mapper messages Supabase vers codes query user-friendly :
+Mapper messages Supabase vers **codes flash** connus de `lib/messages/flash-messages.ts` :
 
 ```typescript
 function mapError(message: string): string {
@@ -54,7 +54,9 @@ function mapError(message: string): string {
 }
 ```
 
-Afficher message FR sur la page cible (`?error=migration_required`).
+Puis `redirect("/chemin?error=migration_required")` — le toast Sonner est affiché par `FlashToastHandler` (`components/ui/flash-toast-handler.tsx`).
+
+**Ne pas** : bandeau HTML ad hoc, texte d'erreur Supabase brut, ni code inventé absent de `flash-messages.ts` (sinon toast générique « Un petit souci technique »).
 
 ## Audit trail
 

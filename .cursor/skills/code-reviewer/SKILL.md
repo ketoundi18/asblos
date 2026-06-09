@@ -24,8 +24,12 @@ Revue orientée **débutant** : français clair, verdict explicite, plan de test
    ```bash
    npm run typecheck
    npm run lint
+   ```
+   Build **uniquement si aucun serveur dev ne tourne** (ports 3000/3001 libres, pas de `.asblos-dev.lock`) :
+   ```bash
    CI=true npm run build
    ```
+   Si `npm run dev:clean` / `next dev` est actif → **ne pas** lancer le build (cache `.next` corrompu, CSS 404). Aligné avec `.cursor/rules/asblos-project.mdc`.
 4. Si le diff touche bash : `bash -n scripts/*.sh scripts/lib/*.sh`
 5. Si le diff touche SQL : vérifier numérotation migration, RLS, `SECURITY DEFINER` + grants.
 
@@ -39,7 +43,8 @@ Ne pas approuver sans preuve (commandes ou lecture ciblée du code).
 | **RGPD** | Données enfants, anonymisation transactionnelle (RPC 028), pas de fallback dangereux |
 | **Parent / Staff** | Routes et composants isolés ; PARENT ≠ staff |
 | **Paiements** | Ordre PAID → sync, simulation vs Mollie, pas de fuite cross-parent |
-| **Dev** | Une commande visible : `npm run dev:clean` ; verrou hors `.next` |
+| **Dev** | Une commande visible : `npm run dev:clean` ; verrou hors `.next` ; pas de `build` pendant le dev |
+| **Messages** | Redirects `?error=` / `?success=` → codes dans `lib/messages/flash-messages.ts` + toast Sonner |
 | **Secrets** | Jamais `.env.local`, clés service_role côté client |
 | **Scope PR** | Une PR = un sujet ; signaler si mélange RGPD + UI + dev |
 
