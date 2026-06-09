@@ -1,5 +1,5 @@
 ---
-description: Contexte, stack et règles de travail pour AsblOS (v3)
+description: Contexte, stack et règles de travail pour AsblOS (v4)
 alwaysApply: true
 ---
 
@@ -25,7 +25,7 @@ Next.js 15 App Router · TypeScript strict · Tailwind · shadcn/ui · Supabase 
 ## Deux interfaces
 | Espace | Routes | Utilisateurs |
 |--------|--------|--------------|
-| Staff | `/connexion`, `/`, `/enfants`, `/activites`, `/paiements`… | ADMIN, TRAVAILLEUR, BÉNÉVOLE, STAGIAIRE |
+| Staff | `/connexion`, `/`, `/enfants`, `/activites`, `/paiements`, `/rapports`… | ADMIN, TRAVAILLEUR, BÉNÉVOLE, STAGIAIRE |
 | Parents | `/espace-parents/inscription`, `/espace-parents/connexion`, `/espace-parents/*` | PARENT uniquement |
 
 PARENT ≠ interface staff. Staff ≠ espace public parents.
@@ -39,33 +39,37 @@ PARENT ≠ interface staff. Staff ≠ espace public parents.
 | STAGIAIRE | Consultation limitée + présences — pas de modification |
 | PARENT | Ses enfants uniquement — inscription enfant + paiement self-service |
 
-## Fonctionnalité cible : Inscription par les parents
+## Parcours parent (implémenté)
+1. `/espace-parents/inscription` → créer compte parent (email + mot de passe)
+2. `/espace-parents/inscrire` → wizard : fiche enfant → cotisation (BASE ou SOUTIEN SCOLAIRE) → créneaux si soutien
+3. `/espace-parents/paiement/[childId]` → Mollie (prod) ou simulation (dev/local)
+4. Côté ASBL : enfant dans `/enfants`, paiement dans `/paiements`, validation admin 1 clic (`/administration`)
+5. Activités parent : `/espace-parents/activites` · Soutien : `/espace-parents/soutien-scolaire`
+6. Nav mobile : barre en bas + FAB « Inscrire » (masqués sur wizard/paiement/créneaux)
 
-Flux parent (objectif produit) :
-1. Page publique `/espace-parents/inscription` → créer compte (email + mot de passe)
-2. Espace parent connecté → remplir fiche enfant (mêmes champs Module 2)
-3. Valider l'inscription → paiement en ligne (Stripe/Mollie + Bancontact)
-4. Côté ASBL : enfant visible dans `/enfants`, paiement dans `/paiements`, statut « Inscrit via parent » ou « En attente validation ASBL »
-5. Email confirmation parent + ASBL (optionnel, plus tard)
-
-Exigences :
+Exigences maintenues :
 - Rôle PARENT distinct du staff
-- Un parent ne voit/gère que ses propres enfants
-- Flux fluide : compte → fiche enfant → paiement
-- Intégration avec le système interne existant (Module 2 enfants, Module 4 paiements)
+- Un parent ne voit/gère que ses propres enfants (`parent_child_links`, RLS)
+- Paiement : ordre PAID → sync (jamais l'inverse)
 
 ## État actuel
-- ✅ Modules 1–2 : Auth, fiches enfants (staff)
-- ✅ Module 3 : Activités & présences (staff)
-- ✅ Phase A : STAGIAIRE/BÉNÉVOLE alignés
-- ✅ Phase B (base) : compte parent, espace `/espace-parents`, middleware bi-zones, validation admin 1 clic (`/administration`)
-- ⚠️ Phase B actuelle : lien parent ↔ enfant existant via e-mail guardian (pas encore création enfant par parent)
-- ⏳ À faire : fiche enfant parent · paiement en ligne · statuts inscription · Module 4 Paiements · Module 5 Rapports
+- ✅ Modules 1–2 : Auth staff, fiches enfants
+- ✅ Module 3 : Activités & présences (staff + inscription parent)
+- ✅ Module 4 : Paiements staff (`/paiements`) + flux parent (Mollie + simulation)
+- ✅ Module 5 : Rapports (`/rapports`) — base en place
+- ✅ Phase B parent : compte, espace `/espace-parents`, wizard inscription enfant, paiement, validation admin
+- ✅ Soutien scolaire : programmes, créneaux parent, cotisation dédiée
+- ✅ RGPD : anonymisation enfant via RPC `anonymize_child` (028)
+- ✅ CI : lint, typecheck, build, e2e Playwright
+- ⏳ À renforcer : emails confirmation · Mollie prod complet · rapports avancés · polish UX
 
 ## Conventions code
 - Lectures → `lib/data/` · Mutations → `lib/actions/`
 - Types/états → `-state.ts` (pas d'export objet depuis `"use server"`)
+- Permissions → `lib/auth/permissions.ts` (`canModifyChild`, `canCreateChild`, `isParentRole`… — pas de `canManageChildren`)
 - Dev : **1 Terminal** · `npm run dev:clean` · port 3000
+- **Ne pas lancer `npm run build` pendant que le dev tourne** (cache `.next` corrompu → CSS 404, page sans style)
+- Après gros changement ou page sans style : `npm run dev:stop` → `npm run dev:clean` → Cmd+Shift+R
 - SQL → `supabase/migrations/` numéroté, ordre et scripts indiqués clairement
 - **Jamais de SQL manuel** pour parents/staff en usage normal — tout via l'app
 
@@ -81,7 +85,7 @@ Par défaut : plan court → attendre **GO** explicite avant de coder.
 - Après chaque feature : tests manuels + 1–2 améliorations possibles
 
 ## Début de chaque session
-1. `npm run build` + lint + tsc (après build)
+1. `npm run typecheck` + lint (+ build si pas de dev actif)
 2. `.env.local` OK · pas de secrets commités
 3. Test navigateur staff (+ parents si concerné)
 4. Résumé OK / attention
@@ -94,17 +98,19 @@ Format chat obligatoire : **📋 JOURNAL DE BORD - Bug #XX** (voir le fichier po
 - Auth → Email : Sign up ON · Confirm email OFF en dev
 - Nouvelle valeur enum → script séparé (007a) puis reste
 - Rate limit e-mail → user manuel ou attendre · message clair FR
-- Migrations existantes : 001→009 + FIX_lien_parent_lucas (007a avant 007) · **010** inscription parent
+- Migrations : 001→028 · **007a avant 007** · FIX_lien_parent_lucas si besoin legacy
+- Dernière migration notable : **028** `anonymize_child` (RGPD)
 
 ## Definition of Done
 Build OK · erreurs FR · permissions rôle + RLS si nouvelle table · test manuel 3 étapes · migration documentée
 
 ## Design
 Chaleureux, pro, mobile-first, vieux Android OK, messages humains FR.
+Nav parent mobile : onglets en bas (`lg:hidden`), desktop en haut (`lg:block`).
 
 ## Priorité produit (ordre)
-1. Parcours parent complet : compte → fiche enfant → paiement → visible côté ASBL
-2. Validation admin 1 clic (déjà en place, à garder pour contrôle ASBL)
-3. Module 4 Paiements (staff + sync parent)
-4. Inscription parent aux activités
-5. Module 5 Rapports · emails confirmation
+1. Stabiliser UX parent mobile (wizard, paiement, nav)
+2. Mollie production + webhooks fiables
+3. Emails confirmation (parent + ASBL)
+4. Rapports avancés (Module 5)
+5. Polish staff (présences, exports)
