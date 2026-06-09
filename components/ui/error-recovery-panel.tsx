@@ -77,7 +77,7 @@ export function ErrorRecoveryPanel({
               <br />
               <span className="mt-2 block text-xs">
                 Si ça revient : Terminal → Ctrl+C →{" "}
-                <code className="rounded bg-warning-muted px-1">npm run dev:reset</code>
+                <code className="rounded bg-warning-muted px-1">npm run dev:clean</code>
                 , puis Cmd+Shift+R dans le navigateur.
               </span>
             </>
@@ -92,7 +92,7 @@ export function ErrorRecoveryPanel({
       ) : (
         <p className="text-xs text-muted-foreground">
           Si le problème persiste : Terminal → Ctrl+C →{" "}
-          <code className="rounded bg-muted px-1">npm run dev:reset</code>
+          <code className="rounded bg-muted px-1">npm run dev:clean</code>
         </p>
       )}
 
