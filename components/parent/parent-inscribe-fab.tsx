@@ -4,21 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const HIDE_ON_PREFIXES = [
-  "/espace-parents/inscrire",
-  "/espace-parents/paiement",
-  "/espace-parents/choisir-creneaux",
-];
-
-function shouldShowFab(pathname: string) {
-  return !HIDE_ON_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-}
+import { shouldHideParentMobileChrome } from "@/lib/parent/parent-mobile-chrome";
 
 export function ParentInscribeFab() {
   const pathname = usePathname();
 
-  if (!shouldShowFab(pathname)) {
+  if (shouldHideParentMobileChrome(pathname)) {
     return null;
   }
 
