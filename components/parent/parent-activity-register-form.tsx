@@ -78,7 +78,7 @@ export function ParentActivityRegisterForm({
         return (
           <div
             key={child.id}
-            className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4"
+            className="space-y-3 rounded-lg border border-warning-border bg-warning-muted/50 p-4"
           >
             <p className="font-medium">
               {child.first_name} {child.last_name}

@@ -64,11 +64,11 @@ export default async function ProgrammeSoutienDetailPage({
       </Button>
 
       {!visibleToParents ? (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-4 space-y-3">
-          <p className="text-sm font-medium text-amber-900">
+        <div className="rounded-lg border border-warning-border bg-warning-muted px-4 py-4 space-y-3">
+          <p className="text-sm font-medium text-warning-foreground">
             Ce programme n&apos;est pas encore visible chez les parents.
           </p>
-          <ul className="text-sm text-amber-800 space-y-1 list-disc pl-5">
+          <ul className="text-sm text-warning-foreground space-y-1 list-disc pl-5">
             <li>
               Statut actuel : <strong>{PROGRAM_STATUS_LABELS[program.status]}</strong>
               {program.status !== "OPEN" ? " — passez à « Ouvert »" : null}
@@ -86,7 +86,7 @@ export default async function ProgrammeSoutienDetailPage({
           </form>
         </div>
       ) : (
-        <div className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="rounded-lg border border-success-border bg-success-muted px-4 py-3 text-sm text-success-foreground">
           Visible dans l&apos;espace parents → Soutien scolaire
         </div>
       )}

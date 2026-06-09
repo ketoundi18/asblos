@@ -28,7 +28,7 @@ export default async function TerrainLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background pb-safe">
+    <div className="min-h-screen bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center justify-between px-4 py-3">
           <Link

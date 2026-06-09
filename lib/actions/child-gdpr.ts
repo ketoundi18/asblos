@@ -13,20 +13,36 @@ function birthYearPlaceholder(isoDate: string): string {
   return `${year}-01-01`;
 }
 
-/** Anonymise une fiche enfant et les tuteurs liés (irréversible). Admin uniquement. */
-export async function anonymizeChildAction(
-  childId: string,
-  _formData?: FormData
-) {
-  void _formData;
-  const profile = await requireProfile();
+function mapAnonymizeError(message: string): string {
+  if (message.includes("child_not_anonymizable")) {
+    return "already_anonymized";
+  }
+  return "anonymize";
+}
 
-  if (!canManageChildGdpr(profile.role)) {
-    redirect(`/enfants/${childId}?error=permission`);
+async function anonymizeViaRpc(
+  admin: ReturnType<typeof createAdminClient>,
+  childId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { error } = await admin.rpc("anonymize_child", { p_child_id: childId });
+
+  if (!error) {
+    return { ok: true };
   }
 
-  const admin = createAdminClient();
+  if (error.message.includes("Could not find the function")) {
+    return { ok: false, error: "migration_missing" };
+  }
 
+  return { ok: false, error: mapAnonymizeError(error.message) };
+}
+
+/** Fallback si migration 028 pas encore appliquée — vérifie chaque étape. */
+async function anonymizeViaSteps(
+  admin: ReturnType<typeof createAdminClient>,
+  childId: string,
+  profileId: string
+): Promise<{ ok: true; pseudoLastName: string } | { ok: false; error: string }> {
   const { data: child, error: fetchError } = await admin
     .from("children")
     .select("id, birth_date, anonymized_at")
@@ -34,15 +50,40 @@ export async function anonymizeChildAction(
     .maybeSingle<{ id: string; birth_date: string; anonymized_at: string | null }>();
 
   if (fetchError || !child) {
-    redirect(`/enfants/${childId}?error=notfound`);
+    return { ok: false, error: "notfound" };
   }
 
   if (child.anonymized_at) {
-    redirect(`/enfants/${childId}?error=already_anonymized`);
+    return { ok: false, error: "already_anonymized" };
   }
 
   const now = new Date().toISOString();
   const pseudoLastName = childId.replace(/-/g, "").slice(0, 8).toUpperCase();
+
+  const { data: guardians, error: guardiansListError } = await admin
+    .from("guardians")
+    .select("id")
+    .eq("child_id", childId);
+
+  if (guardiansListError) {
+    return { ok: false, error: "anonymize" };
+  }
+
+  for (const guardian of guardians ?? []) {
+    const { error: guardianError } = await admin
+      .from("guardians")
+      .update({
+        first_name: "Anonymisé",
+        last_name: "—",
+        email: null,
+        phone: "0000000000",
+      })
+      .eq("id", guardian.id);
+
+    if (guardianError) {
+      return { ok: false, error: "anonymize" };
+    }
+  }
 
   const { error: childError } = await admin
     .from("children")
@@ -64,29 +105,44 @@ export async function anonymizeChildAction(
       status: "ARCHIVE",
       deleted_at: now,
       anonymized_at: now,
-      updated_by: profile.id,
+      updated_by: profileId,
     })
     .eq("id", childId);
 
   if (childError) {
-    redirect(`/enfants/${childId}?error=anonymize`);
+    return { ok: false, error: "anonymize" };
   }
 
-  const { data: guardians } = await admin
-    .from("guardians")
-    .select("id")
-    .eq("child_id", childId);
+  return { ok: true, pseudoLastName };
+}
 
-  for (const guardian of guardians ?? []) {
-    await admin
-      .from("guardians")
-      .update({
-        first_name: "Anonymisé",
-        last_name: "—",
-        email: null,
-        phone: "0000000000",
-      })
-      .eq("id", guardian.id);
+/** Anonymise une fiche enfant et les tuteurs liés (irréversible). Admin uniquement. */
+export async function anonymizeChildAction(
+  childId: string,
+  _formData?: FormData
+) {
+  void _formData;
+  const profile = await requireProfile();
+
+  if (!canManageChildGdpr(profile.role)) {
+    redirect(`/enfants/${childId}?error=permission`);
+  }
+
+  const admin = createAdminClient();
+  const viaRpc = await anonymizeViaRpc(admin, childId);
+
+  let pseudoLastName = childId.replace(/-/g, "").slice(0, 8).toUpperCase();
+
+  if (!viaRpc.ok) {
+    if (viaRpc.error === "migration_missing") {
+      const viaSteps = await anonymizeViaSteps(admin, childId, profile.id);
+      if (!viaSteps.ok) {
+        redirect(`/enfants/${childId}?error=${viaSteps.error}`);
+      }
+      pseudoLastName = viaSteps.pseudoLastName;
+    } else {
+      redirect(`/enfants/${childId}?error=${viaRpc.error}`);
+    }
   }
 
   await logAuditEvent({

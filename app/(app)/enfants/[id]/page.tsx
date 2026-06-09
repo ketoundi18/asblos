@@ -90,7 +90,7 @@ export default async function EnfantDetailPage({
       ) : null}
 
       {error === "already_anonymized" ? (
-        <div className="rounded-md border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div className="rounded-md border border-warning-border/50 bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
           Cette fiche est déjà anonymisée.
         </div>
       ) : null}
@@ -102,14 +102,14 @@ export default async function EnfantDetailPage({
       ) : null}
 
       {warning ? (
-        <div className="rounded-md border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div className="rounded-md border border-warning-border/50 bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
           Fiche créée, mais : {decodeURIComponent(warning)}
         </div>
       ) : null}
 
       {!fullView ? (
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-4 text-sm text-amber-900">
+        <Card className="border-warning-border bg-warning-muted">
+          <CardContent className="p-4 text-sm text-warning-foreground">
             Vue limitée — en tant que {profile.role === "STAGIAIRE" ? "stagiaire" : "bénévole"},
             tu vois uniquement les informations nécessaires sur le terrain.
           </CardContent>
@@ -140,7 +140,7 @@ export default async function EnfantDetailPage({
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-600" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 text-warning" />
             <div>
               <p className="font-medium">Allergies</p>
               <p className="text-muted-foreground">
@@ -176,7 +176,7 @@ export default async function EnfantDetailPage({
         <CardContent className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             {child.outing_authorization ? (
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <CheckCircle2 className="h-4 w-4 text-success" />
             ) : (
               <XCircle className="h-4 w-4 text-destructive" />
             )}
@@ -187,7 +187,7 @@ export default async function EnfantDetailPage({
           {fullView ? (
             <div className="flex items-center gap-2">
               {child.image_rights ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-success" />
               ) : (
                 <XCircle className="h-4 w-4 text-destructive" />
               )}

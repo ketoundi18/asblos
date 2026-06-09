@@ -18,6 +18,44 @@ type PayMethod = "BANCONTACT" | "CARD";
 
 type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 
+async function revalidatePaymentViews() {
+  const { revalidatePath } = await import("next/cache");
+  revalidatePath("/espace-parents");
+  revalidatePath("/administration");
+  revalidatePath("/paiements");
+  revalidatePath("/enfants");
+}
+
+/** Paiement PAID mais adhésion pas encore synchronisée → resync avant de continuer. */
+async function resyncPaidMembershipOrContinue(
+  childId: string,
+  context: Awaited<ReturnType<typeof getChildPaymentContext>> & object,
+  successRedirect: string
+): Promise<void> {
+  if (context.membership_status === "AWAITING_ASBL") {
+    redirect("/espace-parents?success=deja-paye");
+  }
+
+  if (
+    context.paid_payment &&
+    context.membership_status === "AWAITING_PAYMENT"
+  ) {
+    const resync = await markMembershipPaidAsAdmin(
+      childId,
+      context.membership_id
+    );
+    if (!resync.ok) {
+      redirect(`/espace-parents/paiement/${childId}?error=membership-paid`);
+    }
+    await revalidatePaymentViews();
+    redirect(successRedirect);
+  }
+
+  if (context.paid_payment) {
+    redirect("/espace-parents?success=deja-paye");
+  }
+}
+
 export async function startParentPaymentAction(
   childId: string,
   method: PayMethod
@@ -38,9 +76,11 @@ export async function startParentPaymentAction(
     redirect("/espace-parents?error=payment");
   }
 
-  if (context.paid_payment || context.membership_status === "AWAITING_ASBL") {
-    redirect("/espace-parents?success=deja-paye");
-  }
+  await resyncPaidMembershipOrContinue(
+    childId,
+    context,
+    "/espace-parents?success=deja-paye"
+  );
 
   if (!childNeedsMembershipPayment(context)) {
     redirect("/espace-parents");
@@ -158,91 +198,72 @@ export async function simulateParentPaymentAction(
     redirect("/espace-parents?error=payment");
   }
 
-  if (context.paid_payment || context.membership_status === "AWAITING_ASBL") {
-    redirect("/espace-parents?success=deja-paye");
-  }
+  const successRedirect = wizardMode
+    ? `/espace-parents/inscrire?step=termine&childId=${encodeURIComponent(childId)}`
+    : "/espace-parents?success=paiement";
+
+  await resyncPaidMembershipOrContinue(childId, context, successRedirect);
 
   if (!childNeedsMembershipPayment(context)) {
     redirect("/espace-parents");
   }
 
-  const supabase = await createClient();
   const feeCents = context.fee_cents;
   const paidAt = new Date().toISOString();
-  const simRef = `sim_${crypto.randomUUID()}`;
+  const membershipId = context.membership_id;
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const admin = createAdminClient();
 
-  if (!context.pending_payment) {
-    const paymentRow: PaymentInsert = {
-      child_id: childId,
-      parent_id: profile.id,
-      amount_cents: feeCents,
-      currency: "EUR",
-      provider: "MOLLIE",
-      provider_payment_id: simRef,
-      method: "BANCONTACT",
-      status: "PENDING",
-      purpose: "MEMBERSHIP",
-      reference_id: context.membership_id ?? undefined,
-    };
+  let paymentId = context.pending_payment?.id;
 
-    const { error: insertError } = await supabase
+  if (!paymentId) {
+    const simRef = `sim_${crypto.randomUUID()}`;
+    const { data: inserted, error: insertError } = await admin
       .from("payments")
-      .insert(paymentRow);
+      .insert({
+        child_id: childId,
+        parent_id: profile.id,
+        amount_cents: feeCents,
+        currency: "EUR",
+        provider: "MOLLIE",
+        provider_payment_id: simRef,
+        method: "BANCONTACT",
+        status: "PAID",
+        paid_at: paidAt,
+        purpose: "MEMBERSHIP",
+        reference_id: membershipId ?? undefined,
+      })
+      .select("id")
+      .single<{ id: string }>();
 
-    if (insertError) {
+    if (insertError || !inserted) {
+      redirect(`/espace-parents/paiement/${childId}?error=db`);
+    }
+    paymentId = inserted.id;
+  } else {
+    const { error: updateError } = await admin
+      .from("payments")
+      .update({
+        status: "PAID",
+        paid_at: paidAt,
+        method: "BANCONTACT",
+        provider_payment_id: `sim_${paymentId}`,
+        purpose: "MEMBERSHIP",
+        reference_id: membershipId,
+      })
+      .eq("id", paymentId);
+
+    if (updateError) {
       redirect(`/espace-parents/paiement/${childId}?error=db`);
     }
   }
 
-  const paid = await markMembershipPaidAsAdmin(childId, context.membership_id);
+  const paid = await markMembershipPaidAsAdmin(childId, membershipId);
   if (!paid.ok) {
     redirect(`/espace-parents/paiement/${childId}?error=membership-paid`);
   }
 
-  try {
-    const { createAdminClient } = await import("@/lib/supabase/admin");
-    const admin = createAdminClient();
-    const paymentId = context.pending_payment?.id;
-    if (paymentId) {
-      await admin
-        .from("payments")
-        .update({
-          status: "PAID",
-          paid_at: paidAt,
-          method: "BANCONTACT",
-          provider_payment_id: `sim_${paymentId}`,
-          purpose: "MEMBERSHIP",
-          reference_id: context.membership_id,
-        })
-        .eq("id", paymentId);
-    } else {
-      await admin
-        .from("payments")
-        .update({
-          status: "PAID",
-          paid_at: paidAt,
-          purpose: "MEMBERSHIP",
-          reference_id: context.membership_id,
-        })
-        .eq("child_id", childId)
-        .eq("parent_id", profile.id)
-        .eq("status", "PENDING");
-    }
-  } catch {
-    // OK sans service role — membership + enfant mis à jour
-  }
+  await revalidatePaymentViews();
 
-  const { revalidatePath } = await import("next/cache");
-  revalidatePath("/espace-parents");
-  revalidatePath("/administration");
-  revalidatePath("/paiements");
-  revalidatePath("/enfants");
-
-  if (wizardMode) {
-    redirect(
-      `/espace-parents/inscrire?step=termine&childId=${encodeURIComponent(childId)}`
-    );
-  }
-
-  redirect("/espace-parents?success=paiement");
+  redirect(successRedirect);
 }

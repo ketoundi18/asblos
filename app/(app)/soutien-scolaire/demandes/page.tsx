@@ -38,7 +38,7 @@ export default async function SoutienScolaireDemandesPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-md alert-banner-warning">
           {friendlyLoadError(loadError, "staff")}
         </div>
       ) : null}
@@ -80,7 +80,7 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <Card className={highlight ? "border-amber-200 bg-amber-50/40" : ""}>
+    <Card className={highlight ? "border-warning-border bg-warning-muted/40" : ""}>
       <CardContent className="py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}

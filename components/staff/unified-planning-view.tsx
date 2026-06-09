@@ -45,7 +45,7 @@ export function UnifiedPlanningView({ days }: { days: PlanningDay[] }) {
                     {item.kind === "activity" ? (
                       <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     ) : (
-                      <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                      <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
                     )}
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">

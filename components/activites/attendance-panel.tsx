@@ -62,7 +62,7 @@ export function AttendancePanel({
                   {child.first_name} {child.last_name}
                 </p>
                 {child.allergies ? (
-                  <p className="flex items-center gap-1 text-xs text-amber-700">
+                  <p className="flex items-center gap-1 text-xs text-warning-foreground">
                     <AlertTriangle className="h-3 w-3" />
                     {child.allergies}
                   </p>

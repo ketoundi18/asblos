@@ -13,7 +13,7 @@ function SimulateButton() {
       type="submit"
       variant="secondary"
       size="lg"
-      className="w-full border border-dashed border-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100"
+      className="w-full border border-dashed border-warning bg-warning-muted text-warning-foreground hover:bg-warning-muted/80"
       disabled={pending}
     >
       {pending ? (

@@ -53,7 +53,7 @@ export default async function ParentPaiementRetourPage({
         <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
           {status === "paid" ? (
             <>
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
+              <CheckCircle2 className="h-12 w-12 text-success" />
               <div>
                 <p className="text-lg font-semibold">Paiement reçu</p>
                 <p className="text-sm text-muted-foreground">
@@ -68,7 +68,7 @@ export default async function ParentPaiementRetourPage({
             </>
           ) : status === "pending" ? (
             <>
-              <Clock className="h-12 w-12 text-amber-500" />
+              <Clock className="h-12 w-12 text-warning" />
               <div>
                 <p className="text-lg font-semibold">Paiement en cours</p>
                 <p className="text-sm text-muted-foreground">

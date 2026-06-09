@@ -521,7 +521,7 @@ export function ParentEnrollmentWizard({
               <ParentPayButtons childId={childId} feeLabel={schoolSupportFeeLabel} />
             ) : null}
             {!simulationEnabled && !mollieReady ? (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-warning-foreground">
                 Paiement en ligne bientôt disponible. Contactez l&apos;ASBL.
               </p>
             ) : null}
@@ -545,7 +545,7 @@ export function ParentEnrollmentWizard({
       {stepKey === "termine" ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-10 text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-600" />
+            <CheckCircle2 className="h-12 w-12 text-success" />
             <div>
               <p className="text-lg font-semibold">Inscription enregistrée</p>
               <p className="mt-2 text-sm text-muted-foreground">

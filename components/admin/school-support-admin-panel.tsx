@@ -97,7 +97,7 @@ export function SchoolSupportAdminPanel({
         <>
           {toConfirm.length > 0 ? (
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-amber-700">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-warning-foreground">
                 À confirmer ({toConfirm.length})
               </h3>
               {toConfirm.map((req) => (
@@ -195,7 +195,7 @@ function RequestCard({
   const confirm = confirmSchoolSupportMembershipAction.bind(null, request.child_id);
 
   return (
-    <Card className={showConfirm ? "border-amber-200 bg-amber-50/30" : ""}>
+    <Card className={showConfirm ? "border-warning-border bg-warning-muted/30" : ""}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -254,7 +254,7 @@ function RequestCard({
               </p>
             )}
             {request.enrollment_status === "PENDING" ? (
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-warning-foreground">
                 Inscription programme en attente — sera activée à la confirmation ASBL.
               </p>
             ) : null}
@@ -274,7 +274,7 @@ function RequestCard({
             Seul un administrateur peut confirmer cette demande.
           </p>
         ) : !request.can_confirm ? (
-          <p className="text-xs text-amber-800">
+          <p className="text-xs text-warning-foreground">
             Le parent doit d&apos;abord régler la cotisation (ou simuler le paiement en
             test).
           </p>

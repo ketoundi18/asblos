@@ -71,10 +71,20 @@ jobs:
         id: e2e
         env:
           E2E_EMAIL: ${{ secrets.E2E_PARENT_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PARENT_PASSWORD }}
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_ANON: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          if [ -z "$E2E_EMAIL" ]; then
+          missing=""
+          [ -z "$E2E_EMAIL" ] && missing="${missing} E2E_PARENT_EMAIL"
+          [ -z "$E2E_PASSWORD" ] && missing="${missing} E2E_PARENT_PASSWORD"
+          [ -z "$SUPABASE_URL" ] && missing="${missing} NEXT_PUBLIC_SUPABASE_URL"
+          [ -z "$SUPABASE_ANON" ] && missing="${missing} NEXT_PUBLIC_SUPABASE_ANON_KEY"
+          [ -z "$SUPABASE_SERVICE" ] && missing="${missing} SUPABASE_SERVICE_ROLE_KEY"
+          if [ -n "$missing" ]; then
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::E2E ignoré — ajoute E2E_PARENT_EMAIL et E2E_PARENT_PASSWORD dans Settings → Secrets."
+            echo "::notice::E2E ignoré — secrets manquants :${missing}"
           else
             echo "configured=true" >> "$GITHUB_OUTPUT"
           fi
