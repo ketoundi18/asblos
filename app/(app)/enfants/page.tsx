@@ -8,7 +8,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChildrenListTable } from "@/components/enfants/children-list-table";
 import type { Child } from "@/types/child";
 
-export default async function EnfantsPage() {
+export default async function EnfantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string }>;
+}) {
+  const { success } = await searchParams;
   const profile = await getCurrentProfile();
   const { children, loadError } = await getChildrenList();
   const canCreate = profile ? canCreateChild(profile.role) : false;
@@ -22,6 +27,15 @@ export default async function EnfantsPage() {
           role="alert"
         >
           {loadError}
+        </div>
+      ) : null}
+
+      {success === "anonymized" ? (
+        <div
+          className="rounded-md border border-green-300/50 bg-green-50 px-4 py-3 text-sm text-green-900"
+          role="status"
+        >
+          Fiche enfant anonymisée avec succès.
         </div>
       ) : null}
       <div className="flex items-start justify-between gap-4">

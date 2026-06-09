@@ -789,23 +789,17 @@ export type Database = {
           p_guardian_email: string;
           p_guardian_phone: string;
           p_guardian_can_pickup: boolean;
-          p_enrollment_status:
-            | "BROUILLON"
-            | "EN_ATTENTE_PAIEMENT"
-            | "PAYE_EN_ATTENTE_ASBL"
-            | "VALIDE"
-            | "REFUSE";
           p_membership_plan: "BASE" | "SCHOOL_SUPPORT";
-          p_fee_cents: number;
-          p_membership_status:
-            | "AWAITING_PAYMENT"
-            | "AWAITING_ASBL"
-            | "ACTIVE"
-            | "REJECTED"
-            | "CANCELLED";
           p_school_year: string;
         };
         Returns: Json;
+      };
+      expected_membership_fee_cents: {
+        Args: {
+          p_plan: "BASE" | "SCHOOL_SUPPORT";
+          p_school_year: string;
+        };
+        Returns: number;
       };
       sync_enrollment_paid: {
         Args: {

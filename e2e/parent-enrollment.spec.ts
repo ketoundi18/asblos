@@ -1,9 +1,16 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { getParentCredentials, loginAsParent } from "./helpers/parent-auth";
 
 function uniqueChildName() {
   const suffix = Date.now().toString(36).slice(-6);
   return { firstName: `E2E${suffix}`, lastName: "Playwright" };
+}
+
+/** Confirme le dialog shadcn ajouté avant l'envoi du formulaire d'inscription. */
+async function confirmEnrollmentDialog(page: Page) {
+  const dialog = page.getByRole("dialog", { name: /Confirmer l'inscription/i });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: /Oui, enregistrer/i }).click();
 }
 
 test.describe("Parcours parent — inscription wizard", () => {
@@ -35,6 +42,7 @@ test.describe("Parcours parent — inscription wizard", () => {
     }
 
     await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+    await confirmEnrollmentDialog(page);
 
     // Étape terminée (BASE gratuit → pas de paiement)
     await expect(page.getByText("Inscription enregistrée")).toBeVisible({ timeout: 30_000 });
@@ -68,6 +76,7 @@ test.describe("Parcours parent — inscription wizard", () => {
     }
 
     await page.getByRole("button", { name: "Enregistrer et continuer" }).click();
+    await confirmEnrollmentDialog(page);
 
     // Jours (optionnel) ou paiement ou terminé selon config ASBL
     const simulateBtn = page.getByRole("button", {

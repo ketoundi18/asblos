@@ -47,3 +47,59 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  e2e:
+    name: E2E Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: quality
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check E2E secrets
+        id: e2e
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_PARENT_EMAIL }}
+        run: |
+          if [ -z "$E2E_EMAIL" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::E2E ignoré — ajoute E2E_PARENT_EMAIL et E2E_PARENT_PASSWORD dans Settings → Secrets."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Playwright (Chromium)
+        if: steps.e2e.outputs.configured == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright
+        if: steps.e2e.outputs.configured == 'true'
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          ALLOW_PAYMENT_SIMULATION: "true"
+          E2E_PARENT_EMAIL: ${{ secrets.E2E_PARENT_EMAIL }}
+          E2E_PARENT_PASSWORD: ${{ secrets.E2E_PARENT_PASSWORD }}
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure() && steps.e2e.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
