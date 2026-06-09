@@ -32,6 +32,7 @@ export function ParentDesktopNav({ pathname }: { pathname: string }) {
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
+                "border-b-2 px-4 py-3 text-sm font-medium transition-colors",
                 active
                   ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
