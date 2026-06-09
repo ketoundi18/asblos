@@ -103,7 +103,7 @@ export function ChildSchoolSupportStaffForm({ childId, context }: Props) {
 
   if (context.parentMissing) {
     return (
-      <p className="text-sm text-amber-800">
+      <p className="text-sm text-warning-foreground">
         Aucun compte parent lié. Renseigne l&apos;e-mail du tuteur (compte parent
         existant) ou crée le lien parent avant d&apos;inscrire au soutien scolaire.
       </p>

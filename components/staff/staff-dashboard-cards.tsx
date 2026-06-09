@@ -14,7 +14,7 @@ export function StaffActionCards({ actions }: { actions: StaffDashboardAction[] 
           <Card
             className={cn(
               "h-full transition-all hover:border-primary/40 hover:shadow-sm",
-              action.urgent && action.count > 0 && "border-amber-300 bg-amber-50/40"
+              action.urgent && action.count > 0 && "border-warning-border bg-warning-muted/40"
             )}
           >
             <CardContent className="flex items-start justify-between gap-3 p-4">
@@ -26,7 +26,7 @@ export function StaffActionCards({ actions }: { actions: StaffDashboardAction[] 
                       {action.count}
                     </Badge>
                   ) : action.id === "all-clear" ? (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden />
+                    <CheckCircle2 className="h-4 w-4 text-success" aria-hidden />
                   ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground leading-snug">

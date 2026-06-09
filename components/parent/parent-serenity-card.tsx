@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 
 function StepIcon({ state }: { state: SerenityStepState }) {
   if (state === "done") {
-    return <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" aria-hidden />;
+    return <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />;
   }
   if (state === "current") {
-    return <Clock className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />;
+    return <Clock className="h-5 w-5 shrink-0 text-warning" aria-hidden />;
   }
   if (state === "waiting") {
     return <Circle className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />;
@@ -25,7 +25,7 @@ function StepRow({ step, isLast }: { step: SerenityStep; isLast: boolean }) {
         <span
           className={cn(
             "absolute left-[9px] top-6 h-[calc(100%-12px)] w-0.5",
-            step.state === "done" ? "bg-green-200" : "bg-border"
+            step.state === "done" ? "bg-success-muted" : "bg-border"
           )}
           aria-hidden
         />
@@ -66,7 +66,7 @@ export function ParentSerenityCard({ child }: Props) {
     <Card
       className={cn(
         "overflow-hidden transition-colors",
-        allDone ? "border-green-200 bg-green-50/30" : "border-border"
+        allDone ? "border-success-border bg-success-muted/30" : "border-border"
       )}
     >
       <CardHeader className="space-y-2 pb-3">
@@ -75,7 +75,7 @@ export function ParentSerenityCard({ child }: Props) {
             {child.firstName} {child.lastName}
           </h2>
           {allDone ? (
-            <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+            <span className="shrink-0 rounded-full bg-success-muted px-2.5 py-0.5 text-xs font-medium text-success-foreground">
               Tout est OK
             </span>
           ) : null}

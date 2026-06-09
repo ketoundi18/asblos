@@ -22,19 +22,13 @@ export default async function EnfantsPage({
   return (
     <div className="space-y-6">
       {loadError ? (
-        <div
-          className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          role="alert"
-        >
+        <div className="alert-banner-warning" role="alert">
           {loadError}
         </div>
       ) : null}
 
       {success === "anonymized" ? (
-        <div
-          className="rounded-md border border-green-300/50 bg-green-50 px-4 py-3 text-sm text-green-900"
-          role="status"
-        >
+        <div className="alert-banner-success" role="status">
           Fiche enfant anonymisée avec succès.
         </div>
       ) : null}

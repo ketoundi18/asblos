@@ -29,7 +29,7 @@ export async function ChildSchoolSupportStaffPanel({ childId }: Props) {
       </CardHeader>
       <CardContent>
         {context.loadError ? (
-          <p className="text-sm text-amber-800">{context.loadError}</p>
+          <p className="text-sm text-warning-foreground">{context.loadError}</p>
         ) : (
           <ChildSchoolSupportStaffForm childId={childId} context={context} />
         )}

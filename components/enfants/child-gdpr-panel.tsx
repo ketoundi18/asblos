@@ -35,10 +35,10 @@ export function ChildGdprPanel({
   const anonymize = anonymizeChildAction.bind(null, childId);
 
   return (
-    <Card className="border-amber-200/80 bg-amber-50/40">
+    <Card className="border-warning-border/80 bg-warning-muted/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
-          <ShieldAlert className="h-5 w-5 text-amber-700" />
+          <ShieldAlert className="h-5 w-5 text-warning-foreground" />
           Données personnelles (RGPD)
         </CardTitle>
         <CardDescription>

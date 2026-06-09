@@ -49,7 +49,7 @@ function CommandItemRow({ item }: { item: CommandItem }) {
   if (item.quickAction === "confirm_school_support" && item.quickActionId) {
     const confirm = confirmSchoolSupportMembershipAction.bind(null, item.quickActionId);
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-lg border border-warning-border bg-warning-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="font-medium leading-tight">{item.title}</p>
           <p className="text-sm text-muted-foreground truncate">{item.subtitle}</p>
@@ -88,7 +88,7 @@ function SectionBlock({ section }: { section: CommandSection }) {
   return (
     <Card
       className={cn(
-        section.priority === "urgent" && "border-amber-300",
+        section.priority === "urgent" && "border-warning-border",
         section.priority === "attention" && "border-border",
         section.priority === "info" && "border-border bg-muted/20"
       )}
@@ -103,7 +103,7 @@ function SectionBlock({ section }: { section: CommandSection }) {
               <Icon
                 className={cn(
                   "h-4 w-4 shrink-0",
-                  section.priority === "urgent" && "text-amber-600",
+                  section.priority === "urgent" && "text-warning",
                   section.priority === "attention" && "text-primary",
                   section.priority === "info" && "text-muted-foreground"
                 )}
@@ -132,7 +132,7 @@ export function CommandCenterView({ data }: { data: CommandCenterData }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card className={data.urgentCount > 0 ? "border-amber-300 bg-amber-50/40" : ""}>
+        <Card className={data.urgentCount > 0 ? "border-warning-border bg-warning-muted/40" : ""}>
           <CardContent className="pt-4">
             <p className="text-2xl font-bold tabular-nums">{data.urgentCount}</p>
             <p className="text-sm text-muted-foreground">À traiter</p>
@@ -144,14 +144,14 @@ export function CommandCenterView({ data }: { data: CommandCenterData }) {
             <p className="text-sm text-muted-foreground">À suivre</p>
           </CardContent>
         </Card>
-        <Card className={data.allClear ? "border-green-300 bg-green-50/40" : ""}>
+        <Card className={data.allClear ? "border-success-border bg-success-muted/40" : ""}>
           <CardContent className="flex items-center gap-3 pt-4">
             {data.allClear ? (
               <>
-                <CheckCircle2 className="h-8 w-8 shrink-0 text-green-600" aria-hidden />
+                <CheckCircle2 className="h-8 w-8 shrink-0 text-success" aria-hidden />
                 <div>
-                  <p className="font-semibold text-green-800">Tout va bien</p>
-                  <p className="text-sm text-green-700">Profitez de votre journée</p>
+                  <p className="font-semibold text-success-foreground">Tout va bien</p>
+                  <p className="text-sm text-success-foreground">Profitez de votre journée</p>
                 </div>
               </>
             ) : (
@@ -167,9 +167,9 @@ export function CommandCenterView({ data }: { data: CommandCenterData }) {
       {data.allClear ? (
         hasInfo ? (
           <div className="space-y-4">
-            <Card className="border-green-200 bg-green-50/30">
+            <Card className="border-success-border bg-success-muted/30">
               <CardContent className="flex items-center gap-3 py-4">
-                <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600" aria-hidden />
+                <CheckCircle2 className="h-6 w-6 shrink-0 text-success" aria-hidden />
                 <div>
                   <p className="font-medium text-foreground">Rien d&apos;urgent pour l&apos;instant</p>
                   <p className="text-sm text-muted-foreground">
@@ -183,9 +183,9 @@ export function CommandCenterView({ data }: { data: CommandCenterData }) {
             ))}
           </div>
         ) : (
-          <Card className="border-green-200 bg-green-50/30">
+          <Card className="border-success-border bg-success-muted/30">
             <CardContent className="py-10 text-center text-muted-foreground">
-              <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-green-600" aria-hidden />
+              <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-success" aria-hidden />
               <p className="font-medium text-foreground">Belle journée — rien en attente</p>
               <p className="mt-1 text-sm">
                 Revenez ici demain matin pour voir ce qui demande votre attention.

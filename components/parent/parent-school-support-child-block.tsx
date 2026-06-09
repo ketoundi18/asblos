@@ -46,8 +46,8 @@ export function ParentSchoolSupportChildBlock({
 
   if (eligibility.reason === "already_enrolled") {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50/50 p-3 text-sm">
-        <p className="font-medium text-green-800">
+      <div className="rounded-lg border border-success-border bg-success-muted/50 p-3 text-sm">
+        <p className="font-medium text-success-foreground">
           {firstName} {lastName} — jours enregistrés
         </p>
         <p className="text-muted-foreground mt-1">{eligibility.message}</p>
@@ -56,7 +56,7 @@ export function ParentSchoolSupportChildBlock({
   }
 
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 space-y-2">
+    <div className="rounded-lg border border-warning-border bg-warning-muted/50 p-3 space-y-2">
       <p className="font-medium">
         {firstName} {lastName}
       </p>

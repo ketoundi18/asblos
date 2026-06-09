@@ -13,7 +13,7 @@ export function ParentVisibilityToggle({ activityId, isOpen }: Props) {
   const action = toggleParentRegistrationAction.bind(null, activityId);
 
   return (
-    <Card className={isOpen ? "border-green-300 bg-green-50/30" : "border-amber-300 bg-amber-50/30"}>
+    <Card className={isOpen ? "border-success-border bg-success-muted/30" : "border-warning-border bg-warning-muted/30"}>
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users className="h-4 w-4" />

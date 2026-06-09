@@ -794,6 +794,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      anonymize_child: {
+        Args: { p_child_id: string };
+        Returns: null;
+      };
       expected_membership_fee_cents: {
         Args: {
           p_plan: "BASE" | "SCHOOL_SUPPORT";

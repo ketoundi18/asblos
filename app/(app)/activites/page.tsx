@@ -37,7 +37,7 @@ export default async function ActivitesPage() {
     <div className="space-y-6">
       {loadError ? (
         <div
-          className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          className="rounded-md alert-banner-warning"
           role="alert"
         >
           {loadError}

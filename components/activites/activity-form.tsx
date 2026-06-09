@@ -190,7 +190,7 @@ export function ActivityForm({
         </CardContent>
       </Card>
 
-      <Card className={parentOpen ? "border-green-300 bg-green-50/40" : undefined}>
+      <Card className={parentOpen ? "border-success-border bg-success-muted/40" : undefined}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
@@ -235,8 +235,8 @@ export function ActivityForm({
           <label
             className={`flex items-start gap-3 rounded-lg border p-4 transition-colors ${
               parentOpen
-                ? "border-green-400 bg-green-50"
-                : "border-amber-300 bg-amber-50"
+                ? "border-success bg-success-muted"
+                : "border-warning-border bg-warning-muted"
             }`}
           >
             <input
@@ -256,7 +256,7 @@ export function ActivityForm({
                   : "⚠️ Activité interne uniquement — les parents ne la verront pas."}
               </p>
               {isNew && parentOpen ? (
-                <p className="text-xs text-green-800">
+                <p className="text-xs text-success-foreground">
                   Recommandé : coché par défaut pour les nouvelles activités.
                 </p>
               ) : null}

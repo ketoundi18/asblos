@@ -125,7 +125,7 @@ export default async function ParentPaiementPage({
 
           {simulationEnabled ? (
             <div className="space-y-3">
-              <p className="text-sm font-medium text-amber-800">
+              <p className="text-sm font-medium text-warning-foreground">
                 Mode test (sans Mollie)
               </p>
               <ParentSimulatePayButton childId={childId} wizardMode={wizardMode} />
@@ -142,7 +142,7 @@ export default async function ParentPaiementPage({
               <ParentPayButtons childId={childId} feeLabel={feeLabel} />
             </div>
           ) : simulationEnabled ? null : (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <div className="rounded-md border border-warning-border bg-warning-muted px-4 py-3 text-sm text-warning-foreground">
               Configuration Mollie requise pour Bancontact et carte bancaire.
             </div>
           )}

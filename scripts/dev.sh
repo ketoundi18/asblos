@@ -63,7 +63,12 @@ PORT=$(pick_dev_port) || {
   exit 1
 }
 
-clean_cache
+if [ "${DEV_HARD_CLEAN:-}" = "1" ]; then
+  clean_cache
+else
+  echo "→ Cache .next conservé (styles plus stables)."
+  echo "  Si CSS/chunks cassés : npm run dev:reset"
+fi
 
 echo ""
 echo "→ Mode stable : redémarrage automatique si le serveur plante"

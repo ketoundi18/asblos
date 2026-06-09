@@ -46,9 +46,9 @@ export function TerrainAttendancePanel({ activityId, registrations }: Props) {
             key={child.registration_id}
             className={cn(
               "rounded-2xl border-2 p-4 shadow-sm transition-colors",
-              child.is_present === true && "border-green-400 bg-green-50/80",
+              child.is_present === true && "border-success bg-success-muted/80",
               child.is_present === false && "border-muted bg-muted/30",
-              child.is_present === null && "border-amber-200 bg-amber-50/40"
+              child.is_present === null && "border-warning-border bg-warning-muted/40"
             )}
           >
             <div className="mb-4 space-y-1">
@@ -56,13 +56,13 @@ export function TerrainAttendancePanel({ activityId, registrations }: Props) {
                 {child.first_name} {child.last_name}
               </p>
               {child.allergies ? (
-                <p className="flex items-center gap-2 rounded-lg bg-amber-100 px-3 py-2 text-sm font-medium text-amber-900">
+                <p className="flex items-center gap-2 rounded-lg bg-warning-muted px-3 py-2 text-sm font-medium text-warning-foreground">
                   <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
                   Allergies : {child.allergies}
                 </p>
               ) : null}
               {child.is_present === true ? (
-                <p className="flex items-center gap-1 text-sm font-medium text-green-700">
+                <p className="flex items-center gap-1 text-sm font-medium text-success-foreground">
                   <CheckCircle2 className="h-4 w-4" aria-hidden />
                   Présent
                 </p>
@@ -72,7 +72,7 @@ export function TerrainAttendancePanel({ activityId, registrations }: Props) {
                   Absent
                 </p>
               ) : (
-                <p className="text-sm font-medium text-amber-800">À marquer</p>
+                <p className="text-sm font-medium text-warning-foreground">À marquer</p>
               )}
             </div>
 
@@ -87,7 +87,7 @@ export function TerrainAttendancePanel({ activityId, registrations }: Props) {
                   variant={child.is_present === true ? "default" : "outline"}
                   className={cn(
                     "h-16 w-full text-base font-semibold",
-                    child.is_present === true && "bg-green-600 hover:bg-green-700"
+                    child.is_present === true && "bg-success hover:bg-success/90"
                   )}
                 >
                   <CheckCircle2 className="h-6 w-6" aria-hidden />

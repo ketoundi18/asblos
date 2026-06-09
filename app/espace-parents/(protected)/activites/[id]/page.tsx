@@ -106,7 +106,7 @@ export default async function ParentActiviteDetailPage({
                   <div key={c.id}>
                     <p className="font-medium">
                       {c.first_name} {c.last_name} —{" "}
-                      <span className="text-green-700">Inscrit</span>
+                      <span className="text-success-foreground">Inscrit</span>
                     </p>
                     {hint ? (
                       <p className="text-sm text-muted-foreground">{hint}</p>
@@ -141,7 +141,7 @@ export default async function ParentActiviteDetailPage({
       ) : null}
 
       {children.length === 0 ? (
-        <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="rounded-md alert-banner-warning">
           Aucun enfant validé. L&apos;ASBL doit valider le lien parent-enfant dans
           Administration.
         </div>

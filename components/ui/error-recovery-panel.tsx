@@ -18,9 +18,9 @@ function isCacheCorruptionError(message: string): boolean {
     "Cannot find module",
     "webpack",
     "Server Action",
-    "RSC payload",
-    "development version of React",
-    "production version on the client",
+    "Loading chunk",
+    "ChunkLoadError",
+    "failed to fetch dynamically imported module",
   ];
   return hints.some((h) => message.includes(h));
 }
@@ -28,7 +28,9 @@ function isCacheCorruptionError(message: string): boolean {
 function isReactVersionMismatch(message: string): boolean {
   return (
     message.includes("RSC payload") ||
-    message.includes("development version of React")
+    message.includes("development version of React") ||
+    message.includes("Loading chunk") ||
+    message.includes("ChunkLoadError")
   );
 }
 
@@ -65,7 +67,7 @@ export function ErrorRecoveryPanel({
       </p>
 
       {autoRecover ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
           {isReactVersionMismatch(error.message ?? "") ? (
             <>
               Le navigateur a gardé une <strong>ancienne version</strong> de
@@ -75,7 +77,7 @@ export function ErrorRecoveryPanel({
               <br />
               <span className="mt-2 block text-xs">
                 Si ça revient : Terminal → Ctrl+C →{" "}
-                <code className="rounded bg-amber-100 px-1">npm run dev:clean</code>
+                <code className="rounded bg-warning-muted px-1">npm run dev:reset</code>
                 , puis Cmd+Shift+R dans le navigateur.
               </span>
             </>
@@ -90,7 +92,7 @@ export function ErrorRecoveryPanel({
       ) : (
         <p className="text-xs text-muted-foreground">
           Si le problème persiste : Terminal → Ctrl+C →{" "}
-          <code className="rounded bg-muted px-1">npm run dev:clean</code>
+          <code className="rounded bg-muted px-1">npm run dev:reset</code>
         </p>
       )}
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fontBody, fontVariables } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
+import "./globals.css";
 
 function loginPathForCurrentArea(): string {
   if (typeof window === "undefined") return "/connexion";
@@ -13,7 +15,9 @@ function loginPathForCurrentArea(): string {
 function isReactVersionMismatch(message: string): boolean {
   return (
     message.includes("RSC payload") ||
-    message.includes("development version of React")
+    message.includes("development version of React") ||
+    message.includes("Loading chunk") ||
+    message.includes("ChunkLoadError")
   );
 }
 
@@ -45,9 +49,11 @@ export default function GlobalError({
   }, [mismatch]);
 
   return (
-    <html lang="fr">
-      <body className="flex min-h-screen items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-4 rounded-xl border p-6 text-center">
+    <html lang="fr" className={fontVariables}>
+      <body
+        className={`${fontBody.className} flex min-h-screen items-center justify-center bg-background p-4 text-foreground antialiased`}
+      >
+        <div className="w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-6 text-center">
           <h2 className="text-lg font-semibold">AsblOS — Erreur</h2>
           <p className="text-sm text-muted-foreground">
             {mismatch
@@ -56,7 +62,7 @@ export default function GlobalError({
           </p>
 
           {mismatch ? (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-left text-sm text-amber-900">
+            <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-left text-sm text-warning-foreground">
               <p className="font-medium">Comment corriger :</p>
               <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs">
                 <li>
@@ -64,14 +70,14 @@ export default function GlobalError({
                 </li>
                 <li>
                   Puis :{" "}
-                  <code className="rounded bg-amber-100 px-1">npm run dev:clean</code>
+                  <code className="rounded bg-warning-muted px-1">npm run dev:reset</code>
                 </li>
                 <li>
                   Ferme <strong>tous</strong> les onglets localhost
                 </li>
                 <li>
                   Rouvre{" "}
-                  <code className="rounded bg-amber-100 px-1">
+                  <code className="rounded bg-warning-muted px-1">
                     http://localhost:3000
                   </code>
                 </li>
@@ -91,7 +97,7 @@ export default function GlobalError({
           ) : (
             <p className="text-xs text-muted-foreground">
               Astuce : dans le Terminal, fais Ctrl+C puis{" "}
-              <code className="rounded bg-muted px-1">npm run dev:clean</code>
+              <code className="rounded bg-muted px-1">npm run dev:reset</code>
             </p>
           )}
 

@@ -52,7 +52,7 @@ export function ParentLinksPanel({
       {showPending ? (
         <section className="space-y-3">
           {!pendingOnly ? (
-            <h3 className="text-sm font-semibold text-amber-800">
+            <h3 className="text-sm font-semibold text-warning-foreground">
               Familles à accueillir ({pending.length})
             </h3>
           ) : null}
@@ -111,7 +111,7 @@ function LinkCard({
   const statusInfo = enrollmentStatusLabel(link);
 
   return (
-    <Card className={showActions ? "border-amber-200" : ""}>
+    <Card className={showActions ? "border-warning-border" : ""}>
       <CardContent className="space-y-3 p-4">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -144,7 +144,7 @@ function LinkCard({
         {showActions ? (
           <div className="grid grid-cols-2 gap-2">
             {paymentBlocked ? (
-              <p className="col-span-2 text-xs text-amber-700">
+              <p className="col-span-2 text-xs text-warning-foreground">
                 En attente du paiement du parent — sans pression.
               </p>
             ) : null}

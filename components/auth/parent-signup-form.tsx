@@ -35,7 +35,7 @@ export function ParentSignupForm() {
 
   if (state.success) {
     return (
-      <div className="space-y-4 rounded-md border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+      <div className="space-y-4 rounded-md border border-success-border bg-success-muted p-4 text-sm text-success-foreground">
         <p className="font-medium">Compte créé !</p>
         {state.needsEmailConfirmation ? (
           <>
@@ -43,7 +43,7 @@ export function ParentSignupForm() {
               Supabase demande une <strong>confirmation par e-mail</strong> avant
               la connexion. Clique le lien reçu, puis reviens ici.
             </p>
-            <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+            <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-warning-foreground">
               <p className="font-medium">En développement (recommandé)</p>
               <p className="mt-1 text-xs">
                 Supabase → Authentication → Sign In / Providers → Email →

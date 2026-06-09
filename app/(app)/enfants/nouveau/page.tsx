@@ -42,7 +42,7 @@ export default async function NouvelEnfantPage() {
           Tu pourras modifier la fiche plus tard.
         </p>
         {loadError ? (
-          <p className="mt-2 text-sm text-amber-700">{loadError}</p>
+          <p className="mt-2 text-sm text-warning-foreground">{loadError}</p>
         ) : null}
       </div>
       <ChildForm

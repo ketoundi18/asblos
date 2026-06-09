@@ -8,6 +8,8 @@
     --foreground: 220 20% 18%;
     --card: 0 0% 100%;
     --card-foreground: 220 20% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 18%;
     --primary: 210 62% 57%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 30% 94%;
@@ -18,6 +20,14 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+    --warning: 43 96% 56%;
+    --warning-foreground: 26 83% 14%;
+    --warning-muted: 48 100% 96%;
+    --warning-border: 45 93% 88%;
+    --success: 122 39% 45%;
+    --success-foreground: 122 45% 18%;
+    --success-muted: 138 76% 97%;
+    --success-border: 141 40% 82%;
     --border: 220 15% 90%;
     --input: 220 15% 90%;
     --ring: 210 62% 57%;
@@ -30,6 +40,23 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+  }
+
+  /* Bannières alerte — remplacer amber/green en dur */
+  .alert-banner-warning {
+    @apply rounded-md border border-warning-border bg-warning-muted px-4 py-3 text-sm text-warning-foreground;
+  }
+
+  .alert-banner-success {
+    @apply rounded-md border border-success-border bg-success-muted px-4 py-3 text-sm text-success-foreground;
+  }
+
+  .surface-warning {
+    @apply border-warning-border bg-warning-muted/40;
+  }
+
+  .surface-success {
+    @apply border-success-border bg-success-muted/40;
   }
 
   h1,
