@@ -7,8 +7,21 @@ const PARENT_PUBLIC = [
   "/espace-parents/inscription",
 ];
 
-/** Routes API sans session (webhooks, sonde santé). */
-const PUBLIC_API_PREFIXES = ["/api/webhooks/mollie", "/api/health"];
+/** Routes sans session (webhooks, sonde santé, tunnel Sentry, debug dev). */
+const PUBLIC_API_PREFIXES = [
+  "/api/webhooks/mollie",
+  "/api/health",
+  ...(process.env.NODE_ENV === "development" ? ["/api/debug/sentry-test"] : []),
+];
+
+const SENTRY_TUNNEL_PREFIX = "/monitoring/sentry-tunnel";
+
+function isSentryTunnelRoute(pathname: string) {
+  return (
+    pathname === SENTRY_TUNNEL_PREFIX ||
+    pathname.startsWith(`${SENTRY_TUNNEL_PREFIX}/`)
+  );
+}
 
 function isAuthCallback(pathname: string) {
   return pathname.startsWith("/auth/");
@@ -25,6 +38,7 @@ function isPublicRoute(pathname: string) {
     STAFF_PUBLIC.includes(pathname) ||
     PARENT_PUBLIC.includes(pathname) ||
     isAuthCallback(pathname) ||
+    isSentryTunnelRoute(pathname) ||
     isPublicApiRoute(pathname)
   );
 }
@@ -94,7 +108,12 @@ export async function updateSession(request: NextRequest) {
     const isParent = role === "PARENT";
 
     if (isParent) {
-      if (pathname === "/connexion" || (!parentRoute && !isAuthCallback(pathname))) {
+      if (
+        pathname === "/connexion" ||
+        (!parentRoute &&
+          !isAuthCallback(pathname) &&
+          !isSentryTunnelRoute(pathname))
+      ) {
         const url = request.nextUrl.clone();
         url.pathname = "/espace-parents";
         return NextResponse.redirect(url);
