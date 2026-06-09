@@ -8,8 +8,10 @@ export async function reportError(
   if (!isSentryEnabled()) return;
 
   const Sentry = await import("@sentry/nextjs");
-  if (context) {
-    Sentry.setContext("asblos", context);
-  }
-  Sentry.captureException(error);
+  Sentry.withScope((scope) => {
+    if (context) {
+      scope.setContext("asblos", context);
+    }
+    scope.captureException(error);
+  });
 }

@@ -11,10 +11,17 @@ export function getSentryDsn(): string | undefined {
   return process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() || undefined;
 }
 
-/** Active uniquement si DSN défini ; désactivé en dev sauf SENTRY_ENABLE_DEV=true */
+function isDevSentryEnabled(): boolean {
+  return (
+    process.env.SENTRY_ENABLE_DEV === "true" ||
+    process.env.NEXT_PUBLIC_SENTRY_ENABLE_DEV === "true"
+  );
+}
+
+/** Active uniquement si DSN défini ; désactivé en dev sauf flag explicite */
 export function isSentryEnabled(): boolean {
   if (!getSentryDsn()) return false;
-  if (process.env.NODE_ENV === "development" && process.env.SENTRY_ENABLE_DEV !== "true") {
+  if (process.env.NODE_ENV === "development" && !isDevSentryEnabled()) {
     return false;
   }
   return true;
