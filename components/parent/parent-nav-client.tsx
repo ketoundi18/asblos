@@ -1,9 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { ParentNav } from "@/components/parent/parent-nav";
+import { ParentDesktopNav, ParentMobileNav } from "@/components/parent/parent-nav";
 
 export function ParentNavClient() {
   const pathname = usePathname();
-  return <ParentNav pathname={pathname} />;
+  return (
+    <>
+      <ParentDesktopNav pathname={pathname} />
+      <ParentMobileNav pathname={pathname} />
+    </>
+  );
 }
