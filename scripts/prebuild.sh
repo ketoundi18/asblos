@@ -9,7 +9,7 @@ if [ "${CI:-}" = "true" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
   exit 0
 fi
 
-LOCK_FILE=".next/.dev-server.lock"
+LOCK_FILE=".asblos-dev.lock"
 
 if [ -f "$LOCK_FILE" ]; then
   pid=$(cat "$LOCK_FILE" 2>/dev/null || true)

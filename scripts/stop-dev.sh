@@ -7,7 +7,7 @@ source scripts/lib/port-utils.sh
 
 echo "→ Arrêt du serveur AsblOS..."
 
-DEV_LOCK=".next/dev-sh.lock"
+DEV_LOCK=".asblos-dev.lock"
 if [ -f "$DEV_LOCK" ]; then
   lock_pid=$(cat "$DEV_LOCK" 2>/dev/null || true)
   if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
@@ -20,7 +20,7 @@ fi
 
 stop_all_dev_servers
 stop_next_orphans
-rm -f "$DEV_LOCK" .next/.dev-server.lock
+rm -f "$DEV_LOCK"
 
 sleep 0.5
 

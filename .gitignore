@@ -25,6 +25,7 @@
 # misc
 .DS_Store
 *.pem
+.asblos-dev.lock
 
 # debug
 npm-debug.log*
