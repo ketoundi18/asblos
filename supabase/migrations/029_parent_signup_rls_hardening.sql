@@ -8,6 +8,7 @@
 --
 -- Comptes staff : créer via Supabase Dashboard ou Admin API avec app_metadata :
 --   {"signup_source":"admin","role":"ADMIN"}
+-- role = enum user_role exact : ADMIN | TRAVAILLEUR | BENEVOLE | STAGIAIRE (sinon trigger échoue)
 -- (raw_app_meta_data — non modifiable par le client anon)
 
 -- ---------------------------------------------------------------------------

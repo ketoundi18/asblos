@@ -47,6 +47,8 @@ SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role
    ```json
    {"signup_source":"admin","role":"ADMIN"}
    ```
+   **`role` doit être une valeur exacte de l'enum** (majuscules, sans faute) :
+   `ADMIN` · `TRAVAILLEUR` · `BENEVOLE` · `STAGIAIRE` — sinon le trigger Supabase **échoue** et le compte n'est pas créé.
 5. Clique **Create user**
 
 > **Important (migration 029)** : sans `app_metadata.signup_source = "admin"`, la création du compte est **refusée** (protection contre l'inscription publique staff). Les parents passent par `/espace-parents/inscription` uniquement.
