@@ -104,6 +104,8 @@ jobs:
           ALLOW_PAYMENT_SIMULATION: "true"
           E2E_PARENT_EMAIL: ${{ secrets.E2E_PARENT_EMAIL }}
           E2E_PARENT_PASSWORD: ${{ secrets.E2E_PARENT_PASSWORD }}
+          E2E_STAFF_EMAIL: ${{ secrets.E2E_STAFF_EMAIL }}
+          E2E_STAFF_PASSWORD: ${{ secrets.E2E_STAFF_PASSWORD }}
         run: npm run test:e2e
 
       - name: Upload Playwright report

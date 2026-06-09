@@ -54,6 +54,21 @@ const SUCCESS_MESSAGES: Record<string, FlashToast> = {
     title: "Publié aux parents",
     description: "Le programme apparaît maintenant dans l'espace parents → Soutien scolaire.",
   },
+  created: {
+    type: "success",
+    title: "Programme créé",
+    description: "Ajoute des créneaux, puis publie le programme aux parents.",
+  },
+  "slot-added": {
+    type: "success",
+    title: "Créneau ajouté",
+    description: "Le créneau est enregistré pour ce programme.",
+  },
+  updated: {
+    type: "success",
+    title: "Programme mis à jour",
+    description: "Les paramètres du programme sont enregistrés.",
+  },
   "soutien-confirmed": {
     type: "success",
     title: "Soutien scolaire confirmé",

@@ -303,6 +303,45 @@ function buildStaffErrorMessages(
       title: "Annulation impossible",
       description: "Réessaie ou recharge la page.",
     },
+    title: {
+      type: "error",
+      title: "Titre obligatoire",
+      description: "Indique un titre pour le programme de soutien scolaire.",
+    },
+    save: {
+      type: "error",
+      title: "Programme non enregistré",
+      description: staffDetail(
+        detail,
+        "Le programme n'a pas pu être créé. Vérifie les migrations 017+ dans Supabase."
+      ),
+    },
+    update: {
+      type: "error",
+      title: "Mise à jour impossible",
+      description: staffDetail(
+        detail,
+        "Les modifications n'ont pas pu être enregistrées. Recharge la page et réessaie."
+      ),
+    },
+    "slot-day": {
+      type: "error",
+      title: "Jour invalide",
+      description: "Choisis un jour de la semaine (lundi à dimanche).",
+    },
+    "slot-time": {
+      type: "error",
+      title: "Heure invalide",
+      description: "Indique au minimum une heure de début pour le créneau.",
+    },
+    "slot-save": {
+      type: "error",
+      title: "Créneau non enregistré",
+      description: staffDetail(
+        detail,
+        "Le créneau n'a pas pu être ajouté. Vérifie les migrations 017+ dans Supabase."
+      ),
+    },
   };
 }
 
