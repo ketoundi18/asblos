@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "dev:clean": "bash scripts/dev.sh",
-    "dev:reset": "rm -rf .next && DEV_HARD_CLEAN=1 bash scripts/dev.sh",
     "dev:stop": "bash scripts/stop-dev.sh",
     "dev:stable": "bash scripts/dev.sh",
     "build": "bash scripts/prebuild.sh && next build",

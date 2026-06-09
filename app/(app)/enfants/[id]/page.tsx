@@ -101,6 +101,13 @@ export default async function EnfantDetailPage({
         </div>
       ) : null}
 
+      {error === "migration_required" ? (
+        <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
+          La migration 028 (<code className="text-xs">anonymize_child</code>) doit
+          être appliquée dans Supabase SQL Editor avant d&apos;anonymiser une fiche.
+        </div>
+      ) : null}
+
       {warning ? (
         <div className="rounded-md border border-warning-border/50 bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
           Fiche créée, mais : {decodeURIComponent(warning)}

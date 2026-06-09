@@ -70,7 +70,7 @@ export default function GlobalError({
                 </li>
                 <li>
                   Puis :{" "}
-                  <code className="rounded bg-warning-muted px-1">npm run dev:reset</code>
+                  <code className="rounded bg-warning-muted px-1">npm run dev:clean</code>
                 </li>
                 <li>
                   Ferme <strong>tous</strong> les onglets localhost
@@ -97,7 +97,7 @@ export default function GlobalError({
           ) : (
             <p className="text-xs text-muted-foreground">
               Astuce : dans le Terminal, fais Ctrl+C puis{" "}
-              <code className="rounded bg-muted px-1">npm run dev:reset</code>
+              <code className="rounded bg-muted px-1">npm run dev:clean</code>
             </p>
           )}
 
