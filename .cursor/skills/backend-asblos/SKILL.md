@@ -123,7 +123,8 @@ Flux staff/parent : `redirect("/chemin?error=code")` ou `?success=code`.
 
 - Simulation : `ALLOW_PAYMENT_SIMULATION` / `lib/config/payments.ts`
 - Mollie : `lib/mollie/`, webhook `app/api/webhooks/mollie/route.ts`
-- `MOLLIE_WEBHOOK_SECRET` obligatoire en production
+- Webhook Mollie : secret en **query** `?secret=` via `buildMollieWebhookUrl()` (Mollie POST sans header) ; sync vérifie le paiement via API Mollie + ligne en base
+- `MOLLIE_WEBHOOK_SECRET` obligatoire en production (URL + Vercel env)
 
 ## Definition of Done backend
 

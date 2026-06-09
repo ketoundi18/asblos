@@ -1,52 +1,41 @@
+import { type NextRequest } from "next/server";
+import {
+  isMollieWebhookNoRetryError,
+  parseMollieWebhookPaymentId,
+  verifyMollieWebhookRequest,
+} from "@/lib/payments/mollie-webhook";
 import { syncMolliePaymentByProviderId } from "@/lib/payments/sync-mollie";
+import { isMollieConfigured } from "@/lib/mollie/client";
 
-function isWebhookAuthorized(request: Request): boolean {
-  const secret = process.env.MOLLIE_WEBHOOK_SECRET?.trim();
-  const isProduction = process.env.NODE_ENV === "production";
-
-  if (!secret) {
-    return !isProduction;
-  }
-
-  const headerSecret = request.headers.get("x-mollie-webhook-secret");
-  if (headerSecret === secret) {
-    return true;
-  }
-
-  const auth = request.headers.get("authorization");
-  return auth === `Bearer ${secret}`;
-}
-
-export async function POST(request: Request) {
-  if (!isWebhookAuthorized(request)) {
+export async function POST(request: NextRequest) {
+  if (!verifyMollieWebhookRequest(request)) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  if (!isMollieConfigured()) {
+    return new Response("Mollie not configured", { status: 503 });
+  }
+
   try {
-    const contentType = request.headers.get("content-type") ?? "";
-
-    let molliePaymentId: string | null = null;
-
-    if (contentType.includes("application/x-www-form-urlencoded")) {
-      const form = await request.formData();
-      const id = form.get("id");
-      if (typeof id === "string") molliePaymentId = id;
-    } else {
-      const body = (await request.json()) as { id?: string };
-      if (body.id) molliePaymentId = body.id;
-    }
+    const molliePaymentId = await parseMollieWebhookPaymentId(request);
 
     if (!molliePaymentId) {
-      return new Response("Missing payment id", { status: 400 });
+      return new Response("Missing or invalid payment id", { status: 400 });
     }
 
     const result = await syncMolliePaymentByProviderId(molliePaymentId);
+
     if (!result.ok) {
+      if (isMollieWebhookNoRetryError(result.error)) {
+        return new Response(null, { status: 200 });
+      }
+      console.error("[mollie-webhook] sync failed:", result.error);
       return new Response("Sync failed", { status: 422 });
     }
 
     return new Response(null, { status: 200 });
-  } catch {
+  } catch (err) {
+    console.error("[mollie-webhook] unexpected error:", err);
     return new Response("Webhook error", { status: 500 });
   }
 }

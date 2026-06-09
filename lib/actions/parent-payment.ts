@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { PaymentMethod } from "@mollie/api-client";
 import { formatCentsForMollie, getAppUrl } from "@/lib/config/payments";
+import { buildMollieWebhookUrl } from "@/lib/payments/mollie-webhook";
 import { getMollieClient, isMollieConfigured } from "@/lib/mollie/client";
 import {
   childNeedsMembershipPayment,
@@ -142,7 +143,7 @@ export async function startParentPaymentAction(
       },
       description,
       redirectUrl: `${appUrl}/espace-parents/paiement/retour?ref=${inserted.id}`,
-      webhookUrl: `${appUrl}/api/webhooks/mollie`,
+      webhookUrl: buildMollieWebhookUrl(appUrl),
       method: mollieMethod,
       metadata: {
         child_id: childId,
