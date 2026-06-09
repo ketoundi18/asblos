@@ -9,7 +9,8 @@ source scripts/lib/port-utils.sh
 
 MAX_RESTARTS=100
 RESTART_DELAY=2
-DEV_LOCK=".next/dev-sh.lock"
+# Hors de .next : clean_cache ne doit pas effacer le verrou (sinon 2 Terminals possibles)
+DEV_LOCK=".asblos-dev.lock"
 NEXT_BIN="./node_modules/.bin/next"
 
 clean_cache() {
@@ -19,11 +20,10 @@ clean_cache() {
 }
 
 release_locks() {
-  rm -f "$DEV_LOCK" .next/.dev-server.lock
+  rm -f "$DEV_LOCK"
 }
 
 acquire_dev_lock() {
-  mkdir -p .next
   if [ -f "$DEV_LOCK" ]; then
     local old_pid
     old_pid=$(cat "$DEV_LOCK" 2>/dev/null || true)
@@ -34,8 +34,23 @@ acquire_dev_lock() {
       echo "   → Sinon : npm run dev:stop"
       exit 1
     fi
+    rm -f "$DEV_LOCK"
   fi
   echo $$ > "$DEV_LOCK"
+}
+
+wait_for_port() {
+  local port=$1
+  local max_wait=${2:-15}
+  local i=0
+  while [ "$i" -lt "$max_wait" ]; do
+    if port_is_listening "$port"; then
+      return 0
+    fi
+    sleep 1
+    i=$((i + 1))
+  done
+  return 1
 }
 
 trap 'release_locks; free_port "${PORT:-3000}" 2>/dev/null || true; exit 0' INT TERM
@@ -89,9 +104,6 @@ while [ "$attempt" -lt "$MAX_RESTARTS" ]; do
     free_port "$PORT" || true
   fi
 
-  mkdir -p .next
-  echo "$$" > .next/.dev-server.lock
-
   start_ts=$(date +%s)
 
   set +e
@@ -110,8 +122,11 @@ while [ "$attempt" -lt "$MAX_RESTARTS" ]; do
     exit 0
   fi
 
-  # Next.js 15 peut quitter le processus parent alors que le serveur écoute encore.
-  # Dans ce cas : attendre, ne pas tuer le port ni relancer en boucle.
+  # Next.js 15 quitte parfois le parent avant que le port écoute — attendre un peu.
+  if ! port_is_listening "$PORT"; then
+    wait_for_port "$PORT" 15 || true
+  fi
+
   if port_is_listening "$PORT"; then
     if [ "$duration" -lt 8 ]; then
       echo ""
@@ -143,7 +158,11 @@ while [ "$attempt" -lt "$MAX_RESTARTS" ]; do
   fi
 
   sleep "$RESTART_DELAY"
-  clean_cache
+
+  # Ne pas effacer .next à chaque essai : Next.js 15 se détache souvent avec code 0.
+  if [ "$exit_code" -ne 0 ] || [ "$duration" -ge 8 ]; then
+    clean_cache
+  fi
 done
 
 echo "❌ Trop de redémarrages (${MAX_RESTARTS})."
