@@ -47,6 +47,6 @@ test.describe("Staff — soutien scolaire (flash messages)", () => {
     await slotForm.getByRole("button", { name: "Ajouter le créneau" }).click();
 
     await expectFlashToast(page, "Créneau ajouté");
-    await expect(page.getByText(/14:30/)).toBeVisible();
+    await expect(page.getByText(/14h30/)).toBeVisible();
   });
 });
