@@ -32,6 +32,7 @@ type Props = {
   schoolSupportFeeLabel: string;
   confirmOpen: boolean;
   confirmSummary: string;
+  localValidationError?: string | null;
   onBack: () => void;
   onOpenConfirm: () => void;
   onConfirmOpenChange: (open: boolean) => void;
@@ -47,6 +48,7 @@ export function EnrollmentStepFormula({
   schoolSupportFeeLabel,
   confirmOpen,
   confirmSummary,
+  localValidationError,
   onBack,
   onOpenConfirm,
   onConfirmOpenChange,
@@ -75,32 +77,35 @@ export function EnrollmentStepFormula({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="guardian_first_name">Prénom *</Label>
-              <Input
-                id="guardian_first_name"
-                name="guardian_first_name"
-                defaultValue={guardianDefaults.first_name}
-              />
+                    <Input
+                      id="guardian_first_name"
+                      name="guardian_first_name"
+                      defaultValue={guardianDefaults.first_name}
+                      required
+                    />
               <FieldError message={fieldErrors.guardian_first_name} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="guardian_last_name">Nom *</Label>
-              <Input
-                id="guardian_last_name"
-                name="guardian_last_name"
-                defaultValue={guardianDefaults.last_name}
-              />
+                    <Input
+                      id="guardian_last_name"
+                      name="guardian_last_name"
+                      defaultValue={guardianDefaults.last_name}
+                      required
+                    />
               <FieldError message={fieldErrors.guardian_last_name} />
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="guardian_phone">Téléphone *</Label>
-              <Input
-                id="guardian_phone"
-                name="guardian_phone"
-                type="tel"
-                defaultValue={guardianDefaults.phone}
-              />
+                    <Input
+                      id="guardian_phone"
+                      name="guardian_phone"
+                      type="tel"
+                      defaultValue={guardianDefaults.phone}
+                      required
+                    />
               <FieldError message={fieldErrors.guardian_phone} />
             </div>
             <div className="space-y-2">
@@ -132,6 +137,8 @@ export function EnrollmentStepFormula({
           schoolSupportFeeLabel={schoolSupportFeeLabel}
         />
       </div>
+
+      {localValidationError ? <EnrollmentFormError message={localValidationError} /> : null}
 
       {error ? <EnrollmentFormError message={error} /> : null}
 

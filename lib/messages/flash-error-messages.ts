@@ -156,9 +156,14 @@ const PARENT_ERROR_MESSAGES: Record<string, FlashToast> = {
   migration: PARENT_GENERIC,
   "membership-paid": {
     type: "error",
-    title: "Adhésion non mise à jour",
+    title: "Cotisation non activée",
     description:
-      "Le paiement simulé n'a pas pu activer l'adhésion. Vérifie SUPABASE_SERVICE_ROLE_KEY ou contacte l'ASBL.",
+      "Le paiement est enregistré, mais la cotisation n'a pas encore pu être activée. Réessayez ou contactez l'ASBL.",
+  },
+  resume: {
+    type: "error",
+    title: "Reprise impossible",
+    description: "Recommencez l'inscription depuis le début.",
   },
 };
 

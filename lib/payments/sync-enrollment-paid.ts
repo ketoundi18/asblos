@@ -1,6 +1,28 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+async function hasConfirmedMembershipPayment(
+  admin: ReturnType<typeof createAdminClient>,
+  childId: string,
+  membershipId: string | null
+): Promise<boolean> {
+  if (!membershipId) {
+    return false;
+  }
+
+  const { data, error } = await admin
+    .from("payments")
+    .select("id")
+    .eq("child_id", childId)
+    .eq("status", "PAID")
+    .eq("purpose", "MEMBERSHIP")
+    .eq("reference_id", membershipId)
+    .limit(1)
+    .maybeSingle();
+
+  return !error && !!data;
+}
+
 /** Met à jour enfant + adhésion après paiement (atomique si migration 026). */
 export async function syncEnrollmentPaid(
   childId: string,
@@ -8,13 +30,10 @@ export async function syncEnrollmentPaid(
 ): Promise<{ ok: boolean; error?: string }> {
   const admin = createAdminClient();
 
-  const { error: rpcError } = await admin.rpc(
-    "sync_enrollment_paid",
-    {
-      p_child_id: childId,
-      p_membership_id: membershipId,
-    }
-  );
+  const { error: rpcError } = await admin.rpc("sync_enrollment_paid", {
+    p_child_id: childId,
+    p_membership_id: membershipId,
+  });
 
   if (!rpcError) {
     return { ok: true };
@@ -30,6 +49,15 @@ export async function syncEnrollmentPaid(
 
   if (!isRpcMissing && !isReferenceIdTypeBug) {
     return { ok: false, error: rpcError.message };
+  }
+
+  const paymentConfirmed = await hasConfirmedMembershipPayment(
+    admin,
+    childId,
+    membershipId
+  );
+  if (!paymentConfirmed) {
+    return { ok: false, error: "payment_not_confirmed" };
   }
 
   const { error: childError } = await admin
