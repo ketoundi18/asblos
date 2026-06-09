@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { syncMolliePaymentByInternalId } from "@/lib/payments/sync-mollie";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 
 export default async function ParentPaiementRetourPage({
   searchParams,
@@ -18,24 +17,30 @@ export default async function ParentPaiementRetourPage({
 
   if (ref) {
     const supabase = await createClient();
-    const { data: paymentRef } = await supabase
-      .from("payments")
-      .select("child_id")
-      .eq("id", ref)
-      .maybeSingle<{ child_id: string }>();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    childId = paymentRef?.child_id ?? null;
+    if (user) {
+      const { data: ownedPayment } = await supabase
+        .from("payments")
+        .select("child_id, parent_id")
+        .eq("id", ref)
+        .maybeSingle<{ child_id: string; parent_id: string }>();
 
-    const result = await syncMolliePaymentByInternalId(ref);
-    if (result.status === "PAID") {
-      status = "paid";
-    } else if (result.status === "FAILED") status = "failed";
-    else if (result.status === "PENDING") status = "pending";
+      if (ownedPayment && ownedPayment.parent_id === user.id) {
+        childId = ownedPayment.child_id;
 
-    revalidatePath("/espace-parents");
-    revalidatePath("/administration");
-    revalidatePath("/enfants");
-    revalidatePath("/paiements");
+        const result = await syncMolliePaymentByInternalId(ref);
+        if (result.status === "PAID") {
+          status = "paid";
+        } else if (result.status === "FAILED") {
+          status = "failed";
+        } else if (result.status === "PENDING") {
+          status = "pending";
+        }
+      }
+    }
   }
 
   const retryHref = childId
@@ -56,7 +61,9 @@ export default async function ParentPaiementRetourPage({
                 </p>
               </div>
               <Button asChild>
-                <Link href="/espace-parents?success=paiement">Retour — Mes enfants</Link>
+                <Link href="/espace-parents?success=paiement">
+                  Retour — Mes enfants
+                </Link>
               </Button>
             </>
           ) : status === "pending" ? (
@@ -65,8 +72,8 @@ export default async function ParentPaiementRetourPage({
               <div>
                 <p className="text-lg font-semibold">Paiement en cours</p>
                 <p className="text-sm text-muted-foreground">
-                  Bancontact peut prendre quelques minutes. Reviens sur Mes enfants
-                  dans un instant.
+                  Bancontact peut prendre quelques minutes. Reviens sur Mes
+                  enfants dans un instant.
                 </p>
               </div>
               <Button asChild variant="outline">

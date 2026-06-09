@@ -33,6 +33,11 @@ export function canExportReports(role: UserRole): boolean {
   return role === "ADMIN";
 }
 
+/** Export RGPD + anonymisation enfant — réservé admin. */
+export function canManageChildGdpr(role: UserRole): boolean {
+  return role === "ADMIN";
+}
+
 export function canModifyChild(role: UserRole): boolean {
   return isStaffFullAccess(role);
 }

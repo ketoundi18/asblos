@@ -10,8 +10,10 @@ import {
   canDeleteChild,
   canViewFullChildProfile,
   canManageUsers,
+  canManageChildGdpr,
 } from "@/lib/auth/permissions";
 import { ChildOverviewPanel } from "@/components/enfants/child-overview-panel";
+import { ChildGdprPanel } from "@/components/enfants/child-gdpr-panel";
 import { ChildSchoolSupportStaffPanel } from "@/components/enfants/child-school-support-staff-panel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +54,7 @@ export default async function EnfantDetailPage({
   const overview = fullView ? await getChildOverview(id) : null;
   const canEdit = canModifyChild(profile.role);
   const canArchive = canDeleteChild(profile.role);
+  const showGdpr = canManageChildGdpr(profile.role);
   const primaryGuardian =
     child.guardians.find((g) => g.is_primary) ?? child.guardians[0];
 
@@ -86,6 +89,18 @@ export default async function EnfantDetailPage({
         </div>
       ) : null}
 
+      {error === "already_anonymized" ? (
+        <div className="rounded-md border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Cette fiche est déjà anonymisée.
+        </div>
+      ) : null}
+
+      {error === "anonymize" ? (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          L&apos;anonymisation a échoué. Réessayez ou contactez le support technique.
+        </div>
+      ) : null}
+
       {warning ? (
         <div className="rounded-md border border-amber-300/50 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Fiche créée, mais : {decodeURIComponent(warning)}
@@ -110,6 +125,14 @@ export default async function EnfantDetailPage({
       ) : null}
 
       {canEdit ? <ChildSchoolSupportStaffPanel childId={child.id} /> : null}
+
+      {showGdpr ? (
+        <ChildGdprPanel
+          childId={child.id}
+          childLabel={getChildFullName(child)}
+          alreadyAnonymized={Boolean(child.anonymized_at)}
+        />
+      ) : null}
 
       <Card>
         <CardHeader>

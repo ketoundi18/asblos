@@ -48,6 +48,15 @@ export async function syncMolliePaymentByProviderId(
     }
 
     if (payment.status === "PAID") {
+      if (payment.purpose === "MEMBERSHIP" || !payment.purpose) {
+        const synced = await syncEnrollmentPaid(
+          payment.child_id,
+          payment.reference_id
+        );
+        if (!synced.ok) {
+          return { ok: false, error: synced.error };
+        }
+      }
       return { ok: true, status: "PAID" };
     }
 
