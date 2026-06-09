@@ -1,0 +1,140 @@
+import { createClient } from "@/lib/supabase/server";
+import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
+import { getCurrentSchoolYear } from "@/lib/school-year";
+import {
+  buildStaffEnrollmentQuote,
+  parseMembershipPlan,
+  parseProgramId,
+  parseSelectedSlotIds,
+} from "@/lib/asbl/fee-utils";
+import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
+import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
+import { emptyToNull } from "@/lib/actions/children/child-form-parsing";
+
+export type StaffEnrollmentAttachResult = {
+  fieldErrors?: Record<string, string>;
+  enrollmentWarning?: string;
+};
+
+export function validateStaffEnrollmentInput(
+  formData: FormData,
+  guardianEmailInput?: string
+): Record<string, string> | null {
+  const plan = parseMembershipPlan(formData.get("membership_plan"));
+  const guardianEmail = emptyToNull(guardianEmailInput);
+
+  if (plan === "SCHOOL_SUPPORT" && !guardianEmail) {
+    return {
+      guardian_email:
+        "Indiquez l'e-mail du parent pour inscrire au soutien scolaire.",
+    };
+  }
+
+  return null;
+}
+
+export async function attachStaffEnrollmentOnCreate(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  staffProfileId: string,
+  formData: FormData,
+  childId: string,
+  guardianId: string,
+  guardianEmailInput?: string
+): Promise<StaffEnrollmentAttachResult> {
+  const plan = parseMembershipPlan(formData.get("membership_plan"));
+  const guardianEmail = emptyToNull(guardianEmailInput);
+
+  if (!guardianEmail) {
+    return {};
+  }
+
+  const parent = await resolveParentProfileByEmail(supabase, guardianEmail);
+  if (!parent) {
+    if (plan === "SCHOOL_SUPPORT") {
+      return {
+        fieldErrors: {
+          guardian_email:
+            "Aucun compte parent actif avec cet e-mail. Créez d'abord le compte parent.",
+        },
+      };
+    }
+    return {};
+  }
+  const paymentReceived = formData.get("membership_payment_received") === "on";
+  const { settings } = await getAsblSettingsForCurrentYear();
+  const quote = buildStaffEnrollmentQuote(plan, settings, paymentReceived);
+  const programId = parseProgramId(formData.get("school_support_program_id"));
+  const slotIds = parseSelectedSlotIds(formData);
+  const verifiedAt =
+    quote.membershipStatus === "ACTIVE" ? new Date().toISOString() : null;
+
+  const { error: linkError } = await supabase.from("parent_child_links").insert({
+    parent_id: parent.id,
+    child_id: childId,
+    guardian_id: guardianId,
+    verified_at: verifiedAt,
+  });
+
+  if (linkError && !linkError.message.includes("unique")) {
+    return {
+      fieldErrors: {
+        guardian_email: `Lien parent impossible (${linkError.message}).`,
+      },
+    };
+  }
+
+  if (quote.enrollmentStatus === "VALIDE") {
+    await supabase
+      .from("children")
+      .update({
+        enrollment_status: "VALIDE",
+        asbl_validated_at: verifiedAt,
+      })
+      .eq("id", childId);
+  } else if (quote.enrollmentStatus === "EN_ATTENTE_PAIEMENT") {
+    await supabase
+      .from("children")
+      .update({ enrollment_status: "EN_ATTENTE_PAIEMENT" })
+      .eq("id", childId);
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("memberships")
+    .insert({
+      child_id: childId,
+      parent_id: parent.id,
+      school_year: getCurrentSchoolYear(),
+      plan: quote.membershipPlan,
+      fee_cents: quote.totalCents,
+      status: quote.membershipStatus,
+      asbl_validated_at: verifiedAt,
+    })
+    .select("id")
+    .single<{ id: string }>();
+
+  if (membershipError || !membership) {
+    const detail = membershipError?.message ?? "erreur inconnue";
+    return {
+      fieldErrors: {
+        guardian_email: `Adhésion non enregistrée (${detail}). Lance 022_memberships_staff_insert.sql dans Supabase.`,
+      },
+    };
+  }
+
+  if (plan === "SCHOOL_SUPPORT" && programId) {
+    const enrollResult = await enrollSchoolSupportByStaff(supabase, {
+      childId,
+      parentId: parent.id,
+      membershipId: membership.id,
+      programId,
+      slotIds,
+      enrolledByStaffId: staffProfileId,
+    });
+
+    if (!enrollResult.ok) {
+      return { enrollmentWarning: enrollResult.error };
+    }
+  }
+
+  return {};
+}

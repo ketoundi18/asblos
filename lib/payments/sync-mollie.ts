@@ -23,6 +23,24 @@ function mapMollieStatus(
   return "unchanged";
 }
 
+function isMembershipCotisationPayment(purpose: string | null): boolean {
+  return purpose === "MEMBERSHIP";
+}
+
+async function syncMembershipEnrollmentIfPaid(
+  payment: {
+    child_id: string;
+    reference_id: string | null;
+    purpose: string | null;
+  }
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isMembershipCotisationPayment(payment.purpose)) {
+    return { ok: true };
+  }
+
+  return syncEnrollmentPaid(payment.child_id, payment.reference_id);
+}
+
 export async function syncMolliePaymentByProviderId(
   molliePaymentId: string
 ): Promise<{ ok: boolean; status?: PaymentStatus; error?: string }> {
@@ -48,14 +66,9 @@ export async function syncMolliePaymentByProviderId(
     }
 
     if (payment.status === "PAID") {
-      if (payment.purpose === "MEMBERSHIP" || !payment.purpose) {
-        const synced = await syncEnrollmentPaid(
-          payment.child_id,
-          payment.reference_id
-        );
-        if (!synced.ok) {
-          return { ok: false, error: synced.error };
-        }
+      const synced = await syncMembershipEnrollmentIfPaid(payment);
+      if (!synced.ok) {
+        return { ok: false, error: synced.error };
       }
       return { ok: true, status: "PAID" };
     }
@@ -87,14 +100,9 @@ export async function syncMolliePaymentByProviderId(
     }
 
     if (nextStatus === "PAID") {
-      if (payment.purpose === "MEMBERSHIP" || !payment.purpose) {
-        const synced = await syncEnrollmentPaid(
-          payment.child_id,
-          payment.reference_id
-        );
-        if (!synced.ok) {
-          return { ok: false, error: synced.error };
-        }
+      const synced = await syncMembershipEnrollmentIfPaid(payment);
+      if (!synced.ok) {
+        return { ok: false, error: synced.error };
       }
 
       await logAuditEvent({
