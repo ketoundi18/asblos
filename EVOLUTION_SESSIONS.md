@@ -1,7 +1,8 @@
 # Évolution AsblOS — journal de sessions
 
 > Mise à jour **stricte** en fin de chaque session de travail.  
-> Chaque entrée compare l'état **avant → après** la session, avec preuves (fichiers, migrations).
+> Chaque entrée compare l'état **avant → après** la session, avec preuves (fichiers, migrations).  
+> **Dernière mise à jour :** 2026-06-09 — `main` @ `d4f713a`
 
 ---
 
@@ -239,7 +240,7 @@ Pousser le code sur GitHub → onglet **Actions** du repo.
 | Détails demande | Nom + parent + cotisation | + programme, jours choisis, lien fiche enfant | `lib/data/school-support-admin.ts`, panel enrichi |
 | Filtres | Aucun | Toutes / À confirmer / Paiement | `school-support-admin-panel.tsx` |
 | Accès rapide | — | Bouton « Demandes » + badge sur `/soutien-scolaire` | `soutien-scolaire/page.tsx` |
-| Ma journée | Liens → administration | Liens → page demandes | `command-center.ts` |
+| Ma journée | Liens → administration | Liens → page demandes | `lib/data/command-center/` |
 | Confirmation ASBL | Redirect accueil | Redirect page demandes (+ `return_to` param) | `school-support-admin.ts` |
 
 ### Non livré / dettes
@@ -417,6 +418,88 @@ npm run test:e2e
 
 1. **GO RGPD V1** — export + anonymisation
 2. CI e2e optionnelle (secrets `E2E_*` + Supabase dev)
+
+---
+
+## Session 2026-06-09 (fin) — Refactors data + e2e staff + PR #12–#14
+
+**Contexte :** Reprise après merge PR #12 ; workflow pro (branche → PR → CI → merge) ; découpage des gros fichiers data ; tests e2e staff ; migration 030 appliquée.
+
+### Livré cette session
+
+| Domaine | Avant | Après | Preuve |
+|---------|-------|-------|--------|
+| Flash messages | Monolithe | Modules `flash-types`, `flash-error-messages`, `flash-success-messages`, `flash-load-errors` | `lib/messages/` — PR #12 |
+| Paiement parent / wizard | Fichiers larges | Découpage + hardening (pas de bypass wizard, guards sync) | PR #12, `lib/payments/`, wizard |
+| Migration 030 | Absente | ✅ Appliquée (user) — `sync_enrollment_paid` exige `MEMBERSHIP` + `reference_id` | `supabase/migrations/030_fix_sync_enrollment_paid_reference.sql` |
+| Sync Mollie | Risque sync hors membership | `MEMBERSHIP` only dans `sync-mollie.ts` | commit `8e95802` |
+| Actions enfants staff | `lib/actions/children.ts` monolithe | 5 modules (`create`, `update`, `archive`, parsing, enrollment) | `lib/actions/children/` |
+| Formulaire enfant staff | `child-form.tsx` monolithe | Sections composants | `components/enfants/` — commit `ca1d747` |
+| Command center | `command-center.ts` (443 L) | 8 modules sous `lib/data/command-center/` | PR #13 @ `d3b6247` |
+| Staff dashboard | `staff-dashboard.ts` (237 L) | 7 modules sous `lib/data/staff-dashboard/` | PR #14 @ `d4f713a` |
+| Tests e2e staff | Absents | Login staff + soutien scolaire (flash toasts) | `e2e/staff-login.spec.ts`, `e2e/staff-soutien-scolaire.spec.ts` |
+| Messages flash soutien | Génériques | Messages dédiés (`title`, `save`, `slot-added`, etc.) | `lib/messages/flash-*-messages.ts` |
+| CI e2e | Parent seulement | + secrets optionnels `E2E_STAFF_*` | `.github/workflows/ci.yml`, `.env.local.example` |
+| Loading UI | 0 fichier | Skeletons staff + parent | `app/(app)/loading.tsx`, `app/espace-parents/(protected)/loading.tsx` |
+| Toasts UX | Flash inline | Sonner (`ServerNoticeToast`) | PR #12 |
+| GitHub CLI | Absent | `gh` v2.93.0 installé + auth SSH (`ketoundi18`) | poste dev local |
+
+### PRs mergées (2026-06-09)
+
+| PR | Branche | Contenu |
+|----|---------|---------|
+| #12 | `refactor/ui-flash-payment-wizard` | Flash / paiement / wizard + hardening |
+| #13 | `refactor/split-command-center` | Découpage `command-center` |
+| #14 | `refactor/split-staff-dashboard` | Découpage `staff-dashboard` |
+
+### Commits directs sur `main` (entre PR #12 et workflow PR)
+
+| Commit | Contenu |
+|--------|---------|
+| `8e95802` | Découpage actions enfants + fix sync Mollie membership |
+| `ca1d747` | Découpage formulaire enfant staff |
+| `3713ba8` | Tests e2e staff soutien + messages flash dédiés |
+| `f46ee6f` | Fix assertion heure `14h30` (format belge) |
+
+### Tests manuels (utilisateur)
+
+| Parcours | Résultat |
+|----------|----------|
+| Parent inscription + paiement simulé | ✅ OK |
+| E2e local `npm run test:e2e` | ✅ 8/8 |
+| Dev server `npm run dev:clean` | ✅ OK |
+
+### Non livré / dettes (mises à jour)
+
+| Sujet | Statut |
+|-------|--------|
+| Sentry / monitoring prod | ❌ Toujours absent |
+| README migrations 001→030 | ❌ Toujours obsolète |
+| Double modèle enrollment / memberships | ❌ Atténué (RPC 026/030), pas unifié |
+| `staff-dashboard-cards.tsx` | ⚠️ Types importés ; `getStaffDashboard` non branché (page `/` utilise `getCommandCenter`) — candidat nettoyage |
+| Paiements offline V1 | ❌ Reporté |
+| Exports PDF/Excel rapports | ❌ Placeholder |
+| RGPD | ⚠️ Partiel — export JSON (`/api/enfants/[id]/export`) + anonymisation (`anonymize_child` RPC) existent ; pas de parcours RGPD complet documenté |
+| Tests unitaires | ❌ 0 (e2e Playwright seulement) |
+| Secrets CI staff | ⚠️ Optionnels — à configurer dans GitHub si e2e staff en CI distante |
+
+### Score progression
+
+| Axe | Avant (post GO e2e) | Après session 09-06 |
+|-----|---------------------|---------------------|
+| Maintenabilité code | 5,5/10 | **7/10** |
+| Parcours parent | 8/10 | **8/10** |
+| Parcours staff | 7,5/10 | **8/10** |
+| Tests auto | 2 specs parent | **4 specs** (parent + staff), 8 tests |
+| Prod-ready global | 7,5/10 | **7,5/10** (refactors + e2e ; Sentry/Mollie réel toujours en attente) |
+
+### Prochaine session recommandée
+
+1. **Sentry / monitoring** — avant Mollie réel en prod
+2. **Nettoyage code mort** — `staff-dashboard-cards.tsx` / `getStaffDashboard` si confirmé inutilisé
+3. **README** — migrations 001→030 + variables env e2e
+4. **RGPD V1 doc** — documenter le parcours export/anonymisation déjà en place
+5. Découper le prochain gros fichier si >200 L (ex. `lib/data/school-support-admin.ts`, `lib/data/parent-admin.ts`)
 
 ---
 
