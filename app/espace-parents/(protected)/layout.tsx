@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
 import { ParentLogoutButton } from "@/components/auth/parent-logout-button";
+import { ParentContentArea } from "@/components/parent/parent-content-area";
 import { ParentNavClient } from "@/components/parent/parent-nav-client";
 
 export default async function EspaceParentsLayout({
@@ -31,7 +32,7 @@ export default async function EspaceParentsLayout({
         </div>
       </header>
       <ParentNavClient />
-      <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6">{children}</main>
+      <ParentContentArea>{children}</ParentContentArea>
     </div>
   );
 }
