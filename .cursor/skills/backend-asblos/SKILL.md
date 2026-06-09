@@ -63,13 +63,13 @@ Expert backend pour Next.js 15 + Supabase. Expliquer au user en **français simp
 "use server";
 
 import { requireProfile } from "@/lib/auth/session";
-import { canManageChildren } from "@/lib/auth/permissions";
+import { canModifyChild } from "@/lib/auth/permissions";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export async function exampleAction(id: string) {
   const profile = await requireProfile();
-  if (!canManageChildren(profile.role)) {
+  if (!canModifyChild(profile.role)) {
     redirect("/enfants?error=permission");
   }
   // ... mutation ...
@@ -77,6 +77,13 @@ export async function exampleAction(id: string) {
   redirect("/enfants?success=done");
 }
 ```
+
+Fonctions permissions réelles (`lib/auth/permissions.ts`) :
+- Staff enfants : `canCreateChild`, `canModifyChild`, `canDeleteChild`, `canViewFullChildProfile`
+- Staff activités : `canManageActivities`, `canRegisterChildToActivity`, `canMarkAttendance`
+- Staff paiements : `canRecordPayment`
+- Admin : `canManageUsers`, `canExportReports`, `canManageChildGdpr`
+- Rôles : `isParentRole`, `isStaffRole` (`lib/auth/roles.ts`)
 
 - Préférer `redirect` + query `?error=` / `?success=` pour flux staff/parent simples.
 - `logAuditEvent()` pour : création/validation enfant, paiement, RGPD, changements admin.
