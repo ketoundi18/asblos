@@ -1,5 +1,4 @@
 import { type NextRequest } from "next/server";
-import { isMollieConfigured } from "@/lib/mollie/client";
 
 /**
  * URL webhook passée à Mollie à la création du paiement.
@@ -15,13 +14,16 @@ export function buildMollieWebhookUrl(appUrl: string): string {
 
 /**
  * Vérifie que la requête webhook est autorisée.
- * - Prod + secret configuré → ?secret= obligatoire (ou headers pour tests curl)
- * - Prod sans secret → Mollie API key requise (vérifiation métier dans sync)
+ * - Prod → `MOLLIE_WEBHOOK_SECRET` obligatoire + ?secret= (ou headers pour tests curl)
  * - Dev sans secret → ouvert (tests locaux)
  */
 export function verifyMollieWebhookRequest(request: NextRequest): boolean {
   const secret = process.env.MOLLIE_WEBHOOK_SECRET?.trim();
   const isProduction = process.env.NODE_ENV === "production";
+
+  if (isProduction && !secret) {
+    return false;
+  }
 
   if (secret) {
     const querySecret = request.nextUrl.searchParams.get("secret");
@@ -34,10 +36,6 @@ export function verifyMollieWebhookRequest(request: NextRequest): boolean {
     if (auth === `Bearer ${secret}`) return true;
 
     return false;
-  }
-
-  if (isProduction) {
-    return isMollieConfigured();
   }
 
   return true;
