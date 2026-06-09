@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ParentEnrollmentForm } from "@/components/parent/parent-enrollment-form";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,11 @@ import {
   formatEnrollmentFeeLabel,
   getSchoolSupportFeeCents,
 } from "@/lib/data/asbl-settings";
+import {
+  childNeedsMembershipPayment,
+  getChildPaymentContext,
+} from "@/lib/data/parent-payments";
+import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { getParentOpenSchoolSupportPrograms } from "@/lib/data/school-support";
 import { isPaymentSimulationEnabled } from "@/lib/config/payments";
 import { isMollieConfigured } from "@/lib/mollie/client";
@@ -41,14 +47,30 @@ export default async function ParentInscrireEnfantPage({
   const simulationEnabled = isPaymentSimulationEnabled();
 
   let initialChildName = "";
+  let initialNeedsPayment = false;
+  let initialSchoolSupport = false;
+
   if (resumeChildId) {
     const supabase = await createClient();
-    const { data: child } = await supabase
-      .from("children")
-      .select("first_name")
-      .eq("id", resumeChildId)
-      .maybeSingle<{ first_name: string }>();
+    const [{ data: child }, membership, paymentContext] = await Promise.all([
+      supabase
+        .from("children")
+        .select("first_name")
+        .eq("id", resumeChildId)
+        .maybeSingle<{ first_name: string }>(),
+      getMembershipForChildCurrentYear(resumeChildId),
+      getChildPaymentContext(resumeChildId),
+    ]);
     initialChildName = child?.first_name ?? "";
+    initialSchoolSupport = membership?.plan === "SCHOOL_SUPPORT";
+    if (paymentContext) {
+      initialNeedsPayment = childNeedsMembershipPayment(paymentContext);
+      if (step === "termine" && initialNeedsPayment) {
+        redirect(
+          `/espace-parents/inscrire?step=paiement&childId=${resumeChildId}&error=payment-required`
+        );
+      }
+    }
   }
 
   const openPrograms = programs.map((program) => ({
@@ -89,6 +111,8 @@ export default async function ParentInscrireEnfantPage({
         initialStep={step}
         initialChildId={resumeChildId}
         initialChildName={initialChildName}
+        initialNeedsPayment={initialNeedsPayment}
+        initialSchoolSupport={initialSchoolSupport}
       />
     </div>
   );

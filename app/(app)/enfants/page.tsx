@@ -6,14 +6,11 @@ import { canCreateChild, canViewFullChildProfile } from "@/lib/auth/permissions"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChildrenListTable } from "@/components/enfants/children-list-table";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import type { Child } from "@/types/child";
 
-export default async function EnfantsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ success?: string }>;
-}) {
-  const { success } = await searchParams;
+export default async function EnfantsPage() {
   const profile = await getCurrentProfile();
   const { children, loadError } = await getChildrenList();
   const canCreate = profile ? canCreateChild(profile.role) : false;
@@ -22,15 +19,7 @@ export default async function EnfantsPage({
   return (
     <div className="space-y-6">
       {loadError ? (
-        <div className="alert-banner-warning" role="alert">
-          {loadError}
-        </div>
-      ) : null}
-
-      {success === "anonymized" ? (
-        <div className="alert-banner-success" role="status">
-          Fiche enfant anonymisée avec succès.
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
       <div className="flex items-start justify-between gap-4">
         <div>

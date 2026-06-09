@@ -6,7 +6,8 @@ import { AuditLogPanel } from "@/components/admin/audit-log-panel";
 import { AuditLogFilterForm } from "@/components/admin/audit-log-filter-form";
 import { AUDIT_ACTION_OPTIONS } from "@/lib/audit/audit-labels";
 import type { AuditAction } from "@/lib/audit/log-audit";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { FileDown } from "lucide-react";
 
 const VALID_ACTIONS = new Set<string>(
@@ -56,9 +57,10 @@ export default async function RapportsPage({ searchParams }: RapportsPageProps) 
         </div>
 
         {loadError ? (
-          <div className="rounded-md alert-banner-warning">
-            {friendlyLoadError(loadError, "staff")}
-          </div>
+          <>
+            <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
+            <AuditLogPanel logs={[]} />
+          </>
         ) : (
           <AuditLogPanel logs={logs} />
         )}

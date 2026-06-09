@@ -9,6 +9,8 @@ import { PROGRAM_STATUS_LABELS } from "@/types/school-support";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 export default async function SoutienScolairePage() {
   const profile = await getCurrentProfile();
@@ -53,9 +55,7 @@ export default async function SoutienScolairePage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {loadError}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
 
       {programs.length === 0 ? (

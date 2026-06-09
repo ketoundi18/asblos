@@ -4,7 +4,8 @@ import { isStaffRole } from "@/lib/auth/roles";
 import { isStaffLimitedAccess } from "@/lib/auth/permissions";
 import { getCommandCenter } from "@/lib/data/command-center";
 import { CommandCenterView } from "@/components/staff/command-center-view";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 export default async function MaJourneePage() {
   const profile = await getCurrentProfile();
@@ -32,9 +33,7 @@ export default async function MaJourneePage() {
       </div>
 
       {data.loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(data.loadError, "staff")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(data.loadError, "staff")} />
       ) : null}
 
       <CommandCenterView data={data} />

@@ -8,7 +8,8 @@ import {
   getAsblSettingsForCurrentYear,
   getSchoolSupportFeeCents,
 } from "@/lib/data/asbl-settings";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ParentSoutienScolairePage() {
@@ -37,9 +38,7 @@ export default async function ParentSoutienScolairePage() {
       </div>
 
       {displayError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(displayError, "parent")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(displayError, "parent")} />
       ) : null}
 
       {children.length === 0 ? (

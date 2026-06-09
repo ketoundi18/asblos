@@ -5,6 +5,8 @@ import { getStaffPayments } from "@/lib/data/payments-staff";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatCentsForDisplay } from "@/lib/config/payments";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 function statusBadge(status: string) {
   if (status === "PAID") return { label: "Payé", variant: "success" as const };
@@ -38,9 +40,7 @@ export default async function PaiementsPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {loadError}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
 
       {payments.length === 0 ? (

@@ -4,7 +4,8 @@ import { isStaffRole } from "@/lib/auth/roles";
 import { canManageActivities } from "@/lib/auth/permissions";
 import { getUnifiedPlanning } from "@/lib/data/unified-planning";
 import { UnifiedPlanningView } from "@/components/staff/unified-planning-view";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 
@@ -38,9 +39,7 @@ export default async function PlanningPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(loadError, "staff")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
 
       <UnifiedPlanningView days={days} />

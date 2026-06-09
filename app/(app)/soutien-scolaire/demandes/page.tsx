@@ -6,7 +6,8 @@ import { getCurrentProfile } from "@/lib/auth/session";
 import { canManageActivities, canManageUsers } from "@/lib/auth/permissions";
 import { getSchoolSupportAdminQueue } from "@/lib/data/school-support-admin";
 import { SchoolSupportAdminPanel } from "@/components/admin/school-support-admin-panel";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -38,9 +39,7 @@ export default async function SoutienScolaireDemandesPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(loadError, "staff")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-3">

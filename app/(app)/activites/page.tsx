@@ -16,6 +16,8 @@ import {
   type Activity,
   type ActivityStatus,
 } from "@/types/activity";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 function statusVariant(status: ActivityStatus) {
   if (status === "PLANIFIEE") return "default";
@@ -36,12 +38,7 @@ export default async function ActivitesPage() {
   return (
     <div className="space-y-6">
       {loadError ? (
-        <div
-          className="rounded-md alert-banner-warning"
-          role="alert"
-        >
-          {loadError}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
       ) : null}
 
       <div className="flex items-start justify-between gap-4">

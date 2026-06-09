@@ -2,11 +2,9 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { WizardStep } from "@/lib/parent/enrollment-wizard-steps";
 
-export type WizardStep = {
-  key: string;
-  label: string;
-};
+export type { WizardStep };
 
 type Props = {
   steps: WizardStep[];
@@ -57,22 +55,4 @@ export function ParentEnrollmentStepper({ steps, currentKey }: Props) {
       </ol>
     </nav>
   );
-}
-
-export function buildEnrollmentWizardSteps(input: {
-  schoolSupport: boolean;
-  needsPayment: boolean;
-}): WizardStep[] {
-  const steps: WizardStep[] = [
-    { key: "enfant", label: "Enfant" },
-    { key: "formule", label: "Formule" },
-  ];
-  if (input.schoolSupport) {
-    steps.push({ key: "jours", label: "Jours" });
-  }
-  if (input.needsPayment) {
-    steps.push({ key: "paiement", label: "Paiement" });
-  }
-  steps.push({ key: "termine", label: "Terminé" });
-  return steps;
 }

@@ -3,10 +3,8 @@ import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { ParentPayButtons } from "@/components/parent/parent-pay-buttons";
 import { ParentSimulatePayButton } from "@/components/parent/parent-simulate-pay-button";
-import {
-  ParentEnrollmentStepper,
-  buildEnrollmentWizardSteps,
-} from "@/components/parent/parent-enrollment-stepper";
+import { ParentEnrollmentStepper } from "@/components/parent/parent-enrollment-stepper";
+import { buildEnrollmentWizardSteps } from "@/lib/parent/enrollment-wizard-steps";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {

@@ -7,7 +7,8 @@ import { getSchoolSupportAdminQueue } from "@/lib/data/school-support-admin";
 import { AsblSettingsPanel } from "@/components/admin/asbl-settings-panel";
 import { ParentLinksPanel } from "@/components/admin/parent-links-panel";
 import { SchoolSupportAdminPanel } from "@/components/admin/school-support-admin-panel";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveCombinedLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 export default async function AdministrationPage() {
   const profile = await getCurrentProfile();
@@ -27,6 +28,9 @@ export default async function AdministrationPage() {
     links.filter((l) => !l.verified).length +
     schoolSupportRequests.filter((r) => r.can_confirm).length;
 
+  const loadErrors = [loadError, soutienError, settingsError];
+  const combinedLoadError = resolveCombinedLoadErrorToast(loadErrors, "staff");
+
   return (
     <div className="space-y-8">
       <div>
@@ -38,16 +42,7 @@ export default async function AdministrationPage() {
         </p>
       </div>
 
-      {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(loadError, "staff")}
-        </div>
-      ) : null}
-      {soutienError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(soutienError, "staff")}
-        </div>
-      ) : null}
+      {combinedLoadError ? <ServerNoticeToast flash={combinedLoadError} /> : null}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">À traiter aujourd&apos;hui</h2>
@@ -64,12 +59,6 @@ export default async function AdministrationPage() {
           <h2 className="text-lg font-semibold text-muted-foreground">Historique — familles validées</h2>
           <ParentLinksPanel links={links.filter((l) => l.verified)} validatedOnly />
         </section>
-      ) : null}
-
-      {settingsError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(settingsError, "staff")}
-        </div>
       ) : null}
 
       <section className="space-y-4 border-t pt-8">

@@ -20,10 +20,15 @@ export async function syncEnrollmentPaid(
     return { ok: true };
   }
 
-  if (
-    !rpcError.message.includes("Could not find the function") &&
-    !rpcError.message.includes("sync_enrollment_paid")
-  ) {
+  const isRpcMissing =
+    rpcError.message.includes("Could not find the function") ||
+    rpcError.message.includes("sync_enrollment_paid");
+
+  // Migration 027 : reference_id UUID comparé à TEXT — fallback direct jusqu'à 030 appliquée
+  const isReferenceIdTypeBug =
+    rpcError.code === "42883" && rpcError.message.includes("uuid = text");
+
+  if (!isRpcMissing && !isReferenceIdTypeBug) {
     return { ok: false, error: rpcError.message };
   }
 

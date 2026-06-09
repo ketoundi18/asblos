@@ -30,6 +30,7 @@ export function FlashToastHandler() {
       detail: searchParams.get("detail"),
       created: searchParams.get("created"),
       toggled: searchParams.get("toggled"),
+      warning: searchParams.get("warning"),
       audience,
     });
 

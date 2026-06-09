@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Calendar, Clock, MapPin, Users } from "lucide-react";
 import { getParentActivities } from "@/lib/data/parent-activities";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,9 +26,7 @@ export default async function ParentActivitesPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(loadError, "parent")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "parent")} />
       ) : null}
 
       {activities.length === 0 ? (

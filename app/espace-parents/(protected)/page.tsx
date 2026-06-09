@@ -3,7 +3,8 @@ import { Plus } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getParentSerenityDashboard } from "@/lib/data/parent-serenity";
 import { ParentSerenityCard } from "@/components/parent/parent-serenity-card";
-import { friendlyLoadError } from "@/lib/messages/flash-messages";
+import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -32,9 +33,7 @@ export default async function EspaceParentsPage() {
       </div>
 
       {loadError ? (
-        <div className="rounded-md alert-banner-warning">
-          {friendlyLoadError(loadError, "parent")}
-        </div>
+        <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "parent")} />
       ) : null}
 
       {children.length === 0 ? (

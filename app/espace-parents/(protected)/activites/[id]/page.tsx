@@ -6,6 +6,7 @@ import {
   getParentVerifiedChildrenForRegistration,
 } from "@/lib/data/parent-activities";
 import { ParentActivityRegisterForm } from "@/components/parent/parent-activity-register-form";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -141,10 +142,14 @@ export default async function ParentActiviteDetailPage({
       ) : null}
 
       {children.length === 0 ? (
-        <div className="rounded-md alert-banner-warning">
-          Aucun enfant validé. L&apos;ASBL doit valider le lien parent-enfant dans
-          Administration.
-        </div>
+        <ServerNoticeToast
+          flash={{
+            type: "info",
+            title: "Aucun enfant validé",
+            description:
+              "L'ASBL doit valider le lien parent-enfant dans Administration.",
+          }}
+        />
       ) : null}
     </div>
   );

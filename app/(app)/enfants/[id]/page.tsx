@@ -42,7 +42,6 @@ export default async function EnfantDetailPage({
   searchParams: Promise<{ error?: string; warning?: string; success?: string }>;
 }) {
   const { id } = await params;
-  const { error, warning } = await searchParams;
   const profile = await getCurrentProfile();
   const child = await getChildById(id);
 
@@ -82,37 +81,6 @@ export default async function EnfantDetailPage({
           </Button>
         ) : null}
       </div>
-
-      {error === "permission" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          Tu n&apos;as pas la permission pour cette action.
-        </div>
-      ) : null}
-
-      {error === "already_anonymized" ? (
-        <div className="rounded-md border border-warning-border/50 bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
-          Cette fiche est déjà anonymisée.
-        </div>
-      ) : null}
-
-      {error === "anonymize" ? (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          L&apos;anonymisation a échoué. Réessayez ou contactez le support technique.
-        </div>
-      ) : null}
-
-      {error === "migration_required" ? (
-        <div className="rounded-md border border-warning-border bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
-          La migration 028 (<code className="text-xs">anonymize_child</code>) doit
-          être appliquée dans Supabase SQL Editor avant d&apos;anonymiser une fiche.
-        </div>
-      ) : null}
-
-      {warning ? (
-        <div className="rounded-md border border-warning-border/50 bg-warning-muted px-3 py-2 text-sm text-warning-foreground">
-          Fiche créée, mais : {decodeURIComponent(warning)}
-        </div>
-      ) : null}
 
       {!fullView ? (
         <Card className="border-warning-border bg-warning-muted">
