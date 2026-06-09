@@ -6,6 +6,7 @@ import {
 } from "@/lib/payments/mollie-webhook";
 import { syncMolliePaymentByProviderId } from "@/lib/payments/sync-mollie";
 import { isMollieConfigured } from "@/lib/mollie/client";
+import { reportError } from "@/lib/monitoring/report-error";
 
 export async function POST(request: NextRequest) {
   if (!verifyMollieWebhookRequest(request)) {
@@ -30,12 +31,17 @@ export async function POST(request: NextRequest) {
         return new Response(null, { status: 200 });
       }
       console.error("[mollie-webhook] sync failed:", result.error);
+      await reportError(new Error(result.error), {
+        surface: "mollie-webhook",
+        molliePaymentId,
+      });
       return new Response("Sync failed", { status: 422 });
     }
 
     return new Response(null, { status: 200 });
   } catch (err) {
     console.error("[mollie-webhook] unexpected error:", err);
+    await reportError(err, { surface: "mollie-webhook" });
     return new Response("Webhook error", { status: 500 });
   }
 }

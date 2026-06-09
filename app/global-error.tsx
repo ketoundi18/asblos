@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { fontBody, fontVariables } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
+import { reportError } from "@/lib/monitoring/report-error";
 import "./globals.css";
 
 function loginPathForCurrentArea(): string {
@@ -30,6 +31,11 @@ export default function GlobalError({
 }) {
   const [countdown, setCountdown] = useState(5);
   const mismatch = isReactVersionMismatch(error.message ?? "");
+
+  useEffect(() => {
+    if (mismatch) return;
+    void reportError(error, { surface: "global-error", digest: error.digest });
+  }, [error, mismatch]);
 
   useEffect(() => {
     if (!mismatch) return;
