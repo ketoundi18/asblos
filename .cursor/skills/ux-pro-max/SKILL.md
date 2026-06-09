@@ -110,4 +110,5 @@ Demander **GO** explicite avant gros refactor multi-pages.
 - Checklist détaillée : [parent-ux-checklist.md](parent-ux-checklist.md)
 - Backend / permissions : skill `backend-asblos`
 - Revue avant merge : skill `code-reviewer`
+- Implémentation UI (shadcn, Tailwind, tokens) : skill `frontend-design-senior`
 - Messages utilisateur : `lib/messages/flash-messages.ts` + toasts Sonner (pas de texte inventé hors ce fichier)
