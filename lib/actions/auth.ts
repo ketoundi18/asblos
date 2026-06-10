@@ -22,16 +22,16 @@ const parentSignupSchema = z
 function parentSignupErrorMessage(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("rate limit") || m.includes("rate_limit")) {
-    return "Trop de tentatives d'inscription. Attends 30–60 minutes, ou crée le compte manuellement dans Supabase (Authentication → Users).";
+    return "Trop de tentatives d'inscription. Attendez 30 à 60 minutes, ou contactez l'ASBL.";
   }
   if (m.includes("already registered") || m.includes("already been registered")) {
     return "Cet e-mail est déjà utilisé. Va sur Connexion ou choisis un autre e-mail.";
   }
   if (m.includes("signups not allowed") || m.includes("signup is disabled")) {
-    return "Les inscriptions sont désactivées dans Supabase (Authentication → Providers → Email).";
+    return "Les inscriptions en ligne sont temporairement indisponibles. Contactez l'ASBL.";
   }
   if (m.includes("database error saving new user")) {
-    return "Erreur SQL à l'inscription. Relance 007a puis 007 dans Supabase, ou contacte l'ASBL.";
+    return "Impossible de finaliser l'inscription pour le moment. Contactez l'ASBL.";
   }
   if (m.includes("invalid email")) {
     return "Adresse e-mail invalide.";
@@ -39,7 +39,7 @@ function parentSignupErrorMessage(message: string): string {
   if (m.includes("password")) {
     return "Mot de passe refusé (minimum 8 caractères, pas trop simple).";
   }
-  return `Impossible de créer le compte : ${message}`;
+  return "Impossible de créer le compte. Réessayez ou contactez l'ASBL.";
 }
 
 async function checkProfileActive(userId: string) {
@@ -119,7 +119,7 @@ export async function loginAction(
 function parentLoginErrorMessage(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("email not confirmed") || m.includes("not confirmed")) {
-    return "Ton e-mail n'est pas encore confirmé. Clique le lien reçu par mail, ou demande à l'ASBL de valider ton compte dans Supabase.";
+    return "Ton e-mail n'est pas encore confirmé. Clique le lien reçu par mail, ou demande à l'ASBL de valider ton compte.";
   }
   if (m.includes("invalid login credentials")) {
     return "E-mail ou mot de passe incorrect. Si tu viens de t'inscrire, confirme d'abord ton e-mail.";

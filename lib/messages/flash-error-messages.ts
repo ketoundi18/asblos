@@ -110,7 +110,7 @@ const PARENT_ERROR_MESSAGES: Record<string, FlashToast> = {
     type: "error",
     title: "Activation impossible",
     description:
-      "La demande n'a pas pu être enregistrée. Contactez l'ASBL (migration 020 à lancer dans Supabase).",
+      "La demande n'a pas pu être enregistrée. Réessayez dans un instant ou contactez l'ASBL.",
   },
   link: {
     type: "error",
@@ -395,11 +395,7 @@ export function resolveErrorFlashToast(
 ): FlashToast {
   if (audience === "parent") {
     if (code === "upgrade" && detail) {
-      return {
-        type: "error",
-        title: "Activation impossible",
-        description: detail,
-      };
+      return PARENT_ERROR_MESSAGES.upgrade ?? PARENT_GENERIC;
     }
     return PARENT_ERROR_MESSAGES[code] ?? PARENT_GENERIC;
   }

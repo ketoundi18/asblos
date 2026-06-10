@@ -182,10 +182,9 @@ export async function applySchoolSupportUpgrade(
       return {
         ok: false,
         code: "upgrade",
-        detail:
-          adminResult.detail.includes("service_role")
-            ? "Lance 020_school_support_upgrade_rpc.sql dans Supabase (SQL Editor)."
-            : adminResult.detail,
+        detail: adminResult.detail.includes("service_role")
+          ? "configuration"
+          : "unknown",
       };
     }
   }
@@ -195,8 +194,7 @@ export async function applySchoolSupportUpgrade(
     return {
       ok: false,
       code: "upgrade",
-      detail:
-        "La base n'a pas été mise à jour. Lance 020_school_support_upgrade_rpc.sql dans Supabase.",
+      detail: "not_updated",
     };
   }
 

@@ -48,7 +48,7 @@ app/(parent)/       → espace parents isolé
 lib/actions/        → mutations (Zod → Supabase → audit)
 lib/data/           → lectures (queries typées)
 lib/auth/           → permissions.ts = source de vérité des droits UI
-supabase/migrations → source de vérité schéma (001 → 036, ordre strict)
+supabase/migrations → source de vérité schéma (001 → 037, ordre strict)
 ```
 
 ### Règles de code
@@ -89,3 +89,4 @@ supabase/migrations → source de vérité schéma (001 → 036, ordre strict)
 - [ ] Migration SQL numérotée si schéma change
 - [ ] Entrée dans **EVOLUTION_SESSIONS.md** en fin de session
 - [ ] Test manuel ou e2e sur le parcours critique
+- [ ] **`npm run css:check` vert** (layout.css HTTP 200 en dev) — à chaque livraison, pas seulement les changements CSS

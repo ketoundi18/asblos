@@ -120,7 +120,7 @@ export async function getParentDashboard(): Promise<{
   if (links.length > 0 && children.length === 0 && childrenError) {
     return {
       links,
-      loadError: `${childrenError} Lance 008_parent_see_linked_children.sql et 010_parent_enrollment.sql dans Supabase.`,
+      loadError: "migration_required",
     };
   }
 

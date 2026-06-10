@@ -59,11 +59,11 @@ npm run test:e2e
 
 **Blocage :** Messages flash « migration manquante », dashboard Mon service vide, RPC introuvables en local.
 
-**Cause :** Code à jour (031–036) mais SQL Editor Supabase en retard ; dev et prod sur des schémas différents.
+**Cause :** Code à jour (031–037) mais SQL Editor Supabase en retard ; dev et prod sur des schémas différents.
 
 **Résolution :** Appliquer migrations dans l'ordre via [supabase/INSTALL.md](./supabase/INSTALL.md) ; messages F1 explicites dans l'UI.
 
-**Éviter :** Checklist DEMO.md « migrations 001→036 » avant toute démo ; noter la dernière migration appliquée en commentaire Supabase.
+**Éviter :** Checklist DEMO.md « migrations 001→037 » avant toute démo ; noter la dernière migration appliquée en commentaire Supabase.
 
 ---
 

@@ -10,6 +10,7 @@ import {
   getSchoolSupportFeeCents,
 } from "@/lib/data/asbl-settings";
 import { getStaffOpenSchoolSupportPrograms } from "@/lib/data/school-support";
+import { friendlyLoadError } from "@/lib/messages/flash-load-errors";
 
 export default async function NouvelEnfantPage() {
   const profile = await getCurrentProfile();
@@ -42,7 +43,9 @@ export default async function NouvelEnfantPage() {
           Tu pourras modifier la fiche plus tard.
         </p>
         {loadError ? (
-          <p className="mt-2 text-sm text-warning-foreground">{loadError}</p>
+          <p className="mt-2 text-sm text-warning-foreground">
+            {friendlyLoadError(loadError, "staff")}
+          </p>
         ) : null}
       </div>
       <ChildForm

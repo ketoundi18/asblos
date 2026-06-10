@@ -103,10 +103,10 @@ async function createViaSteps(
     .single<{ id: string }>();
 
   if (childError || !createdChild) {
-    const detail = childError?.message ?? "erreur inconnue";
     return {
       ok: false,
-      error: `Impossible d'enregistrer la fiche enfant (${detail}). Vérifie que la migration 010 est lancée dans Supabase.`,
+      error:
+        "Impossible d'enregistrer la fiche enfant pour le moment. Réessayez ou contactez l'ASBL.",
     };
   }
 
@@ -137,7 +137,8 @@ async function createViaSteps(
     await rollbackPartialParentEnrollment(childId);
     return {
       ok: false,
-      error: `Lien parent non enregistré (${linkError.message}). Lance 010_parent_enrollment.sql dans Supabase.`,
+      error:
+        "Impossible de lier votre compte à l'enfant pour le moment. Réessayez ou contactez l'ASBL.",
     };
   }
 
@@ -156,10 +157,10 @@ async function createViaSteps(
 
   if (membershipError || !membership) {
     await rollbackPartialParentEnrollment(childId);
-    const detail = membershipError?.message ?? "erreur inconnue";
     return {
       ok: false,
-      error: `Adhésion non enregistrée (${detail}). Lance 014_memberships_v2.sql (ou 026) dans Supabase.`,
+      error:
+        "Impossible d'enregistrer l'adhésion pour le moment. Réessayez ou contactez l'ASBL.",
     };
   }
 

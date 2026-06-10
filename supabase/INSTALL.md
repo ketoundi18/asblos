@@ -67,8 +67,9 @@ N'exécute **que si** tu as une erreur précise documentée dans `JOURNAL_DE_BOR
 |------|-------------------------------------|
 | `/enfants` | Migrations 004+ manquantes |
 | `/espace-parents` | 007a + 007+ manquantes |
-| `/mon-service` | 031–036 manquantes |
-| `/equipe/rapport` | 031–036 manquantes |
+| `/mon-service` | 031–037 manquantes |
+| `/equipe/horaires` | 032 + **037** manquantes (upsert contrat) |
+| `/equipe/rapport` | 031–037 manquantes |
 
 ## Regénérer les types TypeScript
 
@@ -77,3 +78,34 @@ npm run gen:types
 ```
 
 (Remplace `lsgppnhyuwcgnpylwepg` dans `package.json` par ton project-id Supabase si différent.)
+
+## Vérification P0 sécurité & démo (SQL Editor)
+
+Copie-colle **une fois** après installation ou mise à jour. Chaque ligne doit retourner `true` :
+
+```sql
+-- 029 : inscription publique réservée aux parents (signup_not_allowed)
+SELECT pg_get_functiondef('public.handle_new_user()'::regprocedure)
+  LIKE '%signup_not_allowed%' AS migration_029_ok;
+
+-- 035 : rapport horaires filtré par utilisateur (security_barrier)
+SELECT EXISTS (
+  SELECT 1
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public'
+    AND c.relname = 'staff_monthly_flex_report'
+    AND c.reloptions IS NOT NULL
+    AND 'security_barrier=true' = ANY (c.reloptions)
+) AS migration_035_ok;
+
+-- 037 : upsert contrat horaire atomique
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.routines
+  WHERE routine_schema = 'public'
+    AND routine_name = 'upsert_staff_contract'
+) AS migration_037_ok;
+```
+
+Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

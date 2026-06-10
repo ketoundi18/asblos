@@ -4,7 +4,7 @@
 
 ## Avant la démo (checklist)
 
-- [ ] Migrations **001 → 036** appliquées ([supabase/INSTALL.md](./supabase/INSTALL.md))
+- [ ] Migrations **001 → 037** appliquées ([supabase/INSTALL.md](./supabase/INSTALL.md))
 - [ ] App déployée ou `npm run dev:clean` en local
 - [ ] Comptes de test créés (voir ci-dessous)
 - [ ] Parcours testé **2 fois** la veille

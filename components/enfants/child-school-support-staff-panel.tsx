@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 import { getChildSchoolSupportStaffContext } from "@/lib/data/child-school-support-staff";
+import { friendlyLoadError } from "@/lib/messages/flash-load-errors";
 import { ChildSchoolSupportStaffForm } from "@/components/enfants/child-school-support-staff-form";
 import {
   Card,
@@ -29,7 +30,9 @@ export async function ChildSchoolSupportStaffPanel({ childId }: Props) {
       </CardHeader>
       <CardContent>
         {context.loadError ? (
-          <p className="text-sm text-warning-foreground">{context.loadError}</p>
+          <p className="text-sm text-warning-foreground">
+            {friendlyLoadError(context.loadError, "staff")}
+          </p>
         ) : (
           <ChildSchoolSupportStaffForm childId={childId} context={context} />
         )}

@@ -63,7 +63,7 @@
 
 | Date | Décision | Raison | Alternatives rejetées |
 |------|----------|--------|----------------------|
-| 2026-06 | **Migrations numérotées** 001→036, ordre strict | Reproductibilité multi-environnements | Schéma push direct Supabase UI |
+| 2026-06 | **Migrations numérotées** 001→037, ordre strict | Reproductibilité multi-environnements | Schéma push direct Supabase UI |
 | 2026-06 | **EVOLUTION_SESSIONS.md** journal fin de session | Mémoire projet pour agents IA et humains | Wiki externe |
 | 2026-06 | **Commits sur `GO commit` explicite** | Évite commits non voulus en pair-programming IA | Auto-commit à chaque changement |
 | 2026-06 | **Agentic docs** (CONSTITUTION, DECISIONS, LESSONS, FRICTION) | Contexte persistant pour Cursor / agents autonomes | Prompts ad hoc sans mémoire |
