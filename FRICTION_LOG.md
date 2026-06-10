@@ -155,9 +155,9 @@ npm run test:e2e
 
 **Cause :** Migrations 017–036 ajoutées sans `npm run gen:types`.
 
-**Résolution :** En cours — régénérer depuis Supabase CLI quand schéma distant à jour.
+**Résolution :** Args RPC `create_parent_enrollment_core` resynchronisés ; `npm run gen:types` via `scripts/gen-types.sh` (n'écrase plus le fichier si échec).
 
-**Éviter :** `gen:types` dans la checklist post-migration ; CI warning si tables manquantes.
+**Éviter :** `gen:types` dans la checklist post-migration ; `supabase login` avant regénération.
 
 ---
 
@@ -167,7 +167,7 @@ npm run test:e2e
 
 **Cause :** Pas de transaction englobant wizard + Server Actions multiples.
 
-**Résolution :** **Non résolu V1** — atténué par RPC sync ; rollback prévu V2.
+**Résolution :** RPC `create_parent_enrollment_core` (026) + rollback `createViaSteps` + params RPC corrigés (2026-06-10).
 
 **Éviter :** Tester wizard BASE + SCHOOL_SUPPORT bout en bout après chaque changement `parent-enrollment.ts`.
 
@@ -185,5 +185,5 @@ npm run test:e2e
 | 2026-06 | Paiements | sync uuid/text | ✅ Résolu (030) |
 | 2026-06 | UX mobile | Nav tronquée | ✅ Résolu |
 | 2026-06 | E2e | Compte ADMIN pointage | ✅ Résolu (E2E_CLOCK_*) |
-| 2026-06 | Types | database.ts retard | ⏳ En cours |
-| 2026-06 | Parent | Pas de rollback | ❌ Dette V2 |
+| 2026-06 | Types | database.ts retard | ⚠️ `gen-types.sh` — login Supabase requis |
+| 2026-06 | Parent | Pas de rollback | ✅ RPC 026 + rollback steps |

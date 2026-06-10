@@ -9,6 +9,10 @@ import {
 } from "@/lib/asbl/fee-utils";
 import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
 import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
+import {
+  rollbackStaffEnrollmentAttach,
+  rollbackStaffMembershipOnly,
+} from "@/lib/enrollment/rollback-staff-enrollment-attach";
 import { emptyToNull } from "@/lib/actions/children/child-form-parsing";
 
 export type StaffEnrollmentAttachResult = {
@@ -113,7 +117,7 @@ export async function attachStaffEnrollmentOnCreate(
     .single<{ id: string }>();
 
   if (membershipError || !membership) {
-    console.error("[staff-enrollment] membership insert failed:", membershipError?.message);
+    await rollbackStaffEnrollmentAttach(supabase, childId, parent.id);
     return {
       fieldErrors: {
         guardian_email:
@@ -133,8 +137,21 @@ export async function attachStaffEnrollmentOnCreate(
     });
 
     if (!enrollResult.ok) {
-      console.error("[create-child] soutien enroll failed:", enrollResult.error);
-      return { enrollmentWarning: "soutien-partial" };
+      await rollbackStaffMembershipOnly(supabase, membership.id);
+      await rollbackStaffEnrollmentAttach(supabase, childId, parent.id);
+      const message =
+        enrollResult.error === "already_enrolled"
+          ? "Cet enfant est déjà inscrit à ce programme."
+          : enrollResult.error === "slots_failed"
+            ? "Les créneaux n'ont pas pu être enregistrés. Réessaie."
+          : enrollResult.error === "enroll_failed"
+            ? "Inscription au soutien impossible. Réessaie ou choisis un autre programme."
+            : enrollResult.error;
+      return {
+        fieldErrors: {
+          school_support_program_id: message,
+        },
+      };
     }
   }
 

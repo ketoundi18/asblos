@@ -89,7 +89,17 @@ export async function enrollSchoolSupportByStaff(
       slot_id: slotId,
     }));
 
-    await supabase.from("school_support_enrollment_slots").insert(rows);
+    const { error: slotsError } = await supabase
+      .from("school_support_enrollment_slots")
+      .insert(rows);
+
+    if (slotsError) {
+      await supabase
+        .from("school_support_enrollments")
+        .delete()
+        .eq("id", enrollment.id);
+      return { ok: false, error: "slots_failed" };
+    }
   }
 
   return { ok: true, enrollmentId: enrollment.id };
