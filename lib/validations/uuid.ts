@@ -7,10 +7,15 @@ export function isValidUuid(value: string): boolean {
   return UUID_REGEX.test(value);
 }
 
-/** Redirige si l'identifiant enfant n'est pas un UUID valide. */
-export function guardChildId(childId: string, fallbackPath = "/enfants"): string {
-  if (!isValidUuid(childId)) {
+/** Redirige si l'identifiant n'est pas un UUID valide. */
+export function guardUuid(id: string, fallbackPath: string): string {
+  if (!isValidUuid(id)) {
     redirect(`${fallbackPath}?error=not-found`);
   }
-  return childId;
+  return id;
+}
+
+/** Redirige si l'identifiant enfant n'est pas un UUID valide. */
+export function guardChildId(childId: string, fallbackPath = "/enfants"): string {
+  return guardUuid(childId, fallbackPath);
 }

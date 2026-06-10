@@ -9,12 +9,13 @@ import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import { applySchoolSupportUpgrade } from "@/lib/membership/apply-school-support-upgrade";
 import { resolveSchoolSupportEnrollmentEligibility } from "@/lib/parent/school-support-eligibility";
-import { guardChildId, isValidUuid } from "@/lib/validations/uuid";
+import { guardChildId, guardUuid, isValidUuid } from "@/lib/validations/uuid";
 
 export async function enrollChildInSchoolSupportAction(
   programId: string,
   formData: FormData
 ) {
+  guardUuid(programId, "/espace-parents/soutien-scolaire");
   const profile = await requireProfile();
   if (!isParentRole(profile.role)) {
     redirect("/espace-parents/soutien-scolaire?error=permission");

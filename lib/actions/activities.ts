@@ -14,6 +14,7 @@ import type { Database } from "@/types/database";
 import type { ActivityFormState } from "@/lib/actions/activities-state";
 import { normalizeTimeForDb } from "@/lib/date-utils";
 import { mapActivityInsertError } from "@/lib/messages/map-staff-action-error";
+import { guardUuid, isValidUuid } from "@/lib/validations/uuid";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
@@ -106,6 +107,7 @@ export async function createActivityAction(
 }
 
 export async function toggleParentRegistrationAction(activityId: string) {
+  guardUuid(activityId, "/activites");
   const profile = await requireProfile();
   if (!canManageActivities(profile.role)) {
     redirect(`/activites/${activityId}?error=permission`);
@@ -146,13 +148,14 @@ export async function registerChildAction(
   activityId: string,
   formData: FormData
 ) {
+  guardUuid(activityId, "/activites");
   const profile = await requireProfile();
   if (!canRegisterChildToActivity(profile.role)) {
     redirect(`/activites/${activityId}?error=permission`);
   }
 
   const childId = formData.get("child_id");
-  if (typeof childId !== "string" || !childId) {
+  if (typeof childId !== "string" || !childId || !isValidUuid(childId)) {
     redirect(`/activites/${activityId}?error=inscription`);
   }
 
@@ -175,13 +178,18 @@ export async function markAttendanceAction(
   activityId: string,
   formData: FormData
 ) {
+  guardUuid(activityId, "/activites");
   const profile = await requireProfile();
-  if (!canMarkAttendance(profile.role)) return;
+  if (!canMarkAttendance(profile.role)) {
+    redirect(`/activites/${activityId}?error=permission`);
+  }
 
   const childId = formData.get("child_id");
   const isPresent = formData.get("is_present") === "true";
 
-  if (typeof childId !== "string" || !childId) return;
+  if (typeof childId !== "string" || !childId || !isValidUuid(childId)) {
+    redirect(`/activites/${activityId}?error=attendance`);
+  }
 
   const supabase = await createClient();
 
@@ -193,7 +201,7 @@ export async function markAttendanceAction(
     .maybeSingle<{ id: string }>();
 
   if (existing?.id) {
-    await supabase
+    const { error } = await supabase
       .from("activity_attendance")
       .update({
         is_present: isPresent,
@@ -201,13 +209,21 @@ export async function markAttendanceAction(
         marked_at: new Date().toISOString(),
       })
       .eq("id", existing.id);
+
+    if (error) {
+      redirect(`/activites/${activityId}?error=attendance`);
+    }
   } else {
-    await supabase.from("activity_attendance").insert({
+    const { error } = await supabase.from("activity_attendance").insert({
       activity_id: activityId,
       child_id: childId,
       is_present: isPresent,
       marked_by: profile.id,
     });
+
+    if (error) {
+      redirect(`/activites/${activityId}?error=attendance`);
+    }
   }
 
   revalidatePath(`/activites/${activityId}`);

@@ -7,6 +7,7 @@ import { requireProfile } from "@/lib/auth/session";
 import { canManageActivities } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import type { Database } from "@/types/database";
+import { guardUuid } from "@/lib/validations/uuid";
 
 type ProgramUpdate =
   Database["public"]["Tables"]["school_support_programs"]["Update"];
@@ -58,6 +59,7 @@ export async function createSchoolSupportProgramAction(formData: FormData) {
 }
 
 export async function addSchoolSupportSlotAction(programId: string, formData: FormData) {
+  guardUuid(programId, "/soutien-scolaire");
   const profile = await requireProfile();
   if (!canManageActivities(profile.role)) {
     redirect(`/soutien-scolaire/${programId}?error=permission`);
@@ -99,6 +101,7 @@ export async function updateSchoolSupportProgramAction(
   programId: string,
   formData: FormData
 ) {
+  guardUuid(programId, "/soutien-scolaire");
   const profile = await requireProfile();
   if (!canManageActivities(profile.role)) {
     redirect(`/soutien-scolaire/${programId}?error=permission`);
@@ -136,6 +139,7 @@ export async function updateSchoolSupportProgramAction(
 }
 
 export async function publishSchoolSupportProgramAction(programId: string) {
+  guardUuid(programId, "/soutien-scolaire");
   const profile = await requireProfile();
   if (!canManageActivities(profile.role)) {
     redirect(`/soutien-scolaire/${programId}?error=permission`);

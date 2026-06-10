@@ -9,6 +9,7 @@ import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { resolveActivityRegistrationEligibility } from "@/lib/parent/activity-eligibility";
 import type { ActivityRegistrationPaymentStatus } from "@/types/activity";
 import { isActivityPaid } from "@/types/activity";
+import { guardUuid, isValidUuid } from "@/lib/validations/uuid";
 
 function resolvePaymentStatus(
   priceCents: number,
@@ -27,6 +28,7 @@ export async function registerParentChildToActivityAction(
   activityId: string,
   formData: FormData
 ) {
+  guardUuid(activityId, "/espace-parents/activites");
   const profile = await requireProfile();
 
   if (!isParentRole(profile.role)) {
@@ -34,7 +36,7 @@ export async function registerParentChildToActivityAction(
   }
 
   const childId = formData.get("child_id");
-  if (typeof childId !== "string" || !childId) {
+  if (typeof childId !== "string" || !childId || !isValidUuid(childId)) {
     redirect(`/espace-parents/activites/${activityId}?error=child`);
   }
 

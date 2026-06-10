@@ -11,11 +11,13 @@ import {
   activatePendingSchoolSupportEnrollments,
 } from "@/lib/enrollment/activate-pending-enrollments";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { guardUuid } from "@/lib/validations/uuid";
 
 export async function validateParentLinkAction(
   linkId: string,
   formData: FormData
 ) {
+  guardUuid(linkId, "/administration");
   const profile = await requireProfile();
   const returnTo = safeStaffReturnPath(formData.get("return_to"));
 
@@ -115,6 +117,7 @@ function safeStaffReturnPath(value: FormDataEntryValue | null): string {
 }
 
 export async function rejectParentLinkAction(linkId: string) {
+  guardUuid(linkId, "/administration");
   const profile = await requireProfile();
 
   if (!canManageUsers(profile.role)) {

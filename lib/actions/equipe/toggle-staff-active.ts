@@ -7,11 +7,13 @@ import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { reportError } from "@/lib/monitoring/report-error";
+import { guardUuid } from "@/lib/validations/uuid";
 
 export async function toggleStaffActiveAction(
   memberId: string,
   formData: FormData
 ) {
+  guardUuid(memberId, "/equipe/membres");
   const profile = await requireProfile();
   const returnTo = "/equipe/membres";
 
