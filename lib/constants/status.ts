@@ -1,4 +1,5 @@
-/** Constantes alignées sur les enums Postgres (types/database.ts). */
+/** Constantes alignées sur les enums Postgres (types/database.ts).
+ *  Matrice métier A/B/C : docs/ENROLLMENT_STATUS_MATRIX.md */
 
 export const MEMBERSHIP_STATUS = {
   AWAITING_PAYMENT: "AWAITING_PAYMENT",

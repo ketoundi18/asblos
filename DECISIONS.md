@@ -1,7 +1,7 @@
 # DECISIONS — Registre des décisions AsblOS
 
 > Décisions structurantes déjà actées. Format : **Date | Décision | Raison | Alternatives rejetées**  
-> Dernière mise à jour : 2026-06-06
+> Dernière mise à jour : 2026-06-11
 
 ---
 
@@ -54,7 +54,7 @@
 | 2026-06 | **Compte de flexibilité horaire** (module `/mon-service`) | Besoin ASBL : objectif journalier, tolérance 5 min, solde ± plafonds | Export Excel manuel des heures |
 | 2026-06 | **Clôture soldes** cron 01h00 Europe/Brussels + RPC `settle_staff_time_*` | Recalcul automatique « chaque nuit » — message démo simple | Clôture manuelle admin |
 | 2026-06 | **Planning** (`/planning`) ≠ **Mon service** (`/mon-service`) | Planning = activités enfants ; Mon service = heures staff | Fusion en une seule page |
-| 2026-06 | **Double modèle** `enrollment_status` + `memberships` (atténué RPC 026/030) | Historique Module 3/4 — unification reportée V2 | Refactor complet avant livraison |
+| 2026-06 | **Double modèle** `enrollment_status` + `memberships` (atténué RPC 026/027/030) | Historique Module 3/4 — unification reportée V2 ; **matrice officielle** → [`docs/ENROLLMENT_STATUS_MATRIX.md`](docs/ENROLLMENT_STATUS_MATRIX.md) (C1 phase 0, 2026-06-11) | Refactor complet avant livraison |
 | 2026-06 | **Paiements offline V1** reportés | Mollie + simulation locale suffisants pour démo | Cash + chèque en V1 |
 
 ---
