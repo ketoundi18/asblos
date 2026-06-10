@@ -3,6 +3,8 @@ import {
   type MembershipPlan,
   type MembershipStatus,
 } from "@/lib/constants/status";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 
 export type { MembershipPlan, MembershipStatus };
@@ -58,6 +60,24 @@ export async function getMembershipsForParentDashboard(): Promise<
     map.set(m.child_id, m);
   }
   return map;
+}
+
+export async function getMembershipMapForChildIds(
+  childIds: string[]
+): Promise<{ map: Map<string, Membership>; loadError: string | null }> {
+  const { states, loadError } = await getChildEnrollmentStates(childIds);
+  if (loadError) {
+    return { map: new Map(), loadError };
+  }
+
+  const map = new Map<string, Membership>();
+  for (const [childId, state] of states) {
+    const membership = membershipFromEnrollmentState(state);
+    if (membership) {
+      map.set(childId, membership);
+    }
+  }
+  return { map, loadError: null };
 }
 
 /** Mappe membership → statuts affichage parent (compat ancien enrollment_status) */

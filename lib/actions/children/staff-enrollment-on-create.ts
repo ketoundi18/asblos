@@ -10,6 +10,9 @@ import {
 import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
 import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
 import {
+  writeChildEnrollmentLayerAStaff,
+} from "@/lib/enrollment/enrollment-writes";
+import {
   rollbackStaffEnrollmentAttach,
   rollbackStaffMembershipOnly,
 } from "@/lib/enrollment/rollback-staff-enrollment-attach";
@@ -88,18 +91,16 @@ export async function attachStaffEnrollmentOnCreate(
   }
 
   if (quote.enrollmentStatus === "VALIDE") {
-    await supabase
-      .from("children")
-      .update({
-        enrollment_status: "VALIDE",
-        asbl_validated_at: verifiedAt,
-      })
-      .eq("id", childId);
+    await writeChildEnrollmentLayerAStaff(supabase, {
+      childId,
+      status: "VALIDE",
+      verifiedAt,
+    });
   } else if (quote.enrollmentStatus === "EN_ATTENTE_PAIEMENT") {
-    await supabase
-      .from("children")
-      .update({ enrollment_status: "EN_ATTENTE_PAIEMENT" })
-      .eq("id", childId);
+    await writeChildEnrollmentLayerAStaff(supabase, {
+      childId,
+      status: "EN_ATTENTE_PAIEMENT",
+    });
   }
 
   const { data: membership, error: membershipError } = await supabase

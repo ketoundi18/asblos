@@ -224,7 +224,7 @@ flowchart TD
 | **0** ✅ | Ce document |
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
 | **2** ✅ | Lectures migrées ; writers centralisés dans `enrollment-writes.ts` |
-| **3** 🔄 | RPC SQL transitions (`041_*`) ; puis drop `children.enrollment_status` ou colonne deprecated |
+| **3** 🔄 | RPC SQL transitions (`041_*`, `042_*`) ; lectures parent/admin via RPC ; puis drop `children.enrollment_status` |
 
 **Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.
 

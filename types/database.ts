@@ -1122,6 +1122,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      activate_child_enrollment_staff: {
+        Args: {
+          p_child_id: string
+          p_school_year: string
+          p_verified_at: string
+        }
+        Returns: undefined
+      }
       confirm_child_enrollment_validated: {
         Args: { p_child_id: string; p_verified_at: string }
         Returns: undefined
@@ -1150,6 +1158,10 @@ export type Database = {
         Args: { p_child_id: string; p_school_year: string }
         Returns: undefined
       }
+      reset_child_enrollment_draft_staff: {
+        Args: { p_child_id: string }
+        Returns: undefined
+      }
       request_school_support_upgrade: {
         Args: { p_child_id: string }
         Returns: undefined
@@ -1161,6 +1173,14 @@ export type Database = {
       settle_staff_time_day: {
         Args: { p_reference_date: string; p_user_id: string }
         Returns: string
+      }
+      set_child_enrollment_layer_a_staff: {
+        Args: {
+          p_child_id: string
+          p_status: Database["public"]["Enums"]["child_enrollment_status"]
+          p_verified_at?: string
+        }
+        Returns: undefined
       }
       sync_enrollment_paid: {
         Args: { p_child_id: string; p_membership_id?: string }

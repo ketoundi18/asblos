@@ -15,6 +15,7 @@ import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-suppo
 import { resolveParentIdForChild } from "@/lib/enrollment/resolve-parent-for-child";
 import { reportError } from "@/lib/monitoring/report-error";
 import { activatePendingSchoolSupportEnrollments } from "@/lib/enrollment/activate-pending-enrollments";
+import { writeStaffActivateChildEnrollment } from "@/lib/enrollment/enrollment-writes";
 import { guardChildId, isValidUuid } from "@/lib/validations/uuid";
 
 function childPath(childId: string, query?: string) {
@@ -216,25 +217,13 @@ export async function staffActivateSchoolSupportAction(childId: string) {
     if (membership.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
       redirect(childPath(childId, "error=soutien-payment"));
     }
-
-    if (membership.status !== "ACTIVE") {
-      await supabase
-        .from("memberships")
-        .update({
-          status: "ACTIVE",
-          asbl_validated_at: verifiedAt,
-        })
-        .eq("id", membership.id);
-    }
   }
 
-  await supabase
-    .from("children")
-    .update({
-      enrollment_status: "VALIDE",
-      asbl_validated_at: verifiedAt,
-    })
-    .eq("id", childId);
+  await writeStaffActivateChildEnrollment(supabase, {
+    childId,
+    verifiedAt,
+    schoolYear,
+  });
 
   await activatePendingSchoolSupportEnrollments(supabase, childId);
 

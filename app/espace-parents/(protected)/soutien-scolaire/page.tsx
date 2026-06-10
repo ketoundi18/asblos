@@ -1,6 +1,6 @@
 import { getParentOpenSchoolSupportPrograms, getParentSchoolSupportEnrollments } from "@/lib/data/school-support";
 import { getParentChildrenForSchoolSupport } from "@/lib/data/parent-school-support";
-import { getMembershipsForParentDashboard } from "@/lib/data/memberships";
+import { getMembershipMapForChildIds } from "@/lib/data/memberships";
 import { ParentSchoolSupportChildBlock } from "@/components/parent/parent-school-support-child-block";
 import { formatSlotSchedule } from "@/types/school-support";
 import {
@@ -13,18 +13,21 @@ import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function ParentSoutienScolairePage() {
-  const [{ programs, loadError }, enrollments, { children, loadError: childrenError }, membershipMap, { settings }] =
+  const [{ programs, loadError }, enrollments, { children, loadError: childrenError }, { settings }] =
     await Promise.all([
       getParentOpenSchoolSupportPrograms(),
       getParentSchoolSupportEnrollments(),
       getParentChildrenForSchoolSupport(),
-      getMembershipsForParentDashboard(),
       getAsblSettingsForCurrentYear(),
     ]);
 
+  const childIds = children.map((child) => child.id);
+  const { map: membershipMap, loadError: membershipError } =
+    await getMembershipMapForChildIds(childIds);
+
   const feeLabel = formatEnrollmentFeeLabel(getSchoolSupportFeeCents(settings));
   const enrolledChildIds = new Set(enrollments.map((e) => e.child_id));
-  const displayError = loadError ?? childrenError;
+  const displayError = loadError ?? childrenError ?? membershipError;
 
   return (
     <div className="space-y-6">

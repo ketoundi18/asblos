@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 
 export type ParentChildLink = {
   link_id: string;
@@ -21,7 +22,6 @@ type ChildMeta = {
   first_name: string;
   last_name: string;
   created_via: "STAFF" | "PARENT" | null;
-  enrollment_status: ParentChildLink["enrollment_status"];
 };
 
 async function fetchChildrenMeta(
@@ -34,7 +34,7 @@ async function fetchChildrenMeta(
 
   const extended = await supabase
     .from("children")
-    .select("id, first_name, last_name, created_via, enrollment_status")
+    .select("id, first_name, last_name, created_via")
     .in("id", childIds);
 
   if (!extended.error && extended.data) {
@@ -61,7 +61,6 @@ async function fetchChildrenMeta(
       (c) => ({
         ...c,
         created_via: null,
-        enrollment_status: null,
       })
     ),
     error: null,
@@ -97,15 +96,17 @@ export async function getParentDashboard(): Promise<{
   }[];
 
   const childIds = [...new Set(linkRows.map((r) => r.child_id))];
-  const { children, error: childrenError } = await fetchChildrenMeta(
-    supabase,
-    childIds
-  );
+  const [{ children, error: childrenError }, { states, loadError: stateError }] =
+    await Promise.all([
+      fetchChildrenMeta(supabase, childIds),
+      getChildEnrollmentStates(childIds),
+    ]);
 
   const childMap = new Map(children.map((c) => [c.id, c]));
 
   const links: ParentChildLink[] = linkRows.map((r) => {
     const child = childMap.get(r.child_id);
+    const state = states.get(r.child_id);
     return {
       link_id: r.id,
       child_id: r.child_id,
@@ -113,9 +114,13 @@ export async function getParentDashboard(): Promise<{
       last_name: child?.last_name ?? "lié",
       verified: r.verified_at !== null,
       created_via: child?.created_via ?? null,
-      enrollment_status: child?.enrollment_status ?? null,
+      enrollment_status: state?.layer_a.enrollment_status ?? null,
     };
   });
+
+  if (stateError) {
+    return { links: [], loadError: stateError };
+  }
 
   if (links.length > 0 && children.length === 0 && childrenError) {
     return {

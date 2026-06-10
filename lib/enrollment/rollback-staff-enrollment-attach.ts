@@ -1,5 +1,6 @@
 import "server-only";
 import type { ServerSupabase } from "@/lib/supabase/server-types";
+import { writeStaffResetEnrollmentDraft } from "@/lib/enrollment/enrollment-writes";
 
 /** Annule lien parent + statut inscription si l'adhésion staff échoue après coup. */
 export async function rollbackStaffEnrollmentAttach(
@@ -14,14 +15,7 @@ export async function rollbackStaffEnrollmentAttach(
       .eq("child_id", childId)
       .eq("parent_id", parentId);
 
-    await supabase
-      .from("children")
-      .update({
-        enrollment_status: "BROUILLON",
-        asbl_validated_at: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", childId);
+    await writeStaffResetEnrollmentDraft(supabase, childId);
   } catch {
     // Best-effort — l'admin pourra corriger la fiche manuellement
   }

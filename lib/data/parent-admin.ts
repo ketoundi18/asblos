@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentSchoolYear } from "@/lib/school-year";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 
 export type AdminParentLink = {
   link_id: string;
@@ -68,20 +68,26 @@ export async function getParentLinksForAdmin(): Promise<{
     first_name: string;
     last_name: string;
     created_via?: "STAFF" | "PARENT" | null;
-    enrollment_status?: string | null;
   };
 
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone")
-    .in("id", parentIds);
+  const [{ data: profiles, error: profilesError }, { data: fullChildren, error: fullChildrenError }, { states, loadError: stateError }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, full_name, email, phone")
+        .in("id", parentIds),
+      supabase
+        .from("children")
+        .select("id, first_name, last_name, created_via")
+        .in("id", childIds),
+      getChildEnrollmentStates(childIds),
+    ]);
+
+  if (stateError) {
+    return { links: [], loadError: stateError };
+  }
 
   let childrenData: ChildRow[] = [];
-
-  const { data: fullChildren, error: fullChildrenError } = await supabase
-    .from("children")
-    .select("id, first_name, last_name, created_via, enrollment_status")
-    .in("id", childIds);
 
   if (fullChildrenError) {
     const { data: fallbackChildren } = await supabase
@@ -98,23 +104,10 @@ export async function getParentLinksForAdmin(): Promise<{
   );
   const childMap = new Map(childrenData.map((c) => [c.id, c]));
 
-  const schoolYear = getCurrentSchoolYear();
-  const { data: membershipRows } = await supabase
-    .from("memberships")
-    .select("child_id, status, fee_cents")
-    .in("child_id", childIds)
-    .eq("school_year", schoolYear);
-
-  const membershipMap = new Map(
-    ((membershipRows ?? []) as { child_id: string; status: string; fee_cents: number }[]).map(
-      (m) => [m.child_id, m]
-    )
-  );
-
   const links: AdminParentLink[] = linkRows.map((r) => {
     const parent = profileMap.get(r.parent_id);
     const child = childMap.get(r.child_id);
-    const membership = membershipMap.get(r.child_id);
+    const state = states.get(r.child_id);
     return {
       link_id: r.id,
       parent_id: r.parent_id,
@@ -125,9 +118,9 @@ export async function getParentLinksForAdmin(): Promise<{
       child_first_name: child?.first_name ?? "Enfant",
       child_last_name: child?.last_name ?? "lié",
       child_created_via: child?.created_via ?? null,
-      child_enrollment_status: child?.enrollment_status ?? null,
-      membership_status: membership?.status ?? null,
-      membership_fee_cents: membership?.fee_cents ?? null,
+      child_enrollment_status: state?.layer_a.enrollment_status ?? null,
+      membership_status: state?.layer_b?.status ?? null,
+      membership_fee_cents: state?.layer_b?.fee_cents ?? null,
       created_at: r.created_at,
       verified: r.verified_at !== null,
     };
