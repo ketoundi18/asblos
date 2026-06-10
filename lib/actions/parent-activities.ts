@@ -61,6 +61,7 @@ export async function registerParentChildToActivityAction(
   const { data: link } = await supabase
     .from("parent_child_links")
     .select("id")
+    .eq("parent_id", profile.id)
     .eq("child_id", childId)
     .not("verified_at", "is", null)
     .maybeSingle();
