@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit",
     "gen:types": "bash scripts/gen-types.sh",
     "check:types": "bash scripts/check-database-types.sh",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:ui": "playwright test --ui",
@@ -58,6 +60,7 @@
     "shadcn": "^4.11.0",
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^4.1.8"
   }
 }

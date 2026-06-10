@@ -9,7 +9,7 @@ export function escapeCsvCell(value: string): string {
     cell = `'${cell}`;
   }
 
-  if (/[",\n\r]/.test(cell)) {
+  if (/[";,\n\r]/.test(cell)) {
     return `"${cell.replace(/"/g, '""')}"`;
   }
 
