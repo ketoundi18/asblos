@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAdminOnlyRoute, isAdminRole } from "@/lib/auth/admin-routes";
 
 const STAFF_PUBLIC = ["/connexion"];
 const PARENT_PUBLIC = [
@@ -138,6 +139,20 @@ export async function updateSession(request: NextRequest) {
     } else if (parentRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
+
+    if (
+      !isParent &&
+      isAdminOnlyRoute(pathname) &&
+      !isAdminRole(role)
+    ) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.searchParams.set("error", "permission");
       return NextResponse.redirect(url);
     }
 
