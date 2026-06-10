@@ -1,5 +1,7 @@
-import { createStaffReadClient } from "@/lib/supabase/staff-read";
+import { isStaffFullAccess } from "@/lib/auth/permissions";
+import { getCurrentProfile } from "@/lib/auth/session";
 import { getCurrentSchoolYear } from "@/lib/school-year";
+import { createClient } from "@/lib/supabase/server";
 import { formatEnrollmentFeeLabel, getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
 import { formatSlotSchedule, type SchoolSupportSlot } from "@/types/school-support";
@@ -73,7 +75,12 @@ export async function getSchoolSupportAdminQueue(): Promise<{
   requests: SchoolSupportAdminRequest[];
   loadError: string | null;
 }> {
-  const supabase = await createStaffReadClient();
+  const profile = await getCurrentProfile();
+  if (!profile?.is_active || !isStaffFullAccess(profile.role)) {
+    return { requests: [], loadError: "Accès refusé." };
+  }
+
+  const supabase = await createClient();
   const schoolYear = getCurrentSchoolYear();
 
   const { data: rows, error } = await supabase
@@ -224,7 +231,7 @@ export async function getSchoolSupportAdminQueue(): Promise<{
 }
 
 async function loadEnrollmentDetails(
-  supabase: Awaited<ReturnType<typeof createStaffReadClient>>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   childIds: string[]
 ): Promise<
   Map<

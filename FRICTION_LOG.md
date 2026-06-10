@@ -53,7 +53,7 @@ curl -s -o /dev/null -w "layout.css: %{http_code} size:%{size_download}\n" "http
 
 **Blocage :** Audit Cursor + Claude — sel IP sur service role, hashAuditIp mort, downgrade staff-read, enfants orphelins, guardian silencieux, archivage sans audit.
 
-**Résolution :** `AUDIT_IP_SALT` seul sel ; `getAuditIpHash()` sur login/GDPR/paiements ; `createStaffReadClient` fail loud ; compensation INACTIF create-child ; erreurs guardian update-child ; `CHILD_ARCHIVED` + UUID guards.
+**Résolution :** `AUDIT_IP_SALT` seul sel ; `getAuditIpHash()` sur login/GDPR/paiements ; ~~`createStaffReadClient`~~ supprimé (GO F : RLS `profiles_select_staff_full` + `createClient`) ; compensation INACTIF create-child ; erreurs guardian update-child ; `CHILD_ARCHIVED` + UUID guards.
 
 **Éviter :** Définir `AUDIT_IP_SALT` en prod (openssl rand -hex 32) ; tester création enfant + archivage dans `/rapports` audit.
 
