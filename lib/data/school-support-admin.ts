@@ -2,7 +2,13 @@ import { isStaffFullAccess } from "@/lib/auth/permissions";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import { createClient } from "@/lib/supabase/server";
-import { formatEnrollmentFeeLabel, getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
+import {
+  formatEnrollmentFeeLabel,
+  getAsblSettingsForCurrentYear,
+  getSchoolSupportFeeCents,
+} from "@/lib/data/asbl-settings";
+import { queueMembershipFromState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
 import { formatSlotSchedule, type SchoolSupportSlot } from "@/types/school-support";
 
@@ -111,75 +117,36 @@ export async function getSchoolSupportAdminQueue(): Promise<{
 
   const seenChildIds = new Set(memberships.map((m) => m.child_id));
 
-  // Secours : enfants marqués « soutien en attente » même si l'adhésion n'a pas été mise à jour
-  const { data: pendingChildren } = await supabase
+  // Secours legacy : RPC unifiée pour enfants sans ligne membership à jour
+  const { data: legacyChildren } = await supabase
     .from("children")
-    .select("id, first_name, last_name, enrollment_status")
+    .select("id")
     .in("enrollment_status", ["PAYE_EN_ATTENTE_ASBL", "EN_ATTENTE_PAIEMENT"])
     .is("deleted_at", null);
 
-  const extraChildIds = ((pendingChildren ?? []) as { id: string }[])
+  const extraChildIds = ((legacyChildren ?? []) as { id: string }[])
     .map((c) => c.id)
     .filter((id) => !seenChildIds.has(id));
 
   if (extraChildIds.length > 0) {
     const { settings } = await getAsblSettingsForCurrentYear();
     const defaultFee = getSchoolSupportFeeCents(settings);
+    const { states, loadError: stateError } = await getChildEnrollmentStates(
+      extraChildIds,
+      schoolYear
+    );
 
-    const { data: extraMemberships } = await supabase
-      .from("memberships")
-      .select("id, child_id, parent_id, plan, fee_cents, status")
-      .eq("school_year", schoolYear)
-      .in("child_id", extraChildIds);
-
-    for (const row of (extraMemberships ?? []) as typeof memberships) {
-      const child = (pendingChildren ?? []).find(
-        (c) => (c as { id: string }).id === row.child_id
-      ) as { enrollment_status: string } | undefined;
-
-      if (child?.enrollment_status === "PAYE_EN_ATTENTE_ASBL") {
-        memberships.push({
-          ...row,
-          plan: "SCHOOL_SUPPORT",
-          status: "AWAITING_ASBL",
-          fee_cents: row.fee_cents || defaultFee,
-        });
-      } else if (child?.enrollment_status === "EN_ATTENTE_PAIEMENT") {
-        memberships.push({
-          ...row,
-          plan: "SCHOOL_SUPPORT",
-          status: "AWAITING_PAYMENT",
-          fee_cents: row.fee_cents || defaultFee,
-        });
-      }
-      seenChildIds.add(row.child_id);
+    if (stateError) {
+      return { requests: [], loadError: stateError };
     }
 
-    // Enfant sans ligne membership du tout
-    const { data: links } = await supabase
-      .from("parent_child_links")
-      .select("child_id, parent_id")
-      .in("child_id", extraChildIds)
-      .not("verified_at", "is", null);
-
-    for (const link of (links ?? []) as { child_id: string; parent_id: string }[]) {
-      if (seenChildIds.has(link.child_id)) continue;
-      const child = (pendingChildren ?? []).find(
-        (c) => (c as { id: string }).id === link.child_id
-      ) as { id: string; enrollment_status: string } | undefined;
-      if (!child) continue;
-
-      memberships.push({
-        id: `pending-${link.child_id}`,
-        child_id: link.child_id,
-        parent_id: link.parent_id,
-        plan: "SCHOOL_SUPPORT",
-        fee_cents: defaultFee,
-        status:
-          child.enrollment_status === "EN_ATTENTE_PAIEMENT"
-            ? "AWAITING_PAYMENT"
-            : "AWAITING_ASBL",
-      });
+    for (const childId of extraChildIds) {
+      const state = states.get(childId);
+      if (!state) continue;
+      const row = queueMembershipFromState(state, defaultFee);
+      if (!row || seenChildIds.has(row.child_id)) continue;
+      memberships.push(row);
+      seenChildIds.add(row.child_id);
     }
   }
 

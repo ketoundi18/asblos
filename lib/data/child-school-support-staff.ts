@@ -1,7 +1,8 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { getAsblSettingsForCurrentYear, formatEnrollmentFeeLabel, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import { getStaffOpenSchoolSupportPrograms } from "@/lib/data/school-support";
 import { formatSlotSchedule, type SchoolSupportSlot } from "@/types/school-support";
 import { resolveParentIdForChild } from "@/lib/enrollment/resolve-parent-for-child";
@@ -38,13 +39,17 @@ export async function getChildSchoolSupportStaffContext(
   childId: string
 ): Promise<ChildSchoolSupportStaffContext> {
   const supabase = await createClient();
-  const [{ settings }, { programs, loadError: programsError }, membership, parentId] =
+  const [{ settings }, { programs, loadError: programsError }, enrollmentState, parentId] =
     await Promise.all([
       getAsblSettingsForCurrentYear(),
       getStaffOpenSchoolSupportPrograms(),
-      getMembershipForChildCurrentYear(childId),
+      getChildEnrollmentState(childId),
       resolveParentIdForChild(supabase, childId),
     ]);
+
+  const membership = enrollmentState.state
+    ? membershipFromEnrollmentState(enrollmentState.state)
+    : null;
 
   const feeCents = getSchoolSupportFeeCents(settings);
   const base = {

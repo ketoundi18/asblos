@@ -13,7 +13,6 @@ import {
   childNeedsMembershipPayment,
   getChildPaymentContext,
 } from "@/lib/data/parent-payments";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { getParentOpenSchoolSupportPrograms } from "@/lib/data/school-support";
 import { isPaymentSimulationEnabled } from "@/lib/config/payments";
 import { isMollieConfigured } from "@/lib/mollie/client";
@@ -58,17 +57,16 @@ export default async function ParentInscrireEnfantPage({
 
   if (resumeChildId) {
     const supabase = await createClient();
-    const [{ data: child }, membership, paymentContext] = await Promise.all([
+    const [{ data: child }, paymentContext] = await Promise.all([
       supabase
         .from("children")
         .select("first_name")
         .eq("id", resumeChildId)
         .maybeSingle<{ first_name: string }>(),
-      getMembershipForChildCurrentYear(resumeChildId),
       getChildPaymentContext(resumeChildId),
     ]);
     initialChildName = child?.first_name ?? "";
-    initialSchoolSupport = membership?.plan === "SCHOOL_SUPPORT";
+    initialSchoolSupport = paymentContext?.membership_plan === "SCHOOL_SUPPORT";
     if (paymentContext) {
       initialNeedsPayment = childNeedsMembershipPayment(paymentContext);
       if (step === "termine" && initialNeedsPayment) {

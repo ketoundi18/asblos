@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CHILD_STATUS_LABELS } from "@/lib/validations/child";
+import { staffParentChildEnrollmentBadge } from "@/lib/enrollment/child-enrollment-state";
 import {
   getChildAge,
   getChildFullName,
@@ -22,17 +23,7 @@ function statusVariant(status: Child["status"]) {
 }
 
 function enrollmentLabel(child: Child) {
-  if (child.created_via !== "PARENT") return null;
-  if (child.enrollment_status === "EN_ATTENTE_PAIEMENT") {
-    return { text: "Parent · paiement", variant: "warning" as const };
-  }
-  if (
-    child.enrollment_status === "PAYE_EN_ATTENTE_ASBL" ||
-    !child.asbl_validated_at
-  ) {
-    return { text: "Parent · attente ASBL", variant: "warning" as const };
-  }
-  return { text: "Parent", variant: "success" as const };
+  return staffParentChildEnrollmentBadge(child);
 }
 
 type Props = {

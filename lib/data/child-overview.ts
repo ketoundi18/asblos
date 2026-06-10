@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatEnrollmentFeeLabel } from "@/lib/asbl/fee-utils";
 import {
-  getMembershipForChildCurrentYear,
+  membershipIsSchoolSupportPendingConfirm,
+  membershipFromEnrollmentState,
+} from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
+import {
   membershipToParentDisplay,
   type Membership,
 } from "@/lib/data/memberships";
@@ -57,10 +61,7 @@ function membershipOverview(membership: Membership | null): ChildOverviewMembers
       ? "Accompagnement scolaire"
       : "Inscription simple";
 
-  const canConfirmSchoolSupport =
-    membership.plan === "SCHOOL_SUPPORT" &&
-    (membership.status === "AWAITING_ASBL" ||
-      (membership.status === "AWAITING_PAYMENT" && membership.fee_cents <= 0));
+  const canConfirmSchoolSupport = membershipIsSchoolSupportPendingConfirm(membership);
 
   return {
     planLabel,
@@ -89,7 +90,8 @@ export async function getChildOverview(childId: string): Promise<ChildOverview> 
   const supabase = await createClient();
   const today = getLocalTodayISO();
 
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state } = await getChildEnrollmentState(childId);
+  const membership = state ? membershipFromEnrollmentState(state) : null;
 
   const [{ data: enrollRows, error: enrollError }, { data: activityRows }, { data: paymentRows }] =
     await Promise.all([
@@ -178,7 +180,11 @@ export async function getChildOverview(childId: string): Promise<ChildOverview> 
             : "Inscrit au programme",
       };
     }
-  } else if (membership?.plan === "SCHOOL_SUPPORT" && membership.status !== "ACTIVE") {
+  } else if (
+    state?.layer_c == null &&
+    membership?.plan === "SCHOOL_SUPPORT" &&
+    membership.status !== "ACTIVE"
+  ) {
     schoolSupport = {
       programId: "",
       programTitle: "Accompagnement scolaire",

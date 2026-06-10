@@ -1,4 +1,6 @@
 import type { Membership } from "@/lib/data/memberships";
+import type { ChildEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
 
 export type ActivityRegistrationBlockReason =
   | "awaiting_payment"
@@ -84,4 +86,16 @@ export function resolveActivityRegistrationEligibility(
     message:
       "L'ASBL doit encore valider le dossier de votre enfant avant l'inscription aux activités.",
   };
+}
+
+export function resolveActivityRegistrationEligibilityFromState(
+  state: ChildEnrollmentState
+): ActivityRegistrationEligibility {
+  return resolveActivityRegistrationEligibility(
+    membershipFromEnrollmentState(state),
+    {
+      enrollment_status: state.layer_a.enrollment_status,
+      created_via: state.layer_a.created_via,
+    }
+  );
 }

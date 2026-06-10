@@ -5,8 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
-import { resolveActivityRegistrationEligibility } from "@/lib/parent/activity-eligibility";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
+import { resolveActivityRegistrationEligibilityFromState } from "@/lib/parent/activity-eligibility";
 import type { ActivityRegistrationPaymentStatus } from "@/types/activity";
 import { isActivityPaid } from "@/types/activity";
 import { guardUuid, isValidUuid } from "@/lib/validations/uuid";
@@ -72,17 +72,12 @@ export async function registerParentChildToActivityAction(
     redirect(`/espace-parents/activites/${activityId}?error=not-verified`);
   }
 
-  const [{ data: child }, membership] = await Promise.all([
-    supabase
-      .from("children")
-      .select("enrollment_status, created_via")
-      .eq("id", childId)
-      .is("deleted_at", null)
-      .maybeSingle<{ enrollment_status: string | null; created_via: string | null }>(),
-    getMembershipForChildCurrentYear(childId),
-  ]);
+  const { state, loadError } = await getChildEnrollmentState(childId);
+  if (loadError || !state) {
+    redirect(`/espace-parents/activites/${activityId}?error=cotisation-pending`);
+  }
 
-  const eligibility = resolveActivityRegistrationEligibility(membership, child ?? null);
+  const eligibility = resolveActivityRegistrationEligibilityFromState(state);
   if (!eligibility.allowed) {
     const errorCode =
       eligibility.reason === "awaiting_payment"
