@@ -21,7 +21,7 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 
 ### Base de données
 
-Applique les migrations SQL dans l'ordre : **[supabase/INSTALL.md](./supabase/INSTALL.md)** (001 → 037).
+Applique les migrations SQL dans l'ordre : **[supabase/INSTALL.md](./supabase/INSTALL.md)** (001 → 039).
 
 Crée ensuite un compte **ADMIN** dans Supabase → Authentication → Users, avec App Metadata :
 
@@ -54,12 +54,14 @@ Checklist et scénario 30 min : **[DEMO.md](./DEMO.md)**
 ## Tests
 
 ```bash
+npm run css:check
 npm run typecheck
 npm run lint
+npm run test          # Vitest (logique métier)
 npm run test:e2e -- e2e/demo-smoke.spec.ts
 ```
 
-Variables e2e : voir `.env.local.example` (`E2E_STAFF_EMAIL`, `E2E_PARENT_EMAIL`, …).
+Variables e2e : voir `.env.local.example` (`E2E_STAFF_EMAIL`, `E2E_PARENT_EMAIL`, `E2E_CLOCK_STAFF_EMAIL` pour `/mon-service`, …).
 
 ## Stack
 

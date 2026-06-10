@@ -48,7 +48,7 @@ app/(parent)/       → espace parents isolé
 lib/actions/        → mutations (Zod → Supabase → audit)
 lib/data/           → lectures (queries typées)
 lib/auth/           → permissions.ts = source de vérité des droits UI
-supabase/migrations → source de vérité schéma (001 → 037, ordre strict)
+supabase/migrations → source de vérité schéma (001 → 039, ordre strict)
 ```
 
 ### Règles de code

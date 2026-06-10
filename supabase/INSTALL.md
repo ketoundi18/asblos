@@ -46,6 +46,8 @@
 | 37 | `035_staff_time_security_fixes.sql` | Sécurité horaires |
 | 38 | `036_staff_time_settlement_applied_delta.sql` | Correctif clôture |
 | 39 | `037_upsert_staff_contract_rpc.sql` | Upsert contrat atomique (audit H1) |
+| 40 | `038_membership_on_link_verified.sql` | Adhésion auto à la validation lien parent (I5) |
+| 41 | `039_profiles_select_staff_full.sql` | RLS profils pour staff full (GO F) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -106,6 +108,22 @@ SELECT EXISTS (
   WHERE routine_schema = 'public'
     AND routine_name = 'upsert_staff_contract'
 ) AS migration_037_ok;
+
+-- 038 : trigger adhésion à la validation du lien parent
+SELECT EXISTS (
+  SELECT 1
+  FROM pg_trigger
+  WHERE tgname = 'trg_ensure_membership_on_parent_link'
+) AS migration_038_ok;
+
+-- 039 : staff full peut lire les profils (soutien scolaire sans service role)
+SELECT EXISTS (
+  SELECT 1
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = 'profiles'
+    AND policyname = 'profiles_select_staff_full'
+) AS migration_039_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

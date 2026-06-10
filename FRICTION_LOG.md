@@ -85,7 +85,7 @@ npm run test:e2e
 
 **Résolution :** Appliquer migrations dans l'ordre via [supabase/INSTALL.md](./supabase/INSTALL.md) ; messages F1 explicites dans l'UI.
 
-**Éviter :** Checklist DEMO.md « migrations 001→037 » avant toute démo ; noter la dernière migration appliquée en commentaire Supabase.
+**Éviter :** Checklist DEMO.md « migrations 001→039 » avant toute démo ; noter la dernière migration appliquée en commentaire Supabase.
 
 ---
 

@@ -615,7 +615,7 @@ npm run test:e2e
 | Sentry / monitoring prod | ❌ Toujours absent |
 | README migrations 001→030 | ❌ Toujours obsolète |
 | Double modèle enrollment / memberships | ❌ Atténué (RPC 026/030), pas unifié |
-| `staff-dashboard-cards.tsx` | ⚠️ Types importés ; `getStaffDashboard` non branché (page `/` utilise `getCommandCenter`) — candidat nettoyage |
+| `staff-dashboard-cards.tsx` | ✅ Supprimé — `/` utilise `getCommandCenter` |
 | Paiements offline V1 | ❌ Reporté |
 | Exports PDF/Excel rapports | ❌ Placeholder |
 | RGPD | ⚠️ Partiel — export JSON (`/api/enfants/[id]/export`) + anonymisation (`anonymize_child` RPC) existent ; pas de parcours RGPD complet documenté |
