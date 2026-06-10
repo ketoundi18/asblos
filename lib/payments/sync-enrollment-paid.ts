@@ -32,7 +32,7 @@ export async function syncEnrollmentPaid(
 
   const { error: rpcError } = await admin.rpc("sync_enrollment_paid", {
     p_child_id: childId,
-    p_membership_id: membershipId,
+    p_membership_id: membershipId ?? undefined,
   });
 
   if (!rpcError) {

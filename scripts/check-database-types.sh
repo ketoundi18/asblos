@@ -17,8 +17,8 @@ REQUIRED=(
   "school_support_enrollments"
   "logs_audit"
   "create_parent_enrollment_core"
-  "p_membership_status"
-  "p_enrollment_status"
+  "p_membership_plan"
+  "sync_enrollment_paid"
   "membership_status"
   "child_enrollment_status"
 )
@@ -26,7 +26,7 @@ REQUIRED=(
 for needle in "${REQUIRED[@]}"; do
   if ! grep -q "$needle" "$TYPES"; then
     echo "❌ types/database.ts — symbole manquant : $needle"
-    echo "   Lance : supabase login && npm run gen:types"
+    echo "   Lance : npx supabase login && npm run gen:types"
     exit 1
   fi
 done

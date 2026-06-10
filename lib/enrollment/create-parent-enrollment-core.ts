@@ -56,10 +56,7 @@ async function createViaRpc(
     p_guardian_email: guardian.email ?? "",
     p_guardian_phone: guardian.phone,
     p_guardian_can_pickup: guardian.can_pickup ?? true,
-    p_enrollment_status: child.enrollment_status ?? "EN_ATTENTE_PAIEMENT",
     p_membership_plan: quote.membershipPlan,
-    p_fee_cents: quote.totalCents,
-    p_membership_status: quote.membershipStatus,
     p_school_year: schoolYear,
   });
 

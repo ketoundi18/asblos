@@ -38,6 +38,9 @@ yarn-error.log*
 !.env.local.example
 CONFIG-SUPABASE.txt
 
+# supabase CLI (gen:types local)
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

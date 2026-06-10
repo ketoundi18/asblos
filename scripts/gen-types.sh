@@ -15,7 +15,7 @@ cd "$ROOT"
 if ! npx supabase gen types typescript --project-id lsgppnhyuwcgnpylwepg > "$TMP"; then
   echo ""
   echo "❌ gen:types échoué — types/database.ts inchangé."
-  echo "   Lance : supabase login"
+  echo "   Lance : npx supabase login"
   echo "   ou définis SUPABASE_ACCESS_TOKEN puis réessaie."
   exit 1
 fi
