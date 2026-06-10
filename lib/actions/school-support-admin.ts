@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
+import {
+  enrollmentStateIsSchoolSupportPendingConfirm,
+  enrollmentStateNeedsPayment,
+} from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import {
   activatePendingSchoolSupportEnrollments,
@@ -32,42 +37,24 @@ export async function confirmSchoolSupportMembershipAction(
   const schoolYear = getCurrentSchoolYear();
   const verifiedAt = new Date().toISOString();
 
-  const { data: membership } = await supabase
-    .from("memberships")
-    .select("id, status, fee_cents, plan")
-    .eq("child_id", childId)
-    .eq("school_year", schoolYear)
-    .maybeSingle<{
-      id: string;
-      status: string;
-      fee_cents: number;
-      plan: string;
-    }>();
+  const { state, loadError } = await getChildEnrollmentState(childId, schoolYear);
 
-  const { data: child } = await supabase
-    .from("children")
-    .select("enrollment_status")
-    .eq("id", childId)
-    .maybeSingle<{ enrollment_status: string | null }>();
+  if (loadError?.includes("040_get_child_enrollment_state")) {
+    redirect(`${returnTo}?error=soutien-confirm`);
+  }
 
-  const isSchoolSupportPending =
-    membership?.plan === "SCHOOL_SUPPORT" &&
-    (membership.status === "AWAITING_ASBL" ||
-      (membership.status === "AWAITING_PAYMENT" && membership.fee_cents <= 0));
-
-  const isLegacyPending = child?.enrollment_status === "PAYE_EN_ATTENTE_ASBL";
-
-  if (!isSchoolSupportPending && !isLegacyPending) {
-    if (membership?.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
+  if (!state || !enrollmentStateIsSchoolSupportPendingConfirm(state)) {
+    if (state && enrollmentStateNeedsPayment(state)) {
       redirect(`${returnTo}?error=payment-required`);
     }
     redirect(`${returnTo}?error=soutien-not-found`);
   }
 
-  let membershipId: string | null = membership?.id ?? null;
+  const membership = state.layer_b;
+  let membershipId: string | null = membership?.membership_id ?? null;
 
   if (membership) {
-    if (membership.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
+    if (enrollmentStateNeedsPayment(state)) {
       redirect(`${returnTo}?error=payment-required`);
     }
 
@@ -78,24 +65,17 @@ export async function confirmSchoolSupportMembershipAction(
         status: "ACTIVE",
         asbl_validated_at: verifiedAt,
       })
-      .eq("id", membership.id);
+      .eq("id", membership.membership_id);
 
     if (error) {
       redirect(`${returnTo}?error=soutien-confirm`);
     }
-  } else if (isLegacyPending) {
+  } else if (state.derived.is_legacy_pending_asbl) {
     const { settings } = await getAsblSettingsForCurrentYear();
     const feeCents = getSchoolSupportFeeCents(settings);
+    const parentId = state.link.parent_id;
 
-    const { data: link } = await supabase
-      .from("parent_child_links")
-      .select("parent_id")
-      .eq("child_id", childId)
-      .not("verified_at", "is", null)
-      .limit(1)
-      .maybeSingle<{ parent_id: string }>();
-
-    if (!link) {
+    if (!parentId) {
       redirect(`${returnTo}?error=soutien-not-found`);
     }
 
@@ -103,7 +83,7 @@ export async function confirmSchoolSupportMembershipAction(
       .from("memberships")
       .insert({
         child_id: childId,
-        parent_id: link.parent_id,
+        parent_id: parentId,
         school_year: schoolYear,
         plan: "SCHOOL_SUPPORT",
         fee_cents: feeCents,

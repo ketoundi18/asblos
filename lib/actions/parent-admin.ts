@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import {
+  enrollmentStateBlocksAdminValidation,
+} from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import {
   activatePendingSchoolSupportEnrollments,
 } from "@/lib/enrollment/activate-pending-enrollments";
@@ -35,25 +38,13 @@ export async function validateParentLinkAction(
     .single<{ child_id: string }>();
 
   if (link?.child_id) {
-    const membership = await getMembershipForChildCurrentYear(link.child_id);
+    const { state, loadError } = await getChildEnrollmentState(link.child_id);
 
-    if (
-      membership?.status === "AWAITING_PAYMENT" &&
-      membership.fee_cents > 0
-    ) {
-      redirect(`${returnTo}?error=payment-required`);
+    if (loadError?.includes("040_get_child_enrollment_state")) {
+      redirect(`${returnTo}?error=validate`);
     }
 
-    const { data: child } = await supabase
-      .from("children")
-      .select("created_via, enrollment_status")
-      .eq("id", link.child_id)
-      .single<{ created_via: string | null; enrollment_status: string | null }>();
-
-    if (
-      child?.created_via === "PARENT" &&
-      child.enrollment_status === "EN_ATTENTE_PAIEMENT"
-    ) {
+    if (state && enrollmentStateBlocksAdminValidation(state)) {
       redirect(`${returnTo}?error=payment-required`);
     }
   }

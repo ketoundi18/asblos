@@ -48,6 +48,7 @@
 | 39 | `037_upsert_staff_contract_rpc.sql` | Upsert contrat atomique (audit H1) |
 | 40 | `038_membership_on_link_verified.sql` | Adhésion auto à la validation lien parent (I5) |
 | 41 | `039_profiles_select_staff_full.sql` | RLS profils pour staff full (GO F) |
+| 42 | `040_get_child_enrollment_state.sql` | RPC lecture unifiée statuts A+B+C (C1 phase 1) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -124,6 +125,14 @@ SELECT EXISTS (
     AND tablename = 'profiles'
     AND policyname = 'profiles_select_staff_full'
 ) AS migration_039_ok;
+
+-- 040 : RPC lecture unifiée statuts inscription
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.routines
+  WHERE routine_schema = 'public'
+    AND routine_name = 'get_child_enrollment_state'
+) AS migration_040_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

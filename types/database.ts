@@ -1114,6 +1114,10 @@ export type Database = {
         }
         Returns: number
       }
+      get_child_enrollment_state: {
+        Args: { p_child_id: string; p_school_year?: string | null }
+        Returns: Json
+      }
       get_my_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]

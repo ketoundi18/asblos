@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import { applySchoolSupportUpgrade } from "@/lib/membership/apply-school-support-upgrade";
 import { resolveSchoolSupportEnrollmentEligibility } from "@/lib/parent/school-support-eligibility";
 import { guardChildId, guardUuid, isValidUuid } from "@/lib/validations/uuid";
@@ -39,18 +40,21 @@ export async function enrollChildInSchoolSupportAction(
     redirect("/espace-parents/soutien-scolaire?error=link");
   }
 
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state, loadError } = await getChildEnrollmentState(childId);
 
-  const { data: existingEnrollment } = await supabase
-    .from("school_support_enrollments")
-    .select("id")
-    .eq("child_id", childId)
-    .is("cancelled_at", null)
-    .maybeSingle<{ id: string }>();
+  if (loadError?.includes("040_get_child_enrollment_state")) {
+    redirect("/espace-parents/soutien-scolaire?error=enroll");
+  }
+
+  if (!state) {
+    redirect("/espace-parents/soutien-scolaire?error=child");
+  }
+
+  const membership = membershipFromEnrollmentState(state);
 
   const eligibility = resolveSchoolSupportEnrollmentEligibility(
     membership,
-    !!existingEnrollment
+    state.derived.has_program_enrollment
   );
 
   if (!eligibility.allowed) {

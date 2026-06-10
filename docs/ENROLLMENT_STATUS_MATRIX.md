@@ -169,7 +169,8 @@ flowchart TD
 
 | Fichier | Rôle |
 |---------|------|
-| `lib/data/membership-sync.ts` | ~~`inferMembership`~~ supprimé — logique dans trigger **038** |
+| `lib/enrollment/get-child-enrollment-state.ts` | **Lecture RPC** A+B+C + flags dérivés (C1 phase 1) |
+| `lib/enrollment/child-enrollment-state.ts` | Parse JSON + helpers purs |
 | `lib/parent/serenity.ts` | UI parent — lit B, fallback `link.enrollment_status` |
 | `lib/actions/school-support-admin.ts` | `isLegacyPending` — A si B absent |
 | `lib/actions/parent-admin.ts` | Double check paiement B + A |
@@ -182,6 +183,7 @@ flowchart TD
 
 | RPC | Effet sur A / B / C |
 |-----|---------------------|
+| `get_child_enrollment_state` | **Lecture** A + B + C + flags dérivés (040, C1 phase 1) |
 | `create_parent_enrollment_core` | Crée enfant (A), membership (B) — statuts calculés serveur (027) |
 | `sync_enrollment_paid` | A → PAYE… ; B → AWAITING_ASBL (service_role, paiement PAID requis) |
 | `request_school_support_upgrade` | Upgrade plan B (parent) |
@@ -219,7 +221,7 @@ flowchart TD
 | Phase | Livrable |
 |-------|----------|
 | **0** ✅ | Ce document |
-| **1** | RPC / vue `get_child_enrollment_state(child_id, school_year)` — lecture unique |
+| **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
 | **2** | Tous les writers passent par RPC ; A en lecture seule |
 | **3** | Migration drop `children.enrollment_status` ou colonne deprecated |
 
