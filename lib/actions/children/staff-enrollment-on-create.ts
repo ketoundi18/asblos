@@ -10,9 +10,6 @@ import {
 import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
 import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
 import {
-  writeChildEnrollmentLayerAStaff,
-} from "@/lib/enrollment/enrollment-writes";
-import {
   rollbackStaffEnrollmentAttach,
   rollbackStaffMembershipOnly,
 } from "@/lib/enrollment/rollback-staff-enrollment-attach";
@@ -88,19 +85,6 @@ export async function attachStaffEnrollmentOnCreate(
         guardian_email: `Lien parent impossible (${linkError.message}).`,
       },
     };
-  }
-
-  if (quote.enrollmentStatus === "VALIDE") {
-    await writeChildEnrollmentLayerAStaff(supabase, {
-      childId,
-      status: "VALIDE",
-      verifiedAt,
-    });
-  } else if (quote.enrollmentStatus === "EN_ATTENTE_PAIEMENT") {
-    await writeChildEnrollmentLayerAStaff(supabase, {
-      childId,
-      status: "EN_ATTENTE_PAIEMENT",
-    });
   }
 
   const { data: membership, error: membershipError } = await supabase

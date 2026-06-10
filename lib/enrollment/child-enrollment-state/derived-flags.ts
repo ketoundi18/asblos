@@ -45,6 +45,24 @@ export function mapMembershipStatusToEnrollmentStatus(
   }
 }
 
+/** Miroir SQL layer_a_to_membership_status (RPC 045). */
+export function mapEnrollmentStatusToMembershipStatus(
+  status: ChildEnrollmentStatus
+): MembershipStatus | null {
+  switch (status) {
+    case "EN_ATTENTE_PAIEMENT":
+      return "AWAITING_PAYMENT";
+    case "PAYE_EN_ATTENTE_ASBL":
+      return "AWAITING_ASBL";
+    case "VALIDE":
+      return "ACTIVE";
+    case "REFUSE":
+      return "REJECTED";
+    default:
+      return null;
+  }
+}
+
 /** Recalcule les flags dérivés sans appeler la RPC (listes admin, tests). */
 export function deriveEnrollmentFlagsFromLayers(
   snapshot: EnrollmentLayersSnapshot

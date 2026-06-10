@@ -9,7 +9,11 @@ export type {
 } from "@/lib/enrollment/child-enrollment-state/types";
 
 export { parseChildEnrollmentState } from "@/lib/enrollment/child-enrollment-state/parse";
-export { deriveEnrollmentFlagsFromLayers, mapMembershipStatusToEnrollmentStatus } from "@/lib/enrollment/child-enrollment-state/derived-flags";
+export {
+  deriveEnrollmentFlagsFromLayers,
+  mapEnrollmentStatusToMembershipStatus,
+  mapMembershipStatusToEnrollmentStatus,
+} from "@/lib/enrollment/child-enrollment-state/derived-flags";
 export {
   adminLinkReadyToValidate,
   adminLinkWaitingPayment,

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { ChildEnrollmentStatus } from "@/lib/constants/status";
+import { mapEnrollmentStatusToMembershipStatus } from "@/lib/enrollment/child-enrollment-state";
 import {
   type EnrollmentDbClient,
   isEnrollmentTransitionRpcMissing,
@@ -12,6 +13,7 @@ export async function writeChildEnrollmentLayerAStaff(
     childId: string;
     status: ChildEnrollmentStatus;
     verifiedAt?: string | null;
+    schoolYear: string;
   }
 ): Promise<void> {
   const { error: rpcError } = await client.rpc("set_child_enrollment_layer_a_staff", {
@@ -31,6 +33,45 @@ export async function writeChildEnrollmentLayerAStaff(
     )
   ) {
     throw new Error(rpcError.message);
+  }
+
+  if (input.status === "BROUILLON") {
+    await client
+      .from("children")
+      .update({
+        enrollment_status: "BROUILLON",
+        asbl_validated_at: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", input.childId);
+    return;
+  }
+
+  const membershipStatus = mapEnrollmentStatusToMembershipStatus(input.status);
+
+  if (membershipStatus) {
+    const { data: updatedMembership } = await client
+      .from("memberships")
+      .update({
+        status: membershipStatus,
+        asbl_validated_at:
+          membershipStatus === "ACTIVE" ? (input.verifiedAt ?? null) : null,
+      })
+      .eq("child_id", input.childId)
+      .eq("school_year", input.schoolYear)
+      .select("id")
+      .maybeSingle<{ id: string }>();
+
+    if (updatedMembership) {
+      await client
+        .from("children")
+        .update({
+          asbl_validated_at:
+            input.status === "VALIDE" ? (input.verifiedAt ?? null) : null,
+        })
+        .eq("id", input.childId);
+      return;
+    }
   }
 
   await client
@@ -78,10 +119,7 @@ export async function writeStaffActivateChildEnrollment(
 
   await client
     .from("children")
-    .update({
-      enrollment_status: "VALIDE",
-      asbl_validated_at: input.verifiedAt,
-    })
+    .update({ asbl_validated_at: input.verifiedAt })
     .eq("id", input.childId);
 }
 

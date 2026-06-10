@@ -4,10 +4,6 @@ import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment
 import { writeSchoolSupportUpgradeAdmin } from "@/lib/enrollment/enrollment-writes";
 import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
-import type { Database } from "@/types/database";
-
-type ChildEnrollmentStatus =
-  Database["public"]["Enums"]["child_enrollment_status"];
 
 export type SchoolSupportUpgradeResult =
   | { ok: true; needsPayment: boolean; alreadyUpgraded: boolean }
@@ -95,10 +91,8 @@ async function upgradeViaRpc(
 async function upgradeViaAdminClient(
   membershipId: string,
   parentId: string,
-  childId: string,
   feeCents: number,
-  newStatus: MembershipStatus,
-  newEnrollmentStatus: ChildEnrollmentStatus
+  newStatus: MembershipStatus
 ): Promise<{ ok: boolean; detail: string }> {
   try {
     const { createAdminClient } = await import("@/lib/supabase/admin");
@@ -107,10 +101,8 @@ async function upgradeViaAdminClient(
     const result = await writeSchoolSupportUpgradeAdmin(admin, {
       membershipId,
       parentId,
-      childId,
       feeCents,
       membershipStatus: newStatus,
-      enrollmentStatus: newEnrollmentStatus,
     });
 
     if (!result.ok) {
@@ -152,7 +144,6 @@ export async function applySchoolSupportUpgrade(
   const feeCents = getSchoolSupportFeeCents(settings);
   const needsPayment = feeCents > 0;
   const newStatus: MembershipStatus = needsPayment ? "AWAITING_PAYMENT" : "AWAITING_ASBL";
-  const newEnrollmentStatus = needsPayment ? "EN_ATTENTE_PAIEMENT" : "PAYE_EN_ATTENTE_ASBL";
 
   const rpcResult = await upgradeViaRpc(supabase, childId);
   if (!rpcResult.ok && rpcResult.detail !== "rpc_missing") {
@@ -163,10 +154,8 @@ export async function applySchoolSupportUpgrade(
     const adminResult = await upgradeViaAdminClient(
       membership.id,
       parentId,
-      childId,
       feeCents,
-      newStatus,
-      newEnrollmentStatus
+      newStatus
     );
 
     if (!adminResult.ok) {

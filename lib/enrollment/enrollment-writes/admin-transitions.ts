@@ -1,9 +1,6 @@
 import "server-only";
 
-import type {
-  ChildEnrollmentStatus,
-  MembershipStatus,
-} from "@/lib/constants/status";
+import type { MembershipStatus } from "@/lib/constants/status";
 import {
   type EnrollmentDbClient,
   isEnrollmentTransitionRpcMissing,
@@ -14,25 +11,19 @@ export async function writeEnrollmentPaidAwaitingAsbl(
   childId: string,
   membershipId: string | null
 ): Promise<{ ok: boolean; error?: string }> {
-  const { error: childError } = await client
-    .from("children")
-    .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" })
-    .eq("id", childId);
-
-  if (childError) {
-    return { ok: false, error: childError.message };
+  if (!membershipId) {
+    return { ok: false, error: "membership_required" };
   }
 
-  if (membershipId) {
-    const { error: membershipError } = await client
-      .from("memberships")
-      .update({ status: "AWAITING_ASBL" })
-      .eq("id", membershipId)
-      .eq("status", "AWAITING_PAYMENT");
+  const { error: membershipError } = await client
+    .from("memberships")
+    .update({ status: "AWAITING_ASBL" })
+    .eq("id", membershipId)
+    .eq("child_id", childId)
+    .eq("status", "AWAITING_PAYMENT");
 
-    if (membershipError) {
-      return { ok: false, error: membershipError.message };
-    }
+  if (membershipError) {
+    return { ok: false, error: membershipError.message };
   }
 
   return { ok: true };
@@ -65,10 +56,7 @@ export async function writeChildValidatedByAdmin(
 
   await client
     .from("children")
-    .update({
-      enrollment_status: "VALIDE",
-      asbl_validated_at: verifiedAt,
-    })
+    .update({ asbl_validated_at: verifiedAt })
     .eq("id", childId)
     .eq("created_via", "PARENT");
 
@@ -108,12 +96,6 @@ export async function writeChildRejectedByAdmin(
   }
 
   await client
-    .from("children")
-    .update({ enrollment_status: "REFUSE" })
-    .eq("id", childId)
-    .eq("created_via", "PARENT");
-
-  await client
     .from("memberships")
     .update({ status: "REJECTED" })
     .eq("child_id", childId)
@@ -147,10 +129,7 @@ export async function writeChildValidatedAfterSchoolSupportConfirm(
 
   await client
     .from("children")
-    .update({
-      enrollment_status: "VALIDE",
-      asbl_validated_at: input.verifiedAt,
-    })
+    .update({ asbl_validated_at: input.verifiedAt })
     .eq("id", input.childId);
 }
 
@@ -159,10 +138,8 @@ export async function writeSchoolSupportUpgradeAdmin(
   input: {
     membershipId: string;
     parentId: string;
-    childId: string;
     feeCents: number;
     membershipStatus: MembershipStatus;
-    enrollmentStatus: ChildEnrollmentStatus;
   }
 ): Promise<{ ok: boolean; error?: string }> {
   const { data, error } = await client
@@ -181,15 +158,6 @@ export async function writeSchoolSupportUpgradeAdmin(
 
   if (error || !data) {
     return { ok: false, error: error?.message ?? "membership_update_failed" };
-  }
-
-  const { error: childError } = await client
-    .from("children")
-    .update({ enrollment_status: input.enrollmentStatus })
-    .eq("id", input.childId);
-
-  if (childError) {
-    return { ok: false, error: childError.message };
   }
 
   return { ok: true };

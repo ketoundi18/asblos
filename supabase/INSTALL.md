@@ -53,6 +53,7 @@
 | 44 | `042_enrollment_staff_transitions.sql` | RPC transitions staff create/activate/rollback (C1 phase 3) |
 | 45 | `043_parent_enrollment_layer_a.sql` | RPC couche A parent + commentaire deprecated (C1 phase 4 prep) |
 | 46 | `044_enrollment_state_derive_layer_a.sql` | RPC 040 : couche A dérivée depuis memberships (C1 phase 4) |
+| 47 | `045_stop_enrollment_status_double_write.sql` | Stop double-write couche A — memberships seule source d'écriture (C1 étape A) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -169,6 +170,14 @@ SELECT EXISTS (
   WHERE routine_schema = 'public'
     AND routine_name = 'membership_status_to_layer_a'
 ) AS migration_044_ok;
+
+-- 045 : stop double-write enrollment_status (helper layer_a_to_membership_status)
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.routines
+  WHERE routine_schema = 'public'
+    AND routine_name = 'layer_a_to_membership_status'
+) AS migration_045_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

@@ -4,6 +4,7 @@ import {
   enrollmentStateBlocksAdminValidation,
   enrollmentStateIsSchoolSupportPendingConfirm,
   enrollmentStateNeedsPayment,
+  mapEnrollmentStatusToMembershipStatus,
   mapMembershipStatusToEnrollmentStatus,
   parseChildEnrollmentState,
 } from "@/lib/enrollment/child-enrollment-state";
@@ -50,6 +51,20 @@ function buildState(overrides: {
     },
   })!;
 }
+
+describe("mapEnrollmentStatusToMembershipStatus", () => {
+  it("mappe couche A → membership comme la RPC 045", () => {
+    expect(mapEnrollmentStatusToMembershipStatus("EN_ATTENTE_PAIEMENT")).toBe(
+      "AWAITING_PAYMENT"
+    );
+    expect(mapEnrollmentStatusToMembershipStatus("PAYE_EN_ATTENTE_ASBL")).toBe(
+      "AWAITING_ASBL"
+    );
+    expect(mapEnrollmentStatusToMembershipStatus("VALIDE")).toBe("ACTIVE");
+    expect(mapEnrollmentStatusToMembershipStatus("REFUSE")).toBe("REJECTED");
+    expect(mapEnrollmentStatusToMembershipStatus("BROUILLON")).toBeNull();
+  });
+});
 
 describe("mapMembershipStatusToEnrollmentStatus", () => {
   it("mappe membership → couche A comme la RPC 044", () => {

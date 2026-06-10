@@ -2,10 +2,6 @@ import "server-only";
 import type { ServerSupabase } from "@/lib/supabase/server-types";
 import type { EnrollmentQuote } from "@/lib/asbl/fee-utils";
 import type { Database } from "@/types/database";
-import {
-  enrollmentStatusFromQuote,
-  writeParentEnrollmentLayerA,
-} from "@/lib/enrollment/enrollment-writes";
 import { rollbackPartialParentEnrollment } from "@/lib/enrollment/rollback-parent-enrollment";
 
 type GuardianRelation = Database["public"]["Enums"]["guardian_relation"];
@@ -93,7 +89,6 @@ async function createViaSteps(
   input: ParentEnrollmentCoreInput
 ): Promise<ParentEnrollmentCoreResult> {
   const { profileId, quote, schoolYear, child, guardian } = input;
-  const enrollmentStatus = enrollmentStatusFromQuote(quote);
 
   const { data: createdChild, error: childError } = await supabase
     .from("children")
@@ -115,16 +110,6 @@ async function createViaSteps(
   }
 
   const childId = createdChild.id;
-
-  try {
-    await writeParentEnrollmentLayerA(supabase, childId, enrollmentStatus);
-  } catch {
-    await rollbackPartialParentEnrollment(childId);
-    return {
-      ok: false,
-      error: "Impossible d'enregistrer le statut d'inscription. Réessayez.",
-    };
-  }
 
   const { data: createdGuardian, error: guardianError } = await supabase
     .from("guardians")

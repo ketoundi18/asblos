@@ -225,17 +225,17 @@ flowchart TD
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
 | **2** ✅ | Lectures migrées ; writers centralisés dans `enrollment-writes.ts` |
 | **3** ✅ | RPC transitions ✅ ; lectures migrées ; writers centralisés ; **phase 4** = drop `children.enrollment_status` |
-| **4** 🔄 | RPC 040 dérive couche A depuis `memberships` (044) ; drop colonne ensuite |
+| **4** 🔄 | RPC 040 dérive couche A (044) ; stop double-write (045 ✅) ; drop colonne ensuite |
 
 ### Dettes C1 restantes (2026-06)
 
 | Dette | Statut | Fichier / action |
 |-------|--------|------------------|
-| Writers couche A fallback TS | 🔄 | `enrollment-writes/*` (RPC 041/042 + fallback direct) |
-| Création parent fallback | ✅ | `create-parent-enrollment-core` → `writeParentEnrollmentLayerA` |
-| Création parent RPC | ✅ | `create_parent_enrollment_core` (026/027) — chemin principal |
-| Colonne `children.enrollment_status` | 🔄 phase 4 | Lecture dérivée via 044 ; drop après writers 100 % RPC |
-| RPC parent `set_child_enrollment_layer_a_parent` | ✅ 043 | `writeParentEnrollmentLayerA` |
+| Writers couche A fallback TS | 🔄 | `enrollment-writes/*` — membership only (045) ; BROUILLON staff garde colonne |
+| Création parent fallback | ✅ | `createViaSteps` → membership direct ; plus de `writeParentEnrollmentLayerA` |
+| Création parent RPC | ✅ | `create_parent_enrollment_core` (027/045) — sans `enrollment_status` insert |
+| Colonne `children.enrollment_status` | 🔄 phase 4 | Lecture dérivée 044 ; écriture stop 045 ; drop étape B |
+| RPC parent `set_child_enrollment_layer_a_parent` | ✅ 045 | Met à jour `memberships` uniquement |
 | Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
 | `staffParentChildEnrollmentBadge(child)` legacy | ✅ | Supprimé — remplacé par `FromState` |
 
