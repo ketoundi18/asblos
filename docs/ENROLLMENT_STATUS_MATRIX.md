@@ -174,8 +174,9 @@ flowchart TD
 | `lib/parent/serenity.ts` | UI parent — lit **RPC** via `getChildEnrollmentStates` |
 | `lib/actions/school-support-admin.ts` | ✅ RPC C1 phase 1 |
 | `lib/actions/parent-admin.ts` | ✅ RPC C1 phase 1 |
-| `lib/payments/sync-enrollment-paid.ts` | RPC puis fallback manuel A+B |
-| `lib/membership/apply-school-support-upgrade.ts` | Met à jour A + B ensemble |
+| `lib/enrollment/enrollment-writes.ts` | Double-write V1 centralisé A+B (validate, reject, paiement, upgrade) |
+| `lib/payments/sync-enrollment-paid.ts` | RPC puis fallback via `enrollment-writes` |
+| `lib/membership/apply-school-support-upgrade.ts` | RPC upgrade + fallback `enrollment-writes` |
 
 ---
 
@@ -222,7 +223,7 @@ flowchart TD
 |-------|----------|
 | **0** ✅ | Ce document |
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
-| **2** | 🔄 Lectures migrées (serenity, paiement, admin, overview, activités, file soutien) ; writers encore en double-write A+B |
+| **2** | 🔄 Lectures migrées ; writers centralisés dans `enrollment-writes.ts` (RPC SQL phase 3) |
 | **3** | Migration drop `children.enrollment_status` ou colonne deprecated |
 
 **Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.

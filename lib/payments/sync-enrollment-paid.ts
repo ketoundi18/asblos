@@ -1,4 +1,6 @@
 import "server-only";
+
+import { writeEnrollmentPaidAwaitingAsbl } from "@/lib/enrollment/enrollment-writes";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function hasConfirmedMembershipPayment(
@@ -60,26 +62,5 @@ export async function syncEnrollmentPaid(
     return { ok: false, error: "payment_not_confirmed" };
   }
 
-  const { error: childError } = await admin
-    .from("children")
-    .update({ enrollment_status: "PAYE_EN_ATTENTE_ASBL" })
-    .eq("id", childId);
-
-  if (childError) {
-    return { ok: false, error: childError.message };
-  }
-
-  if (membershipId) {
-    const { error: membershipError } = await admin
-      .from("memberships")
-      .update({ status: "AWAITING_ASBL" })
-      .eq("id", membershipId)
-      .eq("status", "AWAITING_PAYMENT");
-
-    if (membershipError) {
-      return { ok: false, error: membershipError.message };
-    }
-  }
-
-  return { ok: true };
+  return writeEnrollmentPaidAwaitingAsbl(admin, childId, membershipId);
 }

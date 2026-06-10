@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { writeSchoolSupportUpgradeAdmin } from "@/lib/enrollment/enrollment-writes";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
 import type { Database } from "@/types/database";
 
@@ -37,7 +39,8 @@ async function verifyParentLink(
 async function readMembershipAfterUpgrade(
   childId: string
 ): Promise<MembershipRow | null> {
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state } = await getChildEnrollmentState(childId);
+  const membership = state ? membershipFromEnrollmentState(state) : null;
   if (!membership) return null;
   return {
     id: membership.id,
@@ -101,28 +104,18 @@ async function upgradeViaAdminClient(
     const { createAdminClient } = await import("@/lib/supabase/admin");
     const admin = createAdminClient();
 
-    const { data, error } = await admin
-      .from("memberships")
-      .update({
-        plan: "SCHOOL_SUPPORT",
-        fee_cents: feeCents,
-        status: newStatus,
-        asbl_validated_at: null,
-      })
-      .eq("id", membershipId)
-      .eq("parent_id", parentId)
-      .eq("plan", "BASE")
-      .select("id")
-      .maybeSingle<{ id: string }>();
+    const result = await writeSchoolSupportUpgradeAdmin(admin, {
+      membershipId,
+      parentId,
+      childId,
+      feeCents,
+      membershipStatus: newStatus,
+      enrollmentStatus: newEnrollmentStatus,
+    });
 
-    if (error || !data) {
-      return { ok: false, detail: error?.message ?? "membership_update_failed" };
+    if (!result.ok) {
+      return { ok: false, detail: result.error ?? "membership_update_failed" };
     }
-
-    await admin
-      .from("children")
-      .update({ enrollment_status: newEnrollmentStatus })
-      .eq("id", childId);
 
     return { ok: true, detail: "" };
   } catch (err) {
@@ -143,7 +136,8 @@ export async function applySchoolSupportUpgrade(
     return { ok: false, code: "link", detail: "Lien parent non validé." };
   }
 
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state } = await getChildEnrollmentState(childId);
+  const membership = state ? membershipFromEnrollmentState(state) : null;
   if (!membership) {
     return { ok: false, code: "membership", detail: "Aucune adhésion pour cette année." };
   }

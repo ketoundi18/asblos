@@ -13,6 +13,10 @@ import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-s
 import {
   activatePendingSchoolSupportEnrollments,
 } from "@/lib/enrollment/activate-pending-enrollments";
+import {
+  writeChildRejectedByAdmin,
+  writeChildValidatedByAdmin,
+} from "@/lib/enrollment/enrollment-writes";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { guardUuid } from "@/lib/validations/uuid";
@@ -62,24 +66,11 @@ export async function validateParentLinkAction(
   }
 
   if (link?.child_id) {
-    await supabase
-      .from("children")
-      .update({
-        enrollment_status: "VALIDE",
-        asbl_validated_at: verifiedAt,
-      })
-      .eq("id", link.child_id)
-      .eq("created_via", "PARENT");
-
-    await supabase
-      .from("memberships")
-      .update({
-        status: "ACTIVE",
-        asbl_validated_at: verifiedAt,
-      })
-      .eq("child_id", link.child_id)
-      .eq("school_year", getCurrentSchoolYear())
-      .in("status", ["AWAITING_ASBL", "AWAITING_PAYMENT"]);
+    await writeChildValidatedByAdmin(supabase, {
+      childId: link.child_id,
+      verifiedAt,
+      schoolYear: getCurrentSchoolYear(),
+    });
 
     await activatePendingSchoolSupportEnrollments(supabase, link.child_id);
 
@@ -138,17 +129,10 @@ export async function rejectParentLinkAction(linkId: string) {
   }
 
   if (link?.child_id) {
-    await supabase
-      .from("children")
-      .update({ enrollment_status: "REFUSE" })
-      .eq("id", link.child_id)
-      .eq("created_via", "PARENT");
-
-    await supabase
-      .from("memberships")
-      .update({ status: "REJECTED" })
-      .eq("child_id", link.child_id)
-      .eq("school_year", getCurrentSchoolYear());
+    await writeChildRejectedByAdmin(supabase, {
+      childId: link.child_id,
+      schoolYear: getCurrentSchoolYear(),
+    });
 
     const ipHash = await getAuditIpHash();
     await logAuditEvent({

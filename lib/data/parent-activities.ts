@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLocalTodayISO } from "@/lib/date-utils";
-import { getMembershipsForParentDashboard } from "@/lib/data/memberships";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import {
-  resolveActivityRegistrationEligibility,
+  resolveActivityRegistrationEligibilityFromState,
   type ActivityRegistrationEligibility,
 } from "@/lib/parent/activity-eligibility";
 import type { Activity, ActivityRegistrationPaymentStatus } from "@/types/activity";
@@ -153,7 +153,7 @@ export async function getParentVerifiedChildrenForRegistration(): Promise<
 
   const { data: children } = await supabase
     .from("children")
-    .select("id, first_name, last_name, enrollment_status, created_via")
+    .select("id, first_name, last_name")
     .in("id", childIds)
     .is("deleted_at", null);
 
@@ -161,19 +161,25 @@ export async function getParentVerifiedChildrenForRegistration(): Promise<
     id: string;
     first_name: string;
     last_name: string;
-    enrollment_status: string | null;
-    created_via: string | null;
   }[];
 
-  const membershipMap = await getMembershipsForParentDashboard();
+  const { states } = await getChildEnrollmentStates(childIds);
 
   return childRows.map((child) => ({
     id: child.id,
     first_name: child.first_name,
     last_name: child.last_name,
-    eligibility: resolveActivityRegistrationEligibility(
-      membershipMap.get(child.id) ?? null,
-      child
-    ),
+    eligibility: (() => {
+      const state = states.get(child.id);
+      if (!state) {
+        return {
+          allowed: false as const,
+          reason: "legacy_pending" as const,
+          message:
+            "L'ASBL doit encore valider le dossier de votre enfant avant l'inscription aux activités.",
+        };
+      }
+      return resolveActivityRegistrationEligibilityFromState(state);
+    })(),
   }));
 }

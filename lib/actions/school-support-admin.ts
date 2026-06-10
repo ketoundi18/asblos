@@ -16,6 +16,7 @@ import {
   activatePendingSchoolSupportEnrollments,
   verifyParentLinkForChild,
 } from "@/lib/enrollment/activate-pending-enrollments";
+import { writeChildValidatedAfterSchoolSupportConfirm } from "@/lib/enrollment/enrollment-writes";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { guardChildId } from "@/lib/validations/uuid";
@@ -99,13 +100,10 @@ export async function confirmSchoolSupportMembershipAction(
     membershipId = inserted.id;
   }
 
-  await supabase
-    .from("children")
-    .update({
-      enrollment_status: "VALIDE",
-      asbl_validated_at: verifiedAt,
-    })
-    .eq("id", childId);
+  await writeChildValidatedAfterSchoolSupportConfirm(supabase, {
+    childId,
+    verifiedAt,
+  });
 
   await verifyParentLinkForChild(supabase, childId, verifiedAt);
   await activatePendingSchoolSupportEnrollments(supabase, childId);
