@@ -15,7 +15,10 @@ export function friendlyLoadError(message: string, audience: FlashAudience): str
     message.includes("migration") ||
     message.includes(".sql") ||
     message.includes("Supabase") ||
-    message.includes("Lance ")
+    message.includes("Lance ") ||
+    message.includes("does not exist") ||
+    message.includes("Could not embed") ||
+    message.includes("relationship")
   ) {
     return audience === "staff"
       ? "Impossible de charger les données. Un réglage technique est peut-être nécessaire — contacte la personne qui gère AsblOS."

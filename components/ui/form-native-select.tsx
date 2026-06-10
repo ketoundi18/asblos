@@ -21,6 +21,10 @@ type FormNativeSelectProps = {
   defaultValue?: string;
   options: Option[];
   placeholder?: string;
+  /** Aucune option présélectionnée — l'utilisateur doit choisir. */
+  startEmpty?: boolean;
+  required?: boolean;
+  disabled?: boolean;
   triggerClassName?: string;
 };
 
@@ -31,15 +35,26 @@ export function FormNativeSelect({
   defaultValue,
   options,
   placeholder = "Choisir…",
+  startEmpty = false,
+  required = false,
+  disabled = false,
   triggerClassName,
 }: FormNativeSelectProps) {
-  const initial = defaultValue ?? options[0]?.value ?? "";
-  const [value, setValue] = useState(initial);
+  const [value, setValue] = useState<string | undefined>(() => {
+    if (startEmpty) {
+      return defaultValue?.trim() ? defaultValue : undefined;
+    }
+    return defaultValue ?? options[0]?.value ?? "";
+  });
 
   return (
     <>
-      <input type="hidden" name={name} value={value} />
-      <Select value={value} onValueChange={setValue}>
+      <input type="hidden" name={name} value={value ?? ""} required={required} />
+      <Select
+        value={value}
+        onValueChange={setValue}
+        disabled={disabled || options.length === 0}
+      >
         <SelectTrigger
           id={id}
           className={cn("h-11 text-base", triggerClassName)}

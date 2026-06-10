@@ -46,6 +46,7 @@ export default async function EquipeHorairesPage({ searchParams }: PageProps) {
     ? {
         memberId: editingContract.user_id,
         memberName: editingContract.full_name,
+        memberRole: editingContract.role,
         hours: Math.floor(editingContract.target_minutes / 60),
         minutes: editingContract.target_minutes % 60,
         workDays: editingContract.work_days,

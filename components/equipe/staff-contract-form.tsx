@@ -12,6 +12,7 @@ import {
 } from "@/lib/data/staff-time/work-days";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormNativeSelect } from "@/components/ui/form-native-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -19,6 +20,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 export type StaffContractFormInitialValues = {
   memberId: string;
   memberName: string;
+  memberRole: ClockableStaffMember["role"];
   hours: number;
   minutes: number;
   workDays: number[];
@@ -29,10 +31,20 @@ type Props = {
   initialValues?: StaffContractFormInitialValues | null;
 };
 
-function SubmitButton({ isEdit }: { isEdit: boolean }) {
+function SubmitButton({
+  isEdit,
+  disabled,
+}: {
+  isEdit: boolean;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full sm:w-auto" disabled={pending}>
+    <Button
+      type="submit"
+      className="w-full sm:w-auto"
+      disabled={pending || disabled}
+    >
       {pending ? (
         <>
           <LoadingSpinner />
@@ -57,6 +69,10 @@ export function StaffContractForm({ members, initialValues = null }: Props) {
   const hoursDefault = initialValues?.hours ?? 4;
   const minutesDefault = initialValues?.minutes ?? 45;
   const workDaysDefault = initialValues?.workDays ?? DEFAULT_STAFF_WORK_DAYS;
+  const memberOptions = members.map((m) => ({
+    value: m.id,
+    label: `${m.full_name} (${ROLE_LABELS[m.role]})`,
+  }));
 
   return (
     <Card id="contract-form">
@@ -86,20 +102,34 @@ export function StaffContractForm({ members, initialValues = null }: Props) {
         >
           <div className="space-y-2">
             <Label htmlFor="member_id">Membre *</Label>
-            <select
-              id="member_id"
-              name="member_id"
-              required
-              defaultValue={initialValues?.memberId ?? ""}
-              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">— Choisir un membre —</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name} ({ROLE_LABELS[m.role]})
-                </option>
-              ))}
-            </select>
+            {members.length === 0 ? (
+              <div className="rounded-md border border-dashed border-amber-500/40 bg-amber-500/5 px-3 py-3 text-sm text-muted-foreground">
+                Aucun travailleur, stagiaire ou bénévole actif.{" "}
+                <Link href="/equipe/membres" className="font-medium text-primary underline-offset-4 hover:underline">
+                  Crée d&apos;abord un membre
+                </Link>{" "}
+                puis reviens ici.
+              </div>
+            ) : isEdit ? (
+              <>
+                <input type="hidden" name="member_id" value={initialValues!.memberId} />
+                <Input
+                  id="member_id"
+                  readOnly
+                  value={`${initialValues!.memberName} (${ROLE_LABELS[initialValues!.memberRole]})`}
+                  className="bg-muted/40"
+                />
+              </>
+            ) : (
+              <FormNativeSelect
+                id="member_id"
+                name="member_id"
+                options={memberOptions}
+                placeholder="— Choisir un membre —"
+                startEmpty
+                required
+              />
+            )}
             {state.fieldErrors.member_id ? (
               <p className="text-sm text-destructive">{state.fieldErrors.member_id}</p>
             ) : null}
@@ -177,7 +207,7 @@ export function StaffContractForm({ members, initialValues = null }: Props) {
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <SubmitButton isEdit={isEdit} />
+            <SubmitButton isEdit={isEdit} disabled={members.length === 0 && !isEdit} />
             {isEdit ? (
               <Button variant="outline" asChild>
                 <Link href="/equipe/horaires">Nouvel objectif</Link>
