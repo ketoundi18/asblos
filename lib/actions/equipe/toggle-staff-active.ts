@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { reportError } from "@/lib/monitoring/report-error";
 import { guardUuid } from "@/lib/validations/uuid";
 
@@ -59,6 +60,7 @@ export async function toggleStaffActiveAction(
     redirect(`${returnTo}?error=db`);
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: nextActive ? "STAFF_ACCOUNT_ACTIVATED" : "STAFF_ACCOUNT_DEACTIVATED",
     entityType: "profiles",
@@ -69,6 +71,7 @@ export async function toggleStaffActiveAction(
       email: member.email,
       full_name: member.full_name,
     },
+    ipHash,
   });
 
   revalidatePath("/equipe/membres");

@@ -11,6 +11,7 @@ import {
   activatePendingSchoolSupportEnrollments,
 } from "@/lib/enrollment/activate-pending-enrollments";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { guardUuid } from "@/lib/validations/uuid";
 
 export async function validateParentLinkAction(
@@ -91,6 +92,7 @@ export async function validateParentLinkAction(
 
     await activatePendingSchoolSupportEnrollments(supabase, link.child_id);
 
+    const ipHash = await getAuditIpHash();
     await logAuditEvent({
       action: "CHILD_VALIDATED",
       entityType: "children",
@@ -98,6 +100,7 @@ export async function validateParentLinkAction(
       actorId: profile.id,
       actorRole: profile.role,
       metadata: { link_id: linkId, source: "parent_admin_validate" },
+      ipHash,
     });
   }
 
@@ -154,6 +157,7 @@ export async function rejectParentLinkAction(linkId: string) {
       .eq("child_id", link.child_id)
       .eq("school_year", getCurrentSchoolYear());
 
+    const ipHash = await getAuditIpHash();
     await logAuditEvent({
       action: "CHILD_REJECTED",
       entityType: "children",
@@ -161,6 +165,7 @@ export async function rejectParentLinkAction(linkId: string) {
       actorId: profile.id,
       actorRole: profile.role,
       metadata: { link_id: linkId },
+      ipHash,
     });
   }
 

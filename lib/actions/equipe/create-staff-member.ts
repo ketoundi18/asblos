@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { createStaffMemberSchema } from "@/lib/validations/staff-member";
 import type { CreateStaffMemberState } from "@/lib/actions/equipe-state";
 
@@ -86,6 +87,7 @@ export async function createStaffMemberAction(
     };
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: "STAFF_ACCOUNT_CREATED",
     entityType: "profiles",
@@ -97,6 +99,7 @@ export async function createStaffMemberAction(
       role,
       full_name: full_name.trim(),
     },
+    ipHash,
   });
 
   revalidatePath("/equipe/membres");

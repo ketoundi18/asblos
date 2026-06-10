@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canClockStaffTime } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { reportError } from "@/lib/monitoring/report-error";
 import { catchUpStaffTimeSettlements } from "@/lib/staff-time/settlement";
 
@@ -59,12 +60,14 @@ export async function startStaffServiceAction() {
     });
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: "STAFF_CLOCK_IN",
     entityType: "staff_time_entries",
     entityId: data.id,
     actorId: profile.id,
     actorRole: profile.role,
+    ipHash,
   });
 
   revalidatePath("/mon-service");
@@ -126,6 +129,7 @@ export async function endStaffServiceAction() {
     redirect("/mon-service?error=service-none");
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: "STAFF_CLOCK_OUT",
     entityType: "staff_time_entries",
@@ -133,6 +137,7 @@ export async function endStaffServiceAction() {
     actorId: profile.id,
     actorRole: profile.role,
     metadata: { ended_at: endedAt },
+    ipHash,
   });
 
   revalidatePath("/mon-service");

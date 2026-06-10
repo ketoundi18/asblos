@@ -10,6 +10,7 @@ import type { ChildFormState } from "@/lib/actions/children-state";
 import { parseMembershipPlan } from "@/lib/asbl/fee-utils";
 import { resolveParentProfileByEmail } from "@/lib/enrollment/resolve-parent-by-email";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import {
   emptyToNull,
   mapFieldErrors,
@@ -144,6 +145,7 @@ export async function createChildAction(
     };
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: "CHILD_CREATED",
     entityType: "children",
@@ -151,6 +153,7 @@ export async function createChildAction(
     actorId: profile.id,
     actorRole: profile.role,
     metadata: { created_via: "STAFF" },
+    ipHash,
   });
 
   if (planField !== null) {

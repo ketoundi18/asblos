@@ -7,6 +7,7 @@ import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 
 export async function updateSchoolSupportFeeAction(formData: FormData) {
   const profile = await requireProfile();
@@ -25,6 +26,7 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
   const school_support_fee_cents = Math.round(euros * 100);
   const schoolYear = getCurrentSchoolYear();
   const supabase = await createClient();
+  const ipHash = await getAuditIpHash();
 
   const { data: existing } = await supabase
     .from("asbl_settings")
@@ -57,6 +59,7 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
         previous_fee_cents: existing.school_support_fee_cents,
         new_fee_cents: school_support_fee_cents,
       },
+      ipHash,
     });
   } else {
     const { data: inserted, error } = await supabase.from("asbl_settings").insert({
@@ -83,6 +86,7 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
         previous_fee_cents: 0,
         new_fee_cents: school_support_fee_cents,
       },
+      ipHash,
     });
   }
 

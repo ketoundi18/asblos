@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { upsertStaffContractSchema } from "@/lib/validations/staff-contract";
 import type { UpsertStaffContractState } from "@/lib/actions/equipe-state";
 
@@ -94,6 +95,7 @@ export async function upsertStaffContractAction(
     redirect(`${RETURN_PATH}?error=contract-save`);
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: isUpdate ? "STAFF_CONTRACT_UPDATED" : "STAFF_CONTRACT_CREATED",
     entityType: "staff_time_contracts",
@@ -106,6 +108,7 @@ export async function upsertStaffContractAction(
       target_minutes: targetMinutes,
       work_days,
     },
+    ipHash,
   });
 
   revalidatePath(RETURN_PATH);
