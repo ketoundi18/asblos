@@ -1,7 +1,39 @@
 # FRICTION LOG — AsblOS
 
 > Journal des blocages réels et de leur résolution.  
-> Dernière mise à jour : 2026-06-06
+> Dernière mise à jour : 2026-06-09
+
+---
+
+## 2026-06 — CSS `layout.css` 404 (page sans style)
+
+**Blocage :** L'app ressemble à un « vieux site sans CSS » — texte brut, pas de couleurs, pas de cartes. Signalé **plusieurs fois** par l'utilisateur ; non détecté lors d'audits code-only.
+
+**Symptôme visible :** HTML OK, classes Tailwind présentes dans le DOM, mais **aucun style appliqué**.
+
+**Cause :** Le fichier `/_next/static/css/app/layout.css` renvoie **404** — dossier `.next/static/css/app/` vide ou cache corrompu. **Ce n'est pas** un bug Tailwind/globals.css en soi.
+
+**Déclencheurs fréquents :**
+1. **Deux serveurs** `next dev` en parallèle (ports 3000 + 3001)
+2. **`npm run build` pendant que `npm run dev` tourne** → mélange prod/dev dans `.next`
+3. Arrêt brutal du serveur sans `dev:stop`
+
+**Résolution :**
+```bash
+npm run dev:stop
+rm -rf .next
+npm run dev:clean
+```
+Puis **Cmd+Shift+R** dans le navigateur sur http://localhost:3000
+
+**Vérification agent (obligatoire avant « c'est bon ») :**
+```bash
+CSS=$(curl -s http://localhost:3000/connexion | grep -oE 'href="(/_next/static/css/[^"]+)"' | head -1 | sed 's/href="//;s/"//')
+curl -s -o /dev/null -w "layout.css: %{http_code} size:%{size_download}\n" "http://localhost:3000${CSS}"
+```
+→ Attendu : `200` et size > 10000 octets.
+
+**Éviter :** Règle permanente `.cursor/rules/agentic.mdc` § Règle CSS ; **prévenir l'utilisateur** après changements layout/fonts/UI ; ne jamais conclure un audit sans ce check si le dev tourne.
 
 ---
 
@@ -123,6 +155,7 @@ npm run test:e2e
 
 | Date | Domaine | Symptôme | Statut |
 |------|---------|----------|--------|
+| 2026-06 | Dev / CSS | layout.css 404 | ⚠️ Process (dev:clean + règle agent) |
 | 2026-06 | Dev / e2e | webpack 6141.js | ✅ Résolu (clean .next) |
 | 2026-06 | Supabase | Migrations manquantes | ⚠️ Process (INSTALL.md) |
 | 2026-06 | Auth / RLS | Signup BENEVOLE | ✅ Résolu (029) |

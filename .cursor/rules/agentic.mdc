@@ -30,3 +30,38 @@ Avant toute modification **large** (nouveau module, refactor, migration SQL, RLS
 - **Permissions** → `lib/auth/permissions.ts` · **Migrations** → ordre `supabase/INSTALL.md`
 - **E2e / dev** : `npm run dev:stop && rm -rf .next` si erreur webpack `6141.js`
 - **Pitch / démo** : checklist `DEMO.md` verte avant présentation ASBL
+
+## Règle CSS (non négociable)
+
+**Symptôme utilisateur :** page « sans style », texte brut, fond blanc/noir — comme un vieux site HTML.
+
+**Cause réelle (presque toujours) :** `layout.css` renvoie **404** — cache `.next` corrompu, pas Tailwind mal configuré.
+
+### Déclencheurs obligatoires
+
+Appliquer cette règle après **toute** modification touchant :
+`app/layout.tsx`, `app/globals.css`, `tailwind.config.ts`, `postcss.config.*`, `lib/fonts.ts`, `app/global-error.tsx`, refonte UI/layout.
+
+### Avant de dire « c'est bon » à l'utilisateur
+
+1. **Lint + typecheck + build** ne suffisent PAS — ils ne prouvent pas que le CSS se charge en dev.
+2. Si le serveur dev tourne, vérifier que le CSS répond **200** :
+   ```bash
+   CSS=$(curl -s http://localhost:3000/connexion | grep -oE 'href="(/_next/static/css/[^"]+)"' | head -1 | sed 's/href="//;s/"//')
+   curl -s -o /dev/null -w "layout.css: %{http_code}\n" "http://localhost:3000${CSS}"
+   ```
+   → Attendu : `200` et taille > 10 Ko. Si **404** ou dossier `.next/static/css/app/` vide → corriger avant de livrer.
+3. **Prévenir explicitement l'utilisateur** si le changement peut corrompre `.next` :
+   > ⚠️ Risque CSS — un seul terminal dev ; ne pas lancer `npm run build` pendant `npm run dev`. Si la page perd ses couleurs : `npm run dev:clean` puis Cmd+Shift+R.
+
+### Résolution standard (ne pas improviser)
+
+```bash
+npm run dev:stop
+rm -rf .next
+npm run dev:clean
+```
+
+**Interdit en dev :** deux `npm run dev` en parallèle ; `npm run build` pendant que le dev tourne.
+
+Voir `FRICTION_LOG.md` → « CSS layout.css 404 ».

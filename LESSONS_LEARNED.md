@@ -1,7 +1,7 @@
 # LESSONS LEARNED — AsblOS
 
 > Mémoire des frictions et apprentissages. Format : **Date | Contexte | Leçon | Action préventive**  
-> Dernière mise à jour : 2026-06-06
+> Dernière mise à jour : 2026-06-09
 
 ---
 
@@ -33,6 +33,7 @@
 | 2026-06 | Tests `/mon-service` skippés | ADMIN ne peut pas pointer — tests utilisaient le mauvais compte | Variable `E2E_CLOCK_STAFF_EMAIL` pour compte TRAVAILLEUR dédié |
 | 2026-06 | Wizard parent bloqué en e2e (étape 1) | Playwright + hydration React : `validateStep1` via refs React fragile | Validation via `getElementById` ; rebuild `.next` propre |
 | 2026-06 | Migrations non appliquées en local | Code déployé ≠ schéma Supabase → messages flash « migration manquante » | [supabase/INSTALL.md](./supabase/INSTALL.md) checklist ; messages F1 explicites |
+| 2026-06 | Page « sans CSS » en dev (layout.css 404) | **Build/lint vert ≠ CSS chargé** ; cache `.next` corrompu par 2 serveurs ou build+dev simultanés | Vérifier HTTP 200 sur `layout.css` ; `npm run dev:clean` ; **prévenir l'utilisateur** après changements layout/fonts — voir règle agentic § CSS |
 
 ---
 
