@@ -13,6 +13,8 @@ import {
   parseMembershipPlan,
 } from "@/lib/enrollment/build-enrollment-quote";
 import { createParentEnrollmentCore } from "@/lib/enrollment/create-parent-enrollment-core";
+import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 
 function parseForm(formData: FormData) {
   return childFormSchema.safeParse({
@@ -134,7 +136,21 @@ export async function createParentEnrollmentAction(
     };
   }
 
-  const { childId } = coreResult;
+  const { childId, membershipId } = coreResult;
+
+  const ipHash = await getAuditIpHash();
+  await logAuditEvent({
+    action: "CHILD_CREATED",
+    entityType: "children",
+    entityId: childId,
+    actorId: profile.id,
+    actorRole: profile.role,
+    metadata: {
+      created_via: "PARENT",
+      membership_id: membershipId,
+    },
+    ipHash,
+  });
 
   revalidateParentEnrollmentPaths();
   return {
