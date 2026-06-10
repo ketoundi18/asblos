@@ -4,7 +4,7 @@ Application web de gestion pour ASBL belges — simple, sécurisée, en françai
 
 ## Prérequis
 
-1. **Node.js 20+** — [https://nodejs.org](https://nodejs.org) (version LTS)
+1. **Node.js 24+** — [https://nodejs.org](https://nodejs.org) (vérifie avec `node -v`)
 2. Un projet **Supabase** (région Francfort recommandée)
 
 ## Installation rapide

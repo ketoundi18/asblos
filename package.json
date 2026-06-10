@@ -2,6 +2,9 @@
   "name": "asblos",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "next dev --port 3000",
     "dev:clean": "bash scripts/dev.sh",
@@ -16,7 +19,8 @@
     "test:e2e:install": "playwright install chromium",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "css:check": "bash scripts/css-check.sh"
+    "css:check": "bash scripts/css-check.sh",
+    "secrets:sync": "bash scripts/sync-github-secrets.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
