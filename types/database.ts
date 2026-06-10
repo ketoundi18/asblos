@@ -246,7 +246,6 @@ export type Database = {
           deleted_at: string | null
           emergency_contact_name: string | null
           emergency_contact_phone: string | null
-          enrollment_status: Database["public"]["Enums"]["child_enrollment_status"]
           first_name: string
           id: string
           image_rights: boolean
@@ -273,7 +272,6 @@ export type Database = {
           deleted_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
-          enrollment_status?: Database["public"]["Enums"]["child_enrollment_status"]
           first_name: string
           id?: string
           image_rights?: boolean
@@ -300,7 +298,6 @@ export type Database = {
           deleted_at?: string | null
           emergency_contact_name?: string | null
           emergency_contact_phone?: string | null
-          enrollment_status?: Database["public"]["Enums"]["child_enrollment_status"]
           first_name?: string
           id?: string
           image_rights?: boolean

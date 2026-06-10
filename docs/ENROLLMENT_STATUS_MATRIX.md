@@ -14,7 +14,7 @@ AsblOS utilise **trois couches de statut** pour le parcours enfant / adhésion /
 
 | Couche | Table / colonne | Rôle métier |
 |--------|-----------------|-------------|
-| **A — Legacy enfant** | `children.enrollment_status` | Statut global enfant (Module 3, pré-014) — encore lu/écrit partout |
+| **A — Legacy enfant** | ~~`children.enrollment_status`~~ (supprimé 046) | Statut dérivé via `memberships` + RPC `get_child_enrollment_state` |
 | **B — Adhésion annuelle** | `memberships.status` + `plan` + `fee_cents` | **Source de vérité cible** pour cotisation et validation ASBL (migration 014+) |
 | **C — Programme soutien** | `school_support_enrollments.status` | Inscription aux **jours / créneaux** d'un programme (Module 4) — indépendant de A/B |
 
@@ -225,16 +225,16 @@ flowchart TD
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
 | **2** ✅ | Lectures migrées ; writers centralisés dans `enrollment-writes.ts` |
 | **3** ✅ | RPC transitions ✅ ; lectures migrées ; writers centralisés ; **phase 4** = drop `children.enrollment_status` |
-| **4** 🔄 | RPC 040 dérive couche A (044) ; stop double-write (045 ✅) ; drop colonne ensuite |
+| **4** ✅ | 044 dérive couche A ; 045 stop double-write ; 046 DROP colonne |
 
 ### Dettes C1 restantes (2026-06)
 
 | Dette | Statut | Fichier / action |
 |-------|--------|------------------|
-| Writers couche A fallback TS | 🔄 | `enrollment-writes/*` — membership only (045) ; BROUILLON staff garde colonne |
-| Création parent fallback | ✅ | `createViaSteps` → membership direct ; plus de `writeParentEnrollmentLayerA` |
-| Création parent RPC | ✅ | `create_parent_enrollment_core` (027/045) — sans `enrollment_status` insert |
-| Colonne `children.enrollment_status` | 🔄 phase 4 | Lecture dérivée 044 ; écriture stop 045 ; drop étape B |
+| Writers couche A fallback TS | ✅ | `enrollment-writes/*` — membership only ; brouillon staff via asbl + delete membership |
+| Création parent fallback | ✅ | `createViaSteps` → membership direct |
+| Création parent RPC | ✅ | `create_parent_enrollment_core` — sans colonne legacy |
+| Colonne `children.enrollment_status` | ✅ 046 | Supprimée — source = `memberships` |
 | RPC parent `set_child_enrollment_layer_a_parent` | ✅ 045 | Met à jour `memberships` uniquement |
 | Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
 | `staffParentChildEnrollmentBadge(child)` legacy | ✅ | Supprimé — remplacé par `FromState` |

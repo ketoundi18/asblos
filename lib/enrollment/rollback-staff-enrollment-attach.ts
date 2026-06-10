@@ -1,6 +1,7 @@
 import "server-only";
 import type { ServerSupabase } from "@/lib/supabase/server-types";
 import { writeStaffResetEnrollmentDraft } from "@/lib/enrollment/enrollment-writes";
+import { getCurrentSchoolYear } from "@/lib/school-year";
 
 /** Annule lien parent + statut inscription si l'adhésion staff échoue après coup. */
 export async function rollbackStaffEnrollmentAttach(
@@ -15,7 +16,7 @@ export async function rollbackStaffEnrollmentAttach(
       .eq("child_id", childId)
       .eq("parent_id", parentId);
 
-    await writeStaffResetEnrollmentDraft(supabase, childId);
+    await writeStaffResetEnrollmentDraft(supabase, childId, getCurrentSchoolYear());
   } catch {
     // Best-effort — l'admin pourra corriger la fiche manuellement
   }

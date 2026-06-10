@@ -54,6 +54,7 @@
 | 45 | `043_parent_enrollment_layer_a.sql` | RPC couche A parent + commentaire deprecated (C1 phase 4 prep) |
 | 46 | `044_enrollment_state_derive_layer_a.sql` | RPC 040 : couche A dérivée depuis memberships (C1 phase 4) |
 | 47 | `045_stop_enrollment_status_double_write.sql` | Stop double-write couche A — memberships seule source d'écriture (C1 étape A) |
+| 48 | `046_drop_children_enrollment_status.sql` | RLS + trigger sans colonne ; DROP `children.enrollment_status` (C1 étape B) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -178,6 +179,15 @@ SELECT EXISTS (
   WHERE routine_schema = 'public'
     AND routine_name = 'layer_a_to_membership_status'
 ) AS migration_045_ok;
+
+-- 046 : colonne children.enrollment_status supprimée
+SELECT NOT EXISTS (
+  SELECT 1
+  FROM information_schema.columns
+  WHERE table_schema = 'public'
+    AND table_name = 'children'
+    AND column_name = 'enrollment_status'
+) AS migration_046_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

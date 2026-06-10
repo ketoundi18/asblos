@@ -39,11 +39,17 @@ export async function writeChildEnrollmentLayerAStaff(
     await client
       .from("children")
       .update({
-        enrollment_status: "BROUILLON",
         asbl_validated_at: null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", input.childId);
+
+    await client
+      .from("memberships")
+      .delete()
+      .eq("child_id", input.childId)
+      .eq("school_year", input.schoolYear)
+      .in("status", ["AWAITING_PAYMENT", "AWAITING_ASBL"]);
     return;
   }
 
@@ -77,7 +83,6 @@ export async function writeChildEnrollmentLayerAStaff(
   await client
     .from("children")
     .update({
-      enrollment_status: input.status,
       asbl_validated_at:
         input.status === "VALIDE" ? (input.verifiedAt ?? null) : null,
     })
@@ -125,7 +130,8 @@ export async function writeStaffActivateChildEnrollment(
 
 export async function writeStaffResetEnrollmentDraft(
   client: EnrollmentDbClient,
-  childId: string
+  childId: string,
+  schoolYear: string
 ): Promise<void> {
   const { error: rpcError } = await client.rpc("reset_child_enrollment_draft_staff", {
     p_child_id: childId,
@@ -147,9 +153,15 @@ export async function writeStaffResetEnrollmentDraft(
   await client
     .from("children")
     .update({
-      enrollment_status: "BROUILLON",
       asbl_validated_at: null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", childId);
+
+  await client
+    .from("memberships")
+    .delete()
+    .eq("child_id", childId)
+    .eq("school_year", schoolYear)
+    .in("status", ["AWAITING_PAYMENT", "AWAITING_ASBL"]);
 }

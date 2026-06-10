@@ -13,7 +13,7 @@ export type ParentEnrollmentCoreInput = {
   profileEmail: string;
   schoolYear: string;
   quote: EnrollmentQuote;
-  child: Omit<ChildInsert, "created_by" | "created_via" | "enrollment_status">;
+  child: Omit<ChildInsert, "created_by" | "created_via">;
   guardian: Omit<GuardianInsert, "child_id">;
 };
 
@@ -96,7 +96,6 @@ async function createViaSteps(
       ...child,
       created_by: profileId,
       created_via: "PARENT",
-      enrollment_status: "BROUILLON",
     })
     .select("id")
     .single<{ id: string }>();
