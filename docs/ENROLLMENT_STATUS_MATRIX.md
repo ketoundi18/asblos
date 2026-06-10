@@ -18,9 +18,9 @@ AsblOS utilise **trois couches de statut** pour le parcours enfant / adhésion /
 | **B — Adhésion annuelle** | `memberships.status` + `plan` + `fee_cents` | **Source de vérité cible** pour cotisation et validation ASBL (migration 014+) |
 | **C — Programme soutien** | `school_support_enrollments.status` | Inscription aux **jours / créneaux** d'un programme (Module 4) — indépendant de A/B |
 
-**État V1 (aujourd'hui)** : B est prioritaire pour paiement et admin **si** une ligne `memberships` existe ; sinon A sert de fallback (`inferMembership`, `isLegacyPending`, dashboard parent `serenity.ts`).
+**État actuel (juin 2026, C1 ✅)** : **`memberships`** = source d’écriture cotisation/validation. Couche A = **vue dérivée** via RPC `get_child_enrollment_state` (plus de colonne SQL). Couche C inchangée.
 
-**État V2 (objectif)** : B seul pour cotisation/validation ; A en lecture seule puis suppression ; C inchangé.
+~~**État V1**~~ · ~~**État V2 (objectif)**~~ — migration C1 terminée (migrations 040→046).
 
 ---
 
@@ -28,25 +28,25 @@ AsblOS utilise **trois couches de statut** pour le parcours enfant / adhésion /
 
 | Contexte | Champ autoritaire | Fallback si absent |
 |----------|-------------------|---------------------|
-| Paiement en ligne parent | `memberships.status` + `fee_cents` | `children.enrollment_status === EN_ATTENTE_PAIEMENT` |
-| Blocage validation admin (`validateParentLinkAction`) | `memberships` (AWAITING_PAYMENT + fee > 0) | `enrollment_status === EN_ATTENTE_PAIEMENT` si `created_via = PARENT` |
-| Confirmation soutien admin (`confirmSchoolSupportMembershipAction`) | `memberships.plan/status` | `enrollment_status === PAYE_EN_ATTENTE_ASBL` (`isLegacyPending`) |
-| Dashboard parent (étapes sérénité) | `memberships` en priorité | `link.enrollment_status` (legacy) |
+| Paiement en ligne parent | `memberships.status` + `fee_cents` | RPC `get_child_enrollment_state` (legacy sans membership) |
+| Blocage validation admin | `memberships` ou RPC `derived.blocks_admin_validation` | idem |
+| Confirmation soutien admin | `memberships.plan/status` | `derived.is_legacy_pending_asbl` |
+| Dashboard parent (étapes sérénité) | RPC `get_child_enrollment_state` | — |
 | Éligibilité choix créneaux parent | `memberships` | trigger **038** si lien validé sans ligne B |
-| Affichage liste admin / paiements | `memberships` | sync + mapping depuis A |
+| Affichage liste admin / paiements | RPC ou `memberships` | — |
 | Inscription programme (jours) | `school_support_enrollments.status` | — (nécessite adhésion SCHOOL_SUPPORT côté B) |
 
 **Règle d'or pour tout nouveau code :**
 
-1. Lire **`memberships`** en premier (année courante via `getCurrentSchoolYear()`).
-2. N'écrire **`children.enrollment_status`** que si une action existante le fait déjà en parallèle (double-write V1).
-3. Ne jamais déduire la cotisation uniquement depuis A si B existe.
+1. Lire **`get_child_enrollment_state`** ou **`memberships`** (année courante via `getCurrentSchoolYear()`).
+2. **Ne plus** lire/écrire `children.enrollment_status` (colonne supprimée 046).
+3. Ne jamais déduire la cotisation sans passer par B ou la RPC.
 
 ---
 
-## 3. Couche A — `children.enrollment_status`
+## 3. Couche A — statut enfant (vue dérivée, enum `child_enrollment_status`)
 
-Enum SQL : `child_enrollment_status`
+> **Plus de colonne SQL** depuis migration **046**. Valeurs exposées dans `layer_a.enrollment_status` par la RPC 040.
 
 | Valeur | Label métier | Signification |
 |--------|--------------|---------------|
@@ -56,14 +56,12 @@ Enum SQL : `child_enrollment_status`
 | `VALIDE` | Membre actif | Enfant validé par l'ASBL |
 | `REFUSE` | Refusé | Dossier refusé |
 
-**Écriture typique :**
+**Écriture (via memberships + RPC) :**
 
-- RPC `create_parent_enrollment_core` (027) — calcule statut depuis plan + tarif
-- `validateParentLinkAction` → `VALIDE`
-- `rejectParentLinkAction` → `REFUSE`
-- `sync_enrollment_paid` (webhook Mollie) → `PAYE_EN_ATTENTE_ASBL`
-- Staff création enfant → `VALIDE` ou `EN_ATTENTE_PAIEMENT`
-- Rollback staff → `BROUILLON`
+- RPC `create_parent_enrollment_core` (027/045) — enfant + lien + membership
+- RPC `activate_child_enrollment_admin` / `reject_*` (041)
+- RPC `sync_enrollment_paid` — après paiement Mollie
+- RPC staff 042 — brouillon = clear `asbl_validated_at` + delete membership pending
 
 ---
 
@@ -81,10 +79,10 @@ Enum SQL : `membership_status` · Plan : `membership_plan` (`BASE` | `SCHOOL_SUP
 
 **Cas `AWAITING_PAYMENT` + `fee_cents = 0` :** pas de blocage paiement (traité comme « pas de paiement en ligne ») — voir tests `school-support-eligibility.test.ts`.
 
-### Mapping A ↔ B (référence migration 014)
+### Mapping A ↔ B (référence — helpers SQL 044/045)
 
-| `children.enrollment_status` | `memberships.status` | Notes |
-|------------------------------|----------------------|-------|
+| Couche A (dérivée) | `memberships.status` | Notes |
+|--------------------|----------------------|-------|
 | `EN_ATTENTE_PAIEMENT` | `AWAITING_PAYMENT` | Plan SCHOOL_SUPPORT, fee > 0 |
 | `PAYE_EN_ATTENTE_ASBL` | `AWAITING_ASBL` | Après paiement ou si gratuit |
 | `VALIDE` | `ACTIVE` | `asbl_validated_at` renseigné |
@@ -95,7 +93,7 @@ Enum SQL : `membership_status` · Plan : `membership_plan` (`BASE` | `SCHOOL_SUP
 
 - RPC `create_parent_enrollment_core` (027) — crée enfant + lien + membership en une transaction
 - RPC `sync_enrollment_paid` — après paiement Mollie confirmé
-- `validateParentLinkAction` / `confirmSchoolSupportMembershipAction` — double-write A + B
+- `validateParentLinkAction` / `confirmSchoolSupportMembershipAction` — RPC 041 + membership
 - `applySchoolSupportUpgrade` — upgrade BASE → SCHOOL_SUPPORT
 
 **Pansement runtime (supprimé — I5 ✅) :**
@@ -209,9 +207,9 @@ flowchart TD
 
 ## 11. Dettes connues (ne pas aggraver)
 
-1. **Double modèle A + B** — chaque feature « inscription » doit toucher les deux ou une RPC.
-2. **`isLegacyPending`** — enfants sans ligne `memberships` mais A = PAYE_EN_ATTENTE_ASBL.
-3. ~~**`syncMissingMembershipsForCurrentParent`**~~ — résolu migration 038 (trigger lien validé).
+1. ~~**Double modèle A + B**~~ — résolu C1 ✅ (memberships + RPC).
+2. **`isLegacyPending`** — rare sans membership ; géré par RPC + paiements confirmés.
+3. ~~**`syncMissingMembershipsForCurrentParent`**~~ — résolu migration 038.
 4. **`allowed: true` jamais atteint** dans `resolveSchoolSupportEnrollmentEligibility` pour ACTIVE — flux toujours via `choose_days`.
 5. **Noms legacy** — `serenity.ts` = dashboard parent (renommage prévu DM-4).
 
@@ -239,20 +237,19 @@ flowchart TD
 | Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
 | `staffParentChildEnrollmentBadge(child)` legacy | ✅ | Supprimé — remplacé par `FromState` |
 
-**Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.
+**Critère de fin V2 :** ✅ atteint (juin 2026) — zéro lecture/écriture métier de colonne `enrollment_status` ; zéro `syncMissing*` runtime.
 
 ---
 
 ## 13. Checklist nouveau développement
 
-- [ ] Quelle couche je modifie (A, B, C) ?
-- [ ] Si cotisation / validation → **`memberships`** + année scolaire
+- [ ] Quelle couche je modifie (A dérivée, B, C) ?
+- [ ] Si cotisation / validation → **`memberships`** + année scolaire (ou RPC transition)
 - [ ] Si jours soutien → **`school_support_enrollments`**
-- [ ] Double-write A+B encore requis en V1 ?
-- [ ] RPC existante applicable (`create_parent_enrollment_core`, `sync_enrollment_paid`) ?
+- [ ] RPC existante applicable (`get_child_enrollment_state`, `create_parent_enrollment_core`, …) ?
 - [ ] Test Vitest sur la règle métier (`lib/asbl/fee-utils.test.ts`, `school-support-eligibility.test.ts`)
 - [ ] Pas de nouveau `infer*` / `sync*` sans ticket I5/C1
 
 ---
 
-*Maintenu avec le code sur `main`. Dernière révision : 2026-06-11.*
+*Maintenu avec le code sur `main`. Dernière révision : 2026-06-12 (C1 terminé).*
