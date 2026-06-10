@@ -2,13 +2,14 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import {
   hasFlashParams,
   resolveFlashToast,
   stripFlashParams,
   type FlashAudience,
 } from "@/lib/messages/flash-messages";
+import { showFlashToast } from "@/lib/messages/show-flash-toast";
+import { buildToastDedupeKey } from "@/lib/messages/toast-dedupe";
 
 export function FlashToastHandler() {
   const searchParams = useSearchParams();
@@ -35,13 +36,14 @@ export function FlashToastHandler() {
     });
 
     if (flash) {
-      if (flash.type === "success") {
-        toast.success(flash.title, { description: flash.description, duration: 5000 });
-      } else if (flash.type === "info") {
-        toast.info(flash.title, { description: flash.description, duration: 5000 });
-      } else {
-        toast.error(flash.title, { description: flash.description, duration: 6000 });
-      }
+      const key = buildToastDedupeKey([
+        pathname,
+        search,
+        flash.type,
+        flash.title,
+        flash.description,
+      ]);
+      showFlashToast(flash, key);
     }
 
     const cleanUrl = stripFlashParams(pathname, search);

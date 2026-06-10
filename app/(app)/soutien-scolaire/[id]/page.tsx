@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveFlashToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 const DAYS = [
   { value: 1, label: "Lundi" },
@@ -34,14 +36,27 @@ const DAYS = [
 
 export default async function ProgrammeSoutienDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ success?: string; error?: string; detail?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const profile = await getCurrentProfile();
   if (!profile || !canManageActivities(profile.role)) {
     redirect("/");
   }
+
+  const flash =
+    query.success || query.error
+      ? resolveFlashToast({
+          success: query.success,
+          error: query.error,
+          detail: query.detail,
+          audience: "staff",
+        })
+      : null;
 
   const program = await getStaffSchoolSupportProgramById(id);
   if (!program) notFound();
@@ -97,6 +112,8 @@ export default async function ProgrammeSoutienDetailPage({
           {PROGRAM_STATUS_LABELS[program.status]}
         </Badge>
       </div>
+
+      {flash ? <ServerNoticeToast flash={flash} /> : null}
 
       {program.description ? (
         <p className="text-muted-foreground">{program.description}</p>

@@ -61,6 +61,7 @@ export default defineConfig({
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? baseURL,
       ALLOW_PAYMENT_SIMULATION: process.env.ALLOW_PAYMENT_SIMULATION ?? "true",
+      CRON_SECRET: process.env.CRON_SECRET ?? "",
     },
   },
 });

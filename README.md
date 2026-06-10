@@ -1,81 +1,95 @@
 # AsblOS
 
-Application web de gestion pour ASBL belges — simple, sécurisée, en français. 
+Application web de gestion pour ASBL belges — simple, sécurisée, en français.
 
 ## Prérequis
 
 1. **Node.js 20+** — [https://nodejs.org](https://nodejs.org) (version LTS)
-2. Un projet **Supabase** (région Francfort)
+2. Un projet **Supabase** (région Francfort recommandée)
 
-## Installation
-
-### 1. Installer les dépendances
+## Installation rapide
 
 ```bash
 cd ~/Projects/asblos
 npm install
-```
-
-### 2. Configurer les variables d'environnement
-
-Copie le fichier d'exemple :
-
-```bash
 cp .env.local.example .env.local
+# Remplis .env.local avec tes clés Supabase
+npm run dev:clean
 ```
 
-Ouvre `.env.local` et remplis avec tes valeurs Supabase :
+Ouvre [http://localhost:3000](http://localhost:3000).
 
+### Base de données
+
+Applique les migrations SQL dans l'ordre : **[supabase/INSTALL.md](./supabase/INSTALL.md)** (001 → 036).
+
+Crée ensuite un compte **ADMIN** dans Supabase → Authentication → Users, avec App Metadata :
+
+```json
+{"signup_source":"admin","role":"ADMIN"}
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://ton-projet.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=ta_cle_anon_public
-SUPABASE_SERVICE_ROLE_KEY=ta_cle_service_role
-```
 
-### 3. Créer la table profiles dans Supabase
+## Modules disponibles
 
-1. Va dans **Supabase → SQL Editor**
-2. Ouvre le fichier `supabase/migrations/001_profiles.sql`
-3. Copie-colle le contenu et clique **Run**
+| Module | Routes | Rôles |
+|--------|--------|-------|
+| Connexion staff | `/connexion` | Tous staff |
+| Ma journée | `/` | Staff |
+| Enfants | `/enfants` | Staff |
+| Activités + présences | `/activites` | Staff |
+| Planning | `/planning` | Staff |
+| Soutien scolaire | `/soutien-scolaire` | Admin, Travailleur |
+| Paiements | `/paiements` | Admin, Travailleur |
+| Familles & réglages | `/administration` | Admin |
+| Rapports & audit | `/rapports` | Admin |
+| Équipe | `/equipe`, `/equipe/membres`, `/equipe/horaires`, `/equipe/rapport` | Admin |
+| Mon service (pointage) | `/mon-service` | Travailleur, Stagiaire, Bénévole |
+| Espace parents | `/espace-parents` | Parents |
+| Mon compte | `/mon-compte` | Tous |
 
-### 4. Créer ton premier compte ADMIN
+## Présenter à une ASBL
 
-1. Supabase → **Authentication → Users → Add user**
-2. Entre un e-mail et un mot de passe (8 caractères minimum)
-3. Coche **Auto Confirm User**
-4. Dans **App Metadata** (pas User Metadata), colle :
-   ```json
-   {"signup_source":"admin","role":"ADMIN"}
-   ```
-   **`role` doit être une valeur exacte de l'enum** (majuscules, sans faute) :
-   `ADMIN` · `TRAVAILLEUR` · `BENEVOLE` · `STAGIAIRE` — sinon le trigger Supabase **échoue** et le compte n'est pas créé.
-5. Clique **Create user**
+Checklist et scénario 30 min : **[DEMO.md](./DEMO.md)**
 
-> **Important (migration 029)** : sans `app_metadata.signup_source = "admin"`, la création du compte est **refusée** (protection contre l'inscription publique staff). Les parents passent par `/espace-parents/inscription` uniquement.
-
-6. Vérifie dans **Table Editor → profiles** que le rôle est bien **ADMIN**
-
-### 5. Lancer l'application
+## Tests
 
 ```bash
-npm run dev
+npm run typecheck
+npm run lint
+npm run test:e2e -- e2e/demo-smoke.spec.ts
 ```
 
-Ouvre [http://localhost:3000](http://localhost:3000) dans ton navigateur.
-
-## Module 1 — Ce qui fonctionne
-
-- Page de connexion en français
-- 4 rôles : ADMIN, TRAVAILLEUR, STAGIAIRE, BENEVOLE
-- Protection de toutes les routes (middleware)
-- Menu adapté au rôle
-- Déconnexion
+Variables e2e : voir `.env.local.example` (`E2E_STAFF_EMAIL`, `E2E_PARENT_EMAIL`, …).
 
 ## Stack
 
 - Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS + shadcn/ui
-- Supabase (Auth + Database)
+- Supabase (Auth + Database + RLS)
 - Zod + Server Actions
+- Playwright (e2e)
+- Sentry (prod, optionnel)
 
+## Documentation projet
+
+| Fichier | Contenu |
+|---------|---------|
+| [CONSTITUTION.md](./CONSTITUTION.md) | Règles fondamentales (mission, limites, DoD) |
+| [DECISIONS.md](./DECISIONS.md) | Registre des décisions architecture |
+| [LESSONS_LEARNED.md](./LESSONS_LEARNED.md) | Apprentissages & patterns à éviter |
+| [FRICTION_LOG.md](./FRICTION_LOG.md) | Journal des blocages et résolutions |
+| [DEMO.md](./DEMO.md) | Parcours démo vendable |
+| [supabase/INSTALL.md](./supabase/INSTALL.md) | Migrations SQL ordonnées |
+| [DATA_DICTIONARY.md](./DATA_DICTIONARY.md) | Schéma données |
+| [BRAND_BRIEF.md](./BRAND_BRIEF.md) | Charte visuelle |
+| [JOURNAL_DE_BORD.md](./JOURNAL_DE_BORD.md) | Bugs & correctifs |
+| [EVOLUTION_SESSIONS.md](./EVOLUTION_SESSIONS.md) | Historique des livraisons |
+
+## Scripts utiles
+
+```bash
+npm run dev:clean    # Un seul serveur, cache .next vidé
+npm run dev:stop     # Arrête le serveur local
+npm run gen:types    # Regénère types/database.ts depuis Supabase
+```

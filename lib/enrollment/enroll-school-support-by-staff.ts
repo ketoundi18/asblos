@@ -77,14 +77,10 @@ export async function enrollSchoolSupportByStaff(
 
   if (enrollError || !enrollment) {
     if (enrollError?.code === "23505" || enrollError?.message.includes("unique")) {
-      return { ok: false, error: "Cet enfant est déjà inscrit à ce programme." };
+      return { ok: false, error: "already_enrolled" };
     }
-    return {
-      ok: false,
-      error:
-        enrollError?.message ??
-        "Impossible d'enregistrer l'inscription au programme.",
-    };
+    console.error("[enroll-school-support]", enrollError?.message);
+    return { ok: false, error: "enroll_failed" };
   }
 
   if (validSlotIds.length > 0) {

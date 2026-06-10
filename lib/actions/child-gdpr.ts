@@ -33,7 +33,12 @@ export async function anonymizeChildAction(
   const { error } = await admin.rpc("anonymize_child", { p_child_id: childId });
 
   if (error) {
-    redirect(`/enfants/${childId}?error=${mapAnonymizeError(error.message)}`);
+    const code = mapAnonymizeError(error.message);
+    const detail =
+      code === "migration_required"
+        ? `&detail=${encodeURIComponent("Migration 028 (anonymisation RGPD) requise dans Supabase.")}`
+        : "";
+    redirect(`/enfants/${childId}?error=${code}${detail}`);
   }
 
   const pseudoLastName = childId.replace(/-/g, "").slice(0, 8).toUpperCase();

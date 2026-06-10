@@ -11,6 +11,8 @@ import {
   CreditCard,
   FileText,
   Settings,
+  Timer,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,11 +25,13 @@ export type StaffNavItem = {
 const ICONS: Record<string, LucideIcon> = {
   "/": LayoutDashboard,
   "/enfants": Users,
+  "/mon-service": Timer,
   "/planning": CalendarDays,
   "/activites": Calendar,
   "/soutien-scolaire": BookOpen,
   "/paiements": CreditCard,
   "/rapports": FileText,
+  "/equipe": UsersRound,
   "/administration": Settings,
 };
 
@@ -54,7 +58,7 @@ export function StaffDesktopNav({ items }: { items: StaffNavItem[] }) {
             className={cn(
               "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-primary/10 text-primary"
+                ? "bg-primary text-primary-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
@@ -84,8 +88,10 @@ export function StaffMobileNav({ items }: { items: StaffNavItem[] }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs transition-colors",
-                active ? "text-primary" : "text-muted-foreground hover:text-primary"
+                "flex min-h-[44px] min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-xs font-medium transition-colors",
+                active
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               )}
             >
               <Icon className="h-5 w-5" aria-hidden />

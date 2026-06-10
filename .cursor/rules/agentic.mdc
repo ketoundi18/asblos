@@ -1,0 +1,32 @@
+---
+description: Mémoire agentique AsblOS — lire avant toute modification large
+alwaysApply: true
+---
+
+# Agentic Engineering — AsblOS
+
+Avant toute modification **large** (nouveau module, refactor, migration SQL, RLS, rôles), lire **dans l'ordre** :
+
+1. `CONSTITUTION.md` — mission, valeurs, limites absolues, Definition of Done
+2. `DECISIONS.md` — décisions déjà actées (ne pas re-débattre sans raison)
+3. `LESSONS_LEARNED.md` — bugs récurrents, patterns à éviter
+4. `FRICTION_LOG.md` — blocages passés et comment les éviter
+
+## Après chaque session significative
+
+| Événement | Fichier à mettre à jour |
+|-----------|-------------------------|
+| Livraison / fin de session | `EVOLUTION_SESSIONS.md` |
+| Bug signalé ou corrigé | `JOURNAL_DE_BORD.md` |
+| Blocage résolu | `FRICTION_LOG.md` |
+| Apprentissage réutilisable | `LESSONS_LEARNED.md` |
+| Décision structurante | `DECISIONS.md` |
+
+## Rappels agents (non négociables)
+
+- **Pas de commit** sans `GO commit` explicite de l'utilisateur
+- **Scope minimal** — corriger le problème demandé, pas refactoriser à côté
+- **Jamais** assouplir RLS « pour débloquer un test »
+- **Permissions** → `lib/auth/permissions.ts` · **Migrations** → ordre `supabase/INSTALL.md`
+- **E2e / dev** : `npm run dev:stop && rm -rf .next` si erreur webpack `6141.js`
+- **Pitch / démo** : checklist `DEMO.md` verte avant présentation ASBL

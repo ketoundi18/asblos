@@ -163,7 +163,7 @@ export async function createChildAction(
     revalidatePath("/administration");
 
     const warning = enrollmentResult.enrollmentWarning
-      ? `?warning=${encodeURIComponent(enrollmentResult.enrollmentWarning)}`
+      ? `?warning=${enrollmentResult.enrollmentWarning}`
       : "";
 
     redirect(`/enfants/${child.id}${warning}`);

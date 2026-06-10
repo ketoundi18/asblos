@@ -13,7 +13,17 @@ export type AuditAction =
   | "PAYMENT_PAID"
   | "PAYMENT_FAILED"
   | "MEMBERSHIP_ACTIVATED"
-  | "ASBL_SETTINGS_UPDATED";
+  | "ASBL_SETTINGS_UPDATED"
+  | "STAFF_CLOCK_IN"
+  | "STAFF_CLOCK_OUT"
+  | "STAFF_TIME_SETTLEMENT"
+  | "STAFF_TIME_ADJUSTMENT"
+  | "STAFF_ACCOUNT_CREATED"
+  | "STAFF_ACCOUNT_ACTIVATED"
+  | "STAFF_ACCOUNT_DEACTIVATED"
+  | "STAFF_CONTRACT_CREATED"
+  | "STAFF_CONTRACT_UPDATED"
+  | "PASSWORD_CHANGED";
 
 export type AuditEntityType =
   | "children"
@@ -21,7 +31,10 @@ export type AuditEntityType =
   | "memberships"
   | "profiles"
   | "parent_child_links"
-  | "asbl_settings";
+  | "asbl_settings"
+  | "staff_time_entries"
+  | "staff_time_ledger"
+  | "staff_time_contracts";
 
 export type LogAuditInput = {
   action: AuditAction;

@@ -2,7 +2,146 @@
 
 > Mise à jour **stricte** en fin de chaque session de travail.  
 > Chaque entrée compare l'état **avant → après** la session, avec preuves (fichiers, migrations).  
-> **Dernière mise à jour :** 2026-06-09 — `main` @ `d4f713a`
+> **Dernière mise à jour :** 2026-06-06 — Phase **6** polish (présentation / démo)
+
+---
+
+## Session 2026-06-06 — Phase 6 : Polish présentation
+
+**Contexte :** GO phase 6 — rendre l'app présentable (pas de pitch avant checklist démo).
+
+### Livré
+
+| Domaine | Fichiers |
+|---------|----------|
+| Fix messages migration | `lib/messages/flash-error-messages.ts`, `flash-load-errors.ts` |
+| Dashboard Mon service dégradé | `lib/data/staff-time/get-my-service-dashboard.ts` |
+| UX solde (texte nuit) | `app/(app)/mon-service/page.tsx` |
+| UX rapport (solde actuel) | `app/(app)/equipe/rapport/page.tsx` |
+| Skeleton loading | `app/(app)/mon-service/loading.tsx` |
+| E2e smoke démo | `e2e/demo-smoke.spec.ts` |
+| Doc install migrations | `supabase/INSTALL.md` |
+| Guide démo 30 min | `DEMO.md` |
+| README à jour | `README.md` |
+
+### Prochaine étape
+
+Déployer une **instance démo en ligne** + données réalistes + valider [DEMO.md](./DEMO.md) checklist.
+
+---
+
+## Session 2026-06-06 — GO équipe : création comptes staff par admin
+
+### Livré
+
+| Domaine | Fichiers |
+|---------|----------|
+| Hub équipe | `app/(app)/equipe/page.tsx` |
+| Membres | `app/(app)/equipe/membres/page.tsx` |
+| Formulaire + liste | `components/equipe/*` |
+| Actions | `lib/actions/equipe/create-staff-member.ts`, `toggle-staff-active.ts` |
+| Data | `lib/data/equipe/get-staff-members.ts` |
+| Nav admin | `/equipe` desktop + mobile |
+| Audit | `STAFF_ACCOUNT_CREATED`, `ACTIVATED`, `DEACTIVATED` |
+
+### Prochaine étape
+
+**`GO phase 3`** — objectifs horaires admin.
+
+---
+
+## Session 2026-06-06 — Phase 2 : Horaires & pointage (MVP `/mon-service`)
+
+**Contexte :** GO phase 2 — pointage mobile Commencer / Terminer.
+
+### Livré
+
+| Domaine | Fichiers |
+|---------|----------|
+| Page pointage | `app/(app)/mon-service/page.tsx`, `loading.tsx` |
+| UI | `components/staff/time/service-clock-card.tsx`, `service-elapsed-timer.tsx`, `service-history-list.tsx`, `service-balance-badge.tsx` |
+| Data | `lib/data/staff-time/*` |
+| Actions | `lib/actions/staff-time.ts` + audit `STAFF_CLOCK_IN` / `STAFF_CLOCK_OUT` |
+| Permissions | `canClockStaffTime()` dans `lib/auth/permissions.ts` |
+| Nav | `/mon-service` desktop + mobile (TRAVAILLEUR, STAGIAIRE, BENEVOLE) |
+| Flash | `service-started`, `service-ended`, `service-open`, `service-none` |
+| E2E | `e2e/staff-mon-service.spec.ts` |
+
+### Prochaine étape
+
+**`GO phase 3`** — objectifs horaires admin (`/equipe`).
+
+---
+
+## Session 2026-06-06 — Phase 1 : Horaires & pointage (BDD)
+
+**Contexte :** GO phase 1 — migrations Supabase module compte de flexibilité horaire.
+
+### Livré
+
+| Domaine | Fichiers |
+|---------|----------|
+| Enums + helpers RLS | `031_staff_time_enums_helpers.sql` |
+| Objectifs horaires | `032_staff_time_contracts.sql` |
+| Pointages | `033_staff_time_entries.sql` |
+| Ledger + soldes + clôture | `034_staff_time_ledger_balances.sql` |
+| Types TS | `types/database.ts` |
+| Audit (préparation phase 2+) | `lib/audit/log-audit.ts`, `audit-labels.ts` |
+
+### RPC clôture (service role uniquement)
+
+- `settle_staff_time_day(user_id, date)` — delta avec tolérance
+- `settle_staff_time_all_for_date(date)` — batch cron (jour précédent par défaut)
+
+### Action manuelle requise
+
+Appliquer migrations **031 → 034** dans Supabase SQL Editor (dans l'ordre).
+
+### Prochaine étape
+
+**`GO phase 2`** — `/mon-service` (Commencer / Terminer).
+
+---
+
+## Session 2026-06-06 — Phase 0 : Horaires & pointage (cadrage validé)
+
+**Contexte :** Architecture « compte de flexibilité horaire » pour TRAVAILLEUR, STAGIAIRE, BÉNÉVOLE. **Aucun code** — décisions actées avant migration 031.
+
+### Décisions verrouillées (GO phase 0)
+
+| Sujet | Décision |
+|-------|----------|
+| **Nom module (UI)** | Compte de flexibilité horaire |
+| **Route staff** | `/mon-service` (pointage + solde + historique) |
+| **Route admin** | `/equipe` (membres, objectifs, soldes, rapport mensuel) |
+| **Distinction** | `/planning` reste le planning **enfants** (activités + soutien) — inchangé |
+| **Qui pointe** | TRAVAILLEUR, STAGIAIRE, BENEVOLE — **pas ADMIN** en V1 |
+| **Fuseau** | `Europe/Brussels` |
+| **Objectif V1** | **DAILY** (ex. 4h45/jour) — mode WEEKLY en V2 |
+| **Tolérance** | **5 min/jour** — écart ≤ 5 min → delta solde = 0 |
+| **Calcul delta** | Si \|écart\| > tolérance : `delta = écart_brut − signe(écart) × tolérance` |
+| **Plafond crédit** | **+480 min** (+8 h) par contrat |
+| **Plafond débit** | **−240 min** (−4 h) → alerte admin au-delà |
+| **Bénévoles** | Solde négatif **informatif seulement** (pas de « dette » pénalisante) |
+| **Clôture journalière** | **Minuit** (cron 01h00 Europe/Brussels) + recalcul au 1er pointage du lendemain si jour non clôturé |
+| **Récup V1** | **Implicite** — moins d’heures un jour consomme le solde ; pas de bouton « demander récup » |
+| **Tables prévues** | `staff_time_contracts`, `staff_time_entries`, `staff_time_ledger`, `staff_time_balances` |
+| **Migrations** | 031 → 034 (contrats, pointages, ledger, balances + RLS) |
+| **Audit** | `STAFF_CLOCK_IN`, `STAFF_CLOCK_OUT`, `STAFF_TIME_SETTLEMENT`, `STAFF_TIME_ADJUSTMENT` |
+| **Rapport mensuel V1** | Écran admin + export CSV — **pas d’email auto** (V2) |
+
+### Plan phases (après phase 0)
+
+1. **Phase 1** — BDD (migrations 031–034, RLS, types)
+2. **Phase 2** — Pointage MVP `/mon-service`
+3. **Phase 3** — Objectifs horaires admin
+4. **Phase 4** — Moteur solde + affichage travailleur
+5. **Phase 5** — Rapport mensuel admin
+6. **Phase 6** — Polish (e2e, Sentry, doc)
+
+### Prochaine étape (phase 0)
+
+~~**`GO phase 1`**~~ — ✅ fait (voir session Phase 1 ci-dessus).
 
 ---
 

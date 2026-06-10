@@ -106,6 +106,7 @@ jobs:
           E2E_PARENT_PASSWORD: ${{ secrets.E2E_PARENT_PASSWORD }}
           E2E_STAFF_EMAIL: ${{ secrets.E2E_STAFF_EMAIL }}
           E2E_STAFF_PASSWORD: ${{ secrets.E2E_STAFF_PASSWORD }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: npm run test:e2e
 
       - name: Upload Playwright report

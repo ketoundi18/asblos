@@ -4,6 +4,7 @@ import { isStaffRole } from "@/lib/auth/roles";
 import { isStaffLimitedAccess } from "@/lib/auth/permissions";
 import { getCommandCenter } from "@/lib/data/command-center";
 import { CommandCenterView } from "@/components/staff/command-center-view";
+import { PageHeader } from "@/components/ui/page-header";
 import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
 import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
@@ -19,18 +20,14 @@ export default async function MaJourneePage() {
   const limited = isStaffLimitedAccess(profile.role);
   const data = await getCommandCenter(profile.role);
 
+  const title = firstName ? `Bonjour, ${firstName}` : "Ma journée";
+  const description = limited
+    ? "Les activités du jour et les présences — en un coup d'œil."
+    : "Ce qui demande votre attention aujourd'hui, classé par priorité.";
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">
-          {firstName ? `Bonjour, ${firstName}` : "Ma journée"}
-        </h1>
-        <p className="text-muted-foreground">
-          {limited
-            ? "Voici les activités du jour — marquez les présences en un clic."
-            : "Voici ce qui demande votre attention aujourd'hui."}
-        </p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader eyebrow="Ma journée" title={title} description={description} />
 
       {data.loadError ? (
         <ServerNoticeToast flash={resolveLoadErrorToast(data.loadError, "staff")} />

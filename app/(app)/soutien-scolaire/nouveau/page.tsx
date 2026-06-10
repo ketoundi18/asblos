@@ -9,12 +9,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { resolveFlashToast } from "@/lib/messages/flash-messages";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
-export default async function NouveauProgrammeSoutienPage() {
+type PageProps = {
+  searchParams: Promise<{ success?: string; error?: string; detail?: string }>;
+};
+
+export default async function NouveauProgrammeSoutienPage({ searchParams }: PageProps) {
   const profile = await getCurrentProfile();
   if (!profile || !canManageActivities(profile.role)) {
     redirect("/");
   }
+
+  const params = await searchParams;
+  const flash =
+    params.success || params.error
+      ? resolveFlashToast({
+          success: params.success,
+          error: params.error,
+          detail: params.detail,
+          audience: "staff",
+        })
+      : null;
 
   return (
     <div className="space-y-6">
@@ -31,6 +48,8 @@ export default async function NouveauProgrammeSoutienPage() {
           Ex. « Soutien scolaire primaire » — vous ajouterez les créneaux ensuite.
         </p>
       </div>
+
+      {flash ? <ServerNoticeToast flash={flash} /> : null}
 
       <Card>
         <CardHeader>

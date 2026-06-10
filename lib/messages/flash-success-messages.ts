@@ -99,6 +99,47 @@ const SUCCESS_MESSAGES: Record<string, FlashToast> = {
     title: "Présence enregistrée",
     description: "C'est sauvegardé. Passez à l'enfant suivant.",
   },
+  "service-started": {
+    type: "success",
+    title: "Service commencé",
+    description: "Bon courage ! N'oublie pas de terminer en fin de journée.",
+  },
+  "service-ended": {
+    type: "success",
+    title: "Service terminé",
+    description: "Tes heures sont enregistrées. Merci pour aujourd'hui.",
+  },
+  "staff-created": {
+    type: "success",
+    title: "Compte créé",
+    description:
+      "Le membre peut se connecter tout de suite. Communique-lui le mot de passe temporaire — il pourra le changer dans Mon compte.",
+  },
+  "staff-activated": {
+    type: "success",
+    title: "Compte réactivé",
+    description: "La personne peut à nouveau se connecter.",
+  },
+  "staff-deactivated": {
+    type: "success",
+    title: "Compte désactivé",
+    description: "La personne ne peut plus se connecter.",
+  },
+  "password-changed": {
+    type: "success",
+    title: "Mot de passe modifié",
+    description: "Ton nouveau mot de passe est actif. Garde-le pour toi.",
+  },
+  "contract-created": {
+    type: "success",
+    title: "Objectif défini",
+    description: "L'objectif horaire est enregistré. Il sera visible dès la prochaine connexion.",
+  },
+  "contract-updated": {
+    type: "success",
+    title: "Objectif mis à jour",
+    description: "L'ancien objectif est clôturé et le nouveau est actif.",
+  },
   anonymized: {
     type: "success",
     title: "Fiche anonymisée",

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 function SkeletonBar({ className }: { className?: string }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn("rounded-md bg-muted/70", className)}
       aria-hidden
     />
   );

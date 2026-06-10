@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, Clock, Lock } from "lucide-react";
 import type { ChildSerenityView, SerenityStep, SerenityStepState } from "@/lib/parent/serenity";
+import { StatusPill } from "@/components/ui/status-pill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -71,13 +72,11 @@ export function ParentSerenityCard({ child }: Props) {
     >
       <CardHeader className="space-y-2 pb-3">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold">
+          <h2 className="font-heading text-lg font-semibold">
             {child.firstName} {child.lastName}
           </h2>
           {allDone ? (
-            <span className="shrink-0 rounded-full bg-success-muted px-2.5 py-0.5 text-xs font-medium text-success-foreground">
-              Tout est OK
-            </span>
+            <StatusPill variant="success">Tout est en ordre</StatusPill>
           ) : null}
         </div>
         <p className="text-sm leading-relaxed text-muted-foreground">{child.reassurance}</p>
