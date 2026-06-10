@@ -13,7 +13,6 @@ import {
 } from "@/lib/config/payments";
 import { buildEnrollmentQuote } from "@/lib/enrollment/build-enrollment-quote";
 import { getChildPaymentContext } from "@/lib/data/parent-payments";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
 import { isMollieConfigured } from "@/lib/mollie/client";
 
@@ -28,11 +27,10 @@ export default async function ParentPaiementPage({
   const { error, detail, wizard } = await searchParams;
   const wizardMode = wizard === "1";
   const context = await getChildPaymentContext(childId);
-  const membership = await getMembershipForChildCurrentYear(childId);
 
   if (!context) notFound();
 
-  const plan = membership?.plan ?? "BASE";
+  const plan = context.membership_plan ?? "BASE";
 
   if (context.paid_payment || context.membership_status === "AWAITING_ASBL") {
     if (plan === "SCHOOL_SUPPORT") {
@@ -41,11 +39,11 @@ export default async function ParentPaiementPage({
     redirect("/espace-parents?success=inscription");
   }
 
-  if (membership?.status === "ACTIVE" && plan === "BASE") {
+  if (context.membership_status === "ACTIVE" && plan === "BASE") {
     redirect("/espace-parents");
   }
 
-  if (context.fee_cents <= 0 || context.membership_status !== "AWAITING_PAYMENT") {
+  if (context.fee_cents <= 0 || !context.needs_payment) {
     redirect("/espace-parents");
   }
 
@@ -54,7 +52,7 @@ export default async function ParentPaiementPage({
   const simulationEnabled = isPaymentSimulationEnabled();
   const { settings } = await getAsblSettingsForCurrentYear();
   const quote =
-    membership?.plan === "SCHOOL_SUPPORT"
+    plan === "SCHOOL_SUPPORT"
       ? buildEnrollmentQuote("SCHOOL_SUPPORT", settings)
       : buildEnrollmentQuote("BASE", settings);
 
@@ -72,7 +70,7 @@ export default async function ParentPaiementPage({
       {wizardMode ? (
         <ParentEnrollmentStepper
           steps={buildEnrollmentWizardSteps({
-            schoolSupport: membership?.plan === "SCHOOL_SUPPORT",
+            schoolSupport: plan === "SCHOOL_SUPPORT",
             needsPayment: true,
           })}
           currentKey="paiement"

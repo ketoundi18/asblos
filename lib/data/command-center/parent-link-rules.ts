@@ -1,29 +1,26 @@
 import type { AdminParentLink } from "@/lib/data/parent-admin";
 import type { CommandItem, CommandPriority } from "@/lib/data/command-center/types";
+import {
+  adminLinkReadyToValidate,
+  adminLinkWaitingPayment,
+} from "@/lib/enrollment/child-enrollment-state";
+
+function linkInput(link: AdminParentLink) {
+  return {
+    verified: link.verified,
+    membership_status: link.membership_status,
+    membership_fee_cents: link.membership_fee_cents,
+    child_enrollment_status: link.child_enrollment_status,
+    child_created_via: link.child_created_via,
+  };
+}
 
 export function isReadyToValidate(link: AdminParentLink): boolean {
-  if (link.verified) return false;
-  if (
-    link.membership_status === "AWAITING_PAYMENT" &&
-    (link.membership_fee_cents ?? 0) > 0
-  ) {
-    return false;
-  }
-  if (link.child_enrollment_status === "EN_ATTENTE_PAIEMENT") {
-    return false;
-  }
-  return true;
+  return adminLinkReadyToValidate(linkInput(link));
 }
 
 export function isWaitingPayment(link: AdminParentLink): boolean {
-  if (link.verified) return false;
-  if (
-    link.membership_status === "AWAITING_PAYMENT" &&
-    (link.membership_fee_cents ?? 0) > 0
-  ) {
-    return true;
-  }
-  return link.child_enrollment_status === "EN_ATTENTE_PAIEMENT";
+  return adminLinkWaitingPayment(linkInput(link));
 }
 
 export function linksToItems(

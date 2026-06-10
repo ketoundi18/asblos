@@ -1,5 +1,6 @@
 import type { ParentChildLink } from "@/lib/data/parent";
-import type { Membership } from "@/lib/data/memberships";
+import type { ChildEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { resolveSerenityAsblValidated } from "@/lib/enrollment/child-enrollment-state";
 
 export type SerenityStepState = "done" | "current" | "waiting" | "locked";
 
@@ -30,12 +31,13 @@ function step(
 
 export function buildChildSerenityView(input: {
   link: ParentChildLink;
-  membership: Membership | null;
+  state: ChildEnrollmentState;
   activityCount: number;
-  hasSchoolSupportEnrollment?: boolean;
 }): ChildSerenityView {
-  const { link, membership, activityCount, hasSchoolSupportEnrollment = false } = input;
+  const { link, state, activityCount } = input;
   const firstName = link.first_name;
+  const membership = state.layer_b;
+  const derived = state.derived;
   const steps: SerenityStep[] = [];
 
   steps.push(
@@ -47,11 +49,9 @@ export function buildChildSerenityView(input: {
     })
   );
 
-  const needsPayment =
-    membership?.status === "AWAITING_PAYMENT" && (membership.fee_cents ?? 0) > 0;
-  const legacyNeedsPayment = link.enrollment_status === "EN_ATTENTE_PAIEMENT";
+  const needsPayment = derived.needs_payment;
 
-  if (needsPayment || legacyNeedsPayment) {
+  if (needsPayment) {
     steps.push(
       step({
         id: "fee",
@@ -94,21 +94,10 @@ export function buildChildSerenityView(input: {
     );
   }
 
-  const membershipActive = membership?.status === "ACTIVE";
-  const membershipRejected =
-    membership?.status === "REJECTED" || membership?.status === "CANCELLED";
+  const isAsblValidated = resolveSerenityAsblValidated(state, link.verified);
   const waitingAsblMembership = membership?.status === "AWAITING_ASBL";
 
-  let isAsblValidated = membershipActive;
-  if (!membership) {
-    isAsblValidated =
-      link.verified &&
-      (link.enrollment_status === "VALIDE" || link.enrollment_status === null);
-  } else if (!membershipActive && !waitingAsblMembership && link.verified) {
-    isAsblValidated = link.enrollment_status === "VALIDE";
-  }
-
-  if (membershipRejected || link.enrollment_status === "REFUSE") {
+  if (derived.is_rejected) {
     steps.push(
       step({
         id: "validation",
@@ -126,7 +115,7 @@ export function buildChildSerenityView(input: {
         state: "done",
       })
     );
-  } else if (needsPayment || legacyNeedsPayment) {
+  } else if (needsPayment) {
     steps.push(
       step({
         id: "validation",
@@ -147,9 +136,9 @@ export function buildChildSerenityView(input: {
   }
 
   const wantsSchoolSupport = membership?.plan === "SCHOOL_SUPPORT";
-  const paymentDone = !needsPayment && !legacyNeedsPayment;
+  const paymentDone = !needsPayment;
 
-  if (wantsSchoolSupport && paymentDone && !hasSchoolSupportEnrollment) {
+  if (wantsSchoolSupport && paymentDone && !derived.has_program_enrollment) {
     steps.push(
       step({
         id: "school_support_days",
@@ -163,7 +152,7 @@ export function buildChildSerenityView(input: {
         actionHref: `/espace-parents/choisir-creneaux/${link.child_id}`,
       })
     );
-  } else if (wantsSchoolSupport && hasSchoolSupportEnrollment) {
+  } else if (wantsSchoolSupport && derived.has_program_enrollment) {
     steps.push(
       step({
         id: "school_support_days",
@@ -213,11 +202,11 @@ export function buildChildSerenityView(input: {
   }
 
   const reassurance = buildReassurance(firstName, {
-    needsPayment: needsPayment || legacyNeedsPayment,
+    needsPayment,
     isAsblValidated,
     activityCount,
-    waitingAsbl: !isAsblValidated && !needsPayment && !legacyNeedsPayment,
-    rejected: membershipRejected || link.enrollment_status === "REFUSE",
+    waitingAsbl: !isAsblValidated && !needsPayment && !!waitingAsblMembership,
+    rejected: derived.is_rejected,
   });
 
   return {
@@ -227,7 +216,9 @@ export function buildChildSerenityView(input: {
     steps,
     reassurance,
     activityCount,
-    isFullyActive: isAsblValidated && (activityCount > 0 || steps.find(s => s.id === "activities")?.state === "current"),
+    isFullyActive:
+      isAsblValidated &&
+      (activityCount > 0 || steps.find((s) => s.id === "activities")?.state === "current"),
   };
 }
 

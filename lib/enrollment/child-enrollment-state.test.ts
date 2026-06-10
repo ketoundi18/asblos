@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  deriveEnrollmentFlagsFromLayers,
   enrollmentStateBlocksAdminValidation,
   enrollmentStateIsSchoolSupportPendingConfirm,
   enrollmentStateNeedsPayment,
@@ -48,6 +49,46 @@ function buildState(overrides: {
     },
   })!;
 }
+
+describe("deriveEnrollmentFlagsFromLayers", () => {
+  it("bloque validation admin si cotisation due (membership)", () => {
+    const flags = deriveEnrollmentFlagsFromLayers({
+      enrollment_status: null,
+      created_via: "PARENT",
+      has_membership: true,
+      membership_plan: "SCHOOL_SUPPORT",
+      membership_status: "AWAITING_PAYMENT",
+      membership_fee_cents: 3000,
+    });
+    expect(flags.needs_payment).toBe(true);
+    expect(flags.blocks_admin_validation).toBe(true);
+  });
+
+  it("bloque validation admin legacy parent sans membership", () => {
+    const flags = deriveEnrollmentFlagsFromLayers({
+      enrollment_status: "EN_ATTENTE_PAIEMENT",
+      created_via: "PARENT",
+      has_membership: false,
+      membership_plan: null,
+      membership_status: null,
+      membership_fee_cents: 0,
+    });
+    expect(flags.blocks_admin_validation).toBe(true);
+  });
+
+  it("prêt à valider si payé ou cotisation nulle", () => {
+    const flags = deriveEnrollmentFlagsFromLayers({
+      enrollment_status: "PAYE_EN_ATTENTE_ASBL",
+      created_via: "PARENT",
+      has_membership: true,
+      membership_plan: "SCHOOL_SUPPORT",
+      membership_status: "AWAITING_ASBL",
+      membership_fee_cents: 0,
+    });
+    expect(flags.blocks_admin_validation).toBe(false);
+    expect(flags.needs_payment).toBe(false);
+  });
+});
 
 describe("parseChildEnrollmentState", () => {
   it("retourne null si le payload est invalide", () => {

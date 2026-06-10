@@ -184,3 +184,161 @@ export function enrollmentStateIsSchoolSupportPendingConfirm(
 ): boolean {
   return state.derived.is_school_support_pending_confirm;
 }
+
+/** Snapshot partiel (listes admin) — même règles que la RPC 040. */
+export type EnrollmentLayersSnapshot = {
+  enrollment_status: ChildEnrollmentStatus | null;
+  created_via: string | null;
+  has_membership: boolean;
+  membership_plan: MembershipPlan | null;
+  membership_status: MembershipStatus | null;
+  membership_fee_cents: number;
+};
+
+export type DerivedEnrollmentFlags = Pick<
+  ChildEnrollmentStateDerived,
+  | "needs_payment"
+  | "blocks_admin_validation"
+  | "is_asbl_validated"
+  | "is_rejected"
+  | "is_school_support_pending_confirm"
+  | "is_legacy_pending_asbl"
+  | "effective_plan"
+  | "effective_membership_status"
+>;
+
+function inferEffectiveStatus(
+  enrollmentStatus: ChildEnrollmentStatus | null,
+  membershipStatus: MembershipStatus | null
+): MembershipStatus {
+  if (membershipStatus) return membershipStatus;
+  switch (enrollmentStatus) {
+    case "EN_ATTENTE_PAIEMENT":
+      return "AWAITING_PAYMENT";
+    case "PAYE_EN_ATTENTE_ASBL":
+      return "AWAITING_ASBL";
+    case "VALIDE":
+      return "ACTIVE";
+    case "REFUSE":
+      return "REJECTED";
+    default:
+      return "AWAITING_ASBL";
+  }
+}
+
+/** Recalcule les flags dérivés sans appeler la RPC (listes admin, tests). */
+export function deriveEnrollmentFlagsFromLayers(
+  snapshot: EnrollmentLayersSnapshot
+): DerivedEnrollmentFlags {
+  const {
+    enrollment_status,
+    created_via,
+    has_membership,
+    membership_plan,
+    membership_status,
+    membership_fee_cents,
+  } = snapshot;
+
+  const effective_membership_status = inferEffectiveStatus(
+    enrollment_status,
+    membership_status
+  );
+
+  const needs_payment = has_membership
+    ? membership_status === "AWAITING_PAYMENT" && membership_fee_cents > 0
+    : enrollment_status === "EN_ATTENTE_PAIEMENT";
+
+  const blocks_admin_validation =
+    needs_payment ||
+    (!has_membership &&
+      created_via === "PARENT" &&
+      enrollment_status === "EN_ATTENTE_PAIEMENT");
+
+  const is_legacy_pending_asbl =
+    !has_membership && enrollment_status === "PAYE_EN_ATTENTE_ASBL";
+
+  const is_school_support_pending_confirm =
+    (has_membership &&
+      membership_plan === "SCHOOL_SUPPORT" &&
+      (membership_status === "AWAITING_ASBL" ||
+        (membership_status === "AWAITING_PAYMENT" && membership_fee_cents <= 0))) ||
+    is_legacy_pending_asbl;
+
+  const is_asbl_validated =
+    (has_membership && membership_status === "ACTIVE") ||
+    (!has_membership && enrollment_status === "VALIDE");
+
+  const is_rejected =
+    (has_membership &&
+      (membership_status === "REJECTED" || membership_status === "CANCELLED")) ||
+    enrollment_status === "REFUSE";
+
+  return {
+    needs_payment,
+    blocks_admin_validation,
+    is_asbl_validated,
+    is_rejected,
+    is_school_support_pending_confirm,
+    is_legacy_pending_asbl,
+    effective_plan: membership_plan,
+    effective_membership_status,
+  };
+}
+
+/** Validation ASBL affichée dashboard parent (compat lien vérifié sans membership). */
+export function resolveSerenityAsblValidated(
+  state: ChildEnrollmentState,
+  linkVerified: boolean
+): boolean {
+  if (state.derived.is_asbl_validated) return true;
+  if (!state.derived.has_membership && linkVerified) {
+    const status = state.layer_a.enrollment_status;
+    return status === "VALIDE" || status === null;
+  }
+  if (
+    state.derived.has_membership &&
+    state.layer_b?.status !== "ACTIVE" &&
+    state.layer_b?.status !== "AWAITING_ASBL" &&
+    linkVerified
+  ) {
+    return state.layer_a.enrollment_status === "VALIDE";
+  }
+  return false;
+}
+
+export function adminLinkReadyToValidate(input: {
+  verified: boolean;
+  membership_status: string | null;
+  membership_fee_cents: number | null;
+  child_enrollment_status: string | null;
+  child_created_via: string | null;
+}): boolean {
+  if (input.verified) return false;
+  const flags = deriveEnrollmentFlagsFromLayers({
+    enrollment_status: input.child_enrollment_status as ChildEnrollmentStatus | null,
+    created_via: input.child_created_via,
+    has_membership: input.membership_status != null,
+    membership_plan: null,
+    membership_status: input.membership_status as MembershipStatus | null,
+    membership_fee_cents: input.membership_fee_cents ?? 0,
+  });
+  return !flags.blocks_admin_validation;
+}
+
+export function adminLinkWaitingPayment(input: {
+  verified: boolean;
+  membership_status: string | null;
+  membership_fee_cents: number | null;
+  child_enrollment_status: string | null;
+  child_created_via: string | null;
+}): boolean {
+  if (input.verified) return false;
+  return deriveEnrollmentFlagsFromLayers({
+    enrollment_status: input.child_enrollment_status as ChildEnrollmentStatus | null,
+    created_via: input.child_created_via,
+    has_membership: input.membership_status != null,
+    membership_plan: null,
+    membership_status: input.membership_status as MembershipStatus | null,
+    membership_fee_cents: input.membership_fee_cents ?? 0,
+  }).needs_payment;
+}

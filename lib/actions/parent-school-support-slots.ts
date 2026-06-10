@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import { enrollSchoolSupportAtSignup } from "@/lib/enrollment/enroll-school-support-at-signup";
 import {
   parseProgramId,
@@ -54,7 +55,12 @@ export async function saveParentSchoolSupportSlotsAction(
     return { error: "Enfant introuvable pour ce compte.", fieldErrors: {} };
   }
 
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state, loadError } = await getChildEnrollmentState(childId);
+  if (loadError || !state) {
+    return { error: "Impossible de charger l'adhésion.", fieldErrors: {} };
+  }
+
+  const membership = membershipFromEnrollmentState(state);
   if (!membership || membership.plan !== "SCHOOL_SUPPORT") {
     return {
       error: "Cet enfant n'est pas inscrit à la formule soutien scolaire.",

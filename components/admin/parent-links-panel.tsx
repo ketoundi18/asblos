@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AdminParentLink } from "@/lib/data/parent-admin";
+import type { ChildEnrollmentStatus, MembershipStatus } from "@/lib/constants/status";
+import { deriveEnrollmentFlagsFromLayers } from "@/lib/enrollment/child-enrollment-state";
 import { CheckCircle2, XCircle } from "lucide-react";
 
 type ParentLinksPanelProps = {
@@ -78,17 +80,27 @@ export function ParentLinksPanel({
   );
 }
 
+function linkFlags(link: AdminParentLink) {
+  return deriveEnrollmentFlagsFromLayers({
+    enrollment_status: link.child_enrollment_status as ChildEnrollmentStatus | null,
+    created_via: link.child_created_via,
+    has_membership: link.membership_status != null,
+    membership_plan: null,
+    membership_status: link.membership_status as MembershipStatus | null,
+    membership_fee_cents: link.membership_fee_cents ?? 0,
+  });
+}
+
 function enrollmentStatusLabel(link: AdminParentLink) {
-  if (link.membership_status === "AWAITING_PAYMENT" && (link.membership_fee_cents ?? 0) > 0) {
+  const flags = linkFlags(link);
+
+  if (flags.needs_payment) {
     return { label: "Paiement en attente", variant: "warning" as const };
   }
-  if (link.membership_status === "AWAITING_ASBL") {
-    return { label: "Payé · à valider", variant: "success" as const };
-  }
-  if (link.child_enrollment_status === "EN_ATTENTE_PAIEMENT") {
-    return { label: "Paiement en attente", variant: "warning" as const };
-  }
-  if (link.child_enrollment_status === "PAYE_EN_ATTENTE_ASBL") {
+  if (
+    link.membership_status === "AWAITING_ASBL" ||
+    link.child_enrollment_status === "PAYE_EN_ATTENTE_ASBL"
+  ) {
     return { label: "Payé · à valider", variant: "success" as const };
   }
   return null;
@@ -103,11 +115,7 @@ function LinkCard({
 }) {
   const validate = validateParentLinkAction.bind(null, link.link_id);
   const reject = rejectParentLinkAction.bind(null, link.link_id);
-  const paymentBlocked =
-    (link.membership_status === "AWAITING_PAYMENT" &&
-      (link.membership_fee_cents ?? 0) > 0) ||
-    (link.child_created_via === "PARENT" &&
-      link.child_enrollment_status === "EN_ATTENTE_PAIEMENT");
+  const paymentBlocked = linkFlags(link).blocks_admin_validation;
   const statusInfo = enrollmentStatusLabel(link);
 
   return (

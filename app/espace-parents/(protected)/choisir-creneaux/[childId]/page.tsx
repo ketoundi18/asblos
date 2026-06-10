@@ -7,7 +7,7 @@ import { ParentChooseSlotsForm } from "@/components/parent/parent-choose-slots-f
 import { getCurrentProfile } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { getParentOpenSchoolSupportPrograms } from "@/lib/data/school-support";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 
 export default async function ParentChoisirCreneauxPage({
   params,
@@ -38,23 +38,18 @@ export default async function ParentChoisirCreneauxPage({
 
   if (!child) notFound();
 
-  const membership = await getMembershipForChildCurrentYear(childId);
-  if (!membership || membership.plan !== "SCHOOL_SUPPORT") {
+  const { state, loadError } = await getChildEnrollmentState(childId);
+  if (loadError || !state) redirect("/espace-parents");
+
+  if (state.layer_b?.plan !== "SCHOOL_SUPPORT") {
     redirect("/espace-parents");
   }
 
-  if (membership.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
+  if (state.derived.needs_payment) {
     redirect(`/espace-parents/paiement/${childId}`);
   }
 
-  const { data: existingEnrollment } = await supabase
-    .from("school_support_enrollments")
-    .select("id")
-    .eq("child_id", childId)
-    .is("cancelled_at", null)
-    .maybeSingle<{ id: string }>();
-
-  if (existingEnrollment) {
+  if (state.derived.has_program_enrollment) {
     redirect("/espace-parents/soutien-scolaire?success=soutien-slots");
   }
 

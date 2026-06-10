@@ -171,9 +171,9 @@ flowchart TD
 |---------|------|
 | `lib/enrollment/get-child-enrollment-state.ts` | **Lecture RPC** A+B+C + flags dérivés (C1 phase 1) |
 | `lib/enrollment/child-enrollment-state.ts` | Parse JSON + helpers purs |
-| `lib/parent/serenity.ts` | UI parent — lit B, fallback `link.enrollment_status` |
-| `lib/actions/school-support-admin.ts` | `isLegacyPending` — A si B absent |
-| `lib/actions/parent-admin.ts` | Double check paiement B + A |
+| `lib/parent/serenity.ts` | UI parent — lit **RPC** via `getChildEnrollmentStates` |
+| `lib/actions/school-support-admin.ts` | ✅ RPC C1 phase 1 |
+| `lib/actions/parent-admin.ts` | ✅ RPC C1 phase 1 |
 | `lib/payments/sync-enrollment-paid.ts` | RPC puis fallback manuel A+B |
 | `lib/membership/apply-school-support-upgrade.ts` | Met à jour A + B ensemble |
 
@@ -222,7 +222,7 @@ flowchart TD
 |-------|----------|
 | **0** ✅ | Ce document |
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
-| **2** | Tous les writers passent par RPC ; A en lecture seule |
+| **2** | 🔄 Lectures migrées (serenity, paiement, admin listes) ; writers encore en double-write A+B |
 | **3** | Migration drop `children.enrollment_status` ou colonne deprecated |
 
 **Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.

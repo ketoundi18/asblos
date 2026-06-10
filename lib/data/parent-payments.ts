@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
+import { membershipFromEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentState } from "@/lib/enrollment/get-child-enrollment-state";
 import {
   getAsblSettingsForCurrentYear,
   getSchoolSupportFeeCents,
@@ -14,7 +15,9 @@ export type ChildPaymentContext = {
   last_name: string;
   membership_id: string | null;
   membership_status: string | null;
+  membership_plan: string | null;
   fee_cents: number;
+  needs_payment: boolean;
   pending_payment: PaymentRow | null;
   paid_payment: PaymentRow | null;
 };
@@ -41,7 +44,10 @@ export async function getChildPaymentContext(
 
   if (!child) return null;
 
-  const membership = await getMembershipForChildCurrentYear(childId);
+  const { state, loadError } = await getChildEnrollmentState(childId);
+  if (loadError || !state) return null;
+
+  const membership = membershipFromEnrollmentState(state);
 
   let feeCents = membership?.fee_cents ?? 0;
   if (!membership) {
@@ -75,16 +81,15 @@ export async function getChildPaymentContext(
     first_name: child.first_name,
     last_name: child.last_name,
     membership_id: membership?.id ?? null,
-    membership_status: membership?.status ?? null,
+    membership_status: membership?.status ?? state.derived.effective_membership_status,
+    membership_plan: membership?.plan ?? state.derived.effective_plan,
     fee_cents: feeCents,
+    needs_payment: state.derived.needs_payment,
     pending_payment,
     paid_payment,
   };
 }
 
 export function childNeedsMembershipPayment(context: ChildPaymentContext): boolean {
-  if (context.membership_status === "AWAITING_PAYMENT" && context.fee_cents > 0) {
-    return true;
-  }
-  return false;
+  return context.needs_payment;
 }
