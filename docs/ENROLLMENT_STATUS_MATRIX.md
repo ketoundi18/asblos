@@ -234,9 +234,9 @@ flowchart TD
 | Création parent fallback | ✅ | `create-parent-enrollment-core` → `writeParentEnrollmentLayerA` |
 | Création parent RPC | ✅ | `create_parent_enrollment_core` (026/027) — chemin principal |
 | Colonne `children.enrollment_status` | ❌ phase 4 | Migration drop après 100 % RPC |
-| RPC parent `set_child_enrollment_layer_a_parent` | ❌ | Optionnel avant drop colonne |
+| RPC parent `set_child_enrollment_layer_a_parent` | ✅ 043 | `writeParentEnrollmentLayerA` |
 | Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
-| `staffParentChildEnrollmentBadge(child)` legacy | ❌ | Supprimer quand plus d'appelants |
+| `staffParentChildEnrollmentBadge(child)` legacy | ✅ | Supprimé — remplacé par `FromState` |
 
 **Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.
 

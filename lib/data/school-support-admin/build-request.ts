@@ -44,6 +44,6 @@ export function buildSchoolSupportAdminRequest(
       : "Soutien scolaire à confirmer",
     program_title: enrollment?.program_title ?? null,
     slot_labels: enrollment?.slot_labels ?? [],
-    enrollment_status: enrollment?.enrollment_status ?? null,
+    program_enrollment_status: enrollment?.program_enrollment_status ?? null,
   };
 }

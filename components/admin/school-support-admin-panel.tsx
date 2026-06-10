@@ -253,7 +253,7 @@ function RequestCard({
                 Jours souhaités — pas encore indiqués (le parent peut le faire plus tard).
               </p>
             )}
-            {request.enrollment_status === "PENDING" ? (
+            {request.program_enrollment_status === "PENDING" ? (
               <p className="text-xs text-warning-foreground">
                 Inscription programme en attente — sera activée à la confirmation ASBL.
               </p>

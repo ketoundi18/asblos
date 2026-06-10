@@ -51,6 +51,7 @@
 | 42 | `040_get_child_enrollment_state.sql` | RPC lecture unifiée statuts A+B+C (C1 phase 1) |
 | 43 | `041_enrollment_admin_transitions.sql` | RPC transitions admin validate/reject/confirm (C1 phase 3) |
 | 44 | `042_enrollment_staff_transitions.sql` | RPC transitions staff create/activate/rollback (C1 phase 3) |
+| 45 | `043_parent_enrollment_layer_a.sql` | RPC couche A parent + commentaire deprecated (C1 phase 4 prep) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -151,6 +152,14 @@ SELECT EXISTS (
   WHERE routine_schema = 'public'
     AND routine_name = 'activate_child_enrollment_staff'
 ) AS migration_042_ok;
+
+-- 043 : RPC couche A parent (création inscription)
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.routines
+  WHERE routine_schema = 'public'
+    AND routine_name = 'set_child_enrollment_layer_a_parent'
+) AS migration_043_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

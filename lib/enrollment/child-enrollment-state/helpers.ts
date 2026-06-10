@@ -118,34 +118,6 @@ export function staffParentChildEnrollmentBadgeFromState(
   return { text: "Parent", variant: "success" };
 }
 
-export function staffParentChildEnrollmentBadge(child: {
-  created_via?: string | null;
-  enrollment_status?: ChildEnrollmentStatus | null;
-  asbl_validated_at?: string | null;
-}): { text: string; variant: "warning" | "success" } | null {
-  if (child.created_via !== "PARENT") return null;
-
-  const flags = deriveEnrollmentFlagsFromLayers({
-    enrollment_status: child.enrollment_status ?? null,
-    created_via: child.created_via ?? null,
-    has_membership: false,
-    membership_plan: null,
-    membership_status: null,
-    membership_fee_cents: 0,
-  });
-
-  if (flags.needs_payment) {
-    return { text: "Parent · paiement", variant: "warning" };
-  }
-  if (
-    child.enrollment_status === "PAYE_EN_ATTENTE_ASBL" ||
-    !child.asbl_validated_at
-  ) {
-    return { text: "Parent · attente ASBL", variant: "warning" };
-  }
-  return { text: "Parent", variant: "success" };
-}
-
 export function membershipIsSchoolSupportPendingConfirm(membership: Membership): boolean {
   return deriveEnrollmentFlagsFromLayers({
     enrollment_status: null,

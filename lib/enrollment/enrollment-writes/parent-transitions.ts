@@ -2,9 +2,12 @@ import "server-only";
 
 import type { ChildEnrollmentStatus } from "@/lib/constants/status";
 import type { EnrollmentQuote } from "@/lib/asbl/fee-utils";
-import type { EnrollmentDbClient } from "@/lib/enrollment/enrollment-writes/rpc-fallback";
+import {
+  type EnrollmentDbClient,
+  isEnrollmentTransitionRpcMissing,
+} from "@/lib/enrollment/enrollment-writes/rpc-fallback";
 
-/** Couche A à la création parent — RPC dédiée prévue C1 phase 4. */
+/** Couche A à la création parent — préfère RPC 043 quand disponible. */
 export function enrollmentStatusFromQuote(
   quote: EnrollmentQuote
 ): ChildEnrollmentStatus {
@@ -16,6 +19,24 @@ export async function writeParentEnrollmentLayerA(
   childId: string,
   status: ChildEnrollmentStatus
 ): Promise<void> {
+  const { error: rpcError } = await client.rpc("set_child_enrollment_layer_a_parent", {
+    p_child_id: childId,
+    p_status: status,
+  });
+
+  if (!rpcError) {
+    return;
+  }
+
+  if (
+    !isEnrollmentTransitionRpcMissing(
+      rpcError.message,
+      "set_child_enrollment_layer_a_parent"
+    )
+  ) {
+    throw new Error(rpcError.message);
+  }
+
   const { error } = await client
     .from("children")
     .update({ enrollment_status: status })

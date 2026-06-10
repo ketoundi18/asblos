@@ -16,11 +16,11 @@ export type SchoolSupportAdminRequest = {
   status_label: string;
   program_title: string | null;
   slot_labels: string[];
-  enrollment_status: string | null;
+  program_enrollment_status: string | null;
 };
 
 export type SchoolSupportEnrollmentDetails = {
   program_title: string | null;
   slot_labels: string[];
-  enrollment_status: string | null;
+  program_enrollment_status: string | null;
 };

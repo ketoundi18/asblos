@@ -1174,6 +1174,13 @@ export type Database = {
         Args: { p_reference_date: string; p_user_id: string }
         Returns: string
       }
+      set_child_enrollment_layer_a_parent: {
+        Args: {
+          p_child_id: string
+          p_status: Database["public"]["Enums"]["child_enrollment_status"]
+        }
+        Returns: undefined
+      }
       set_child_enrollment_layer_a_staff: {
         Args: {
           p_child_id: string

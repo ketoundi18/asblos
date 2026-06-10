@@ -74,7 +74,7 @@ export async function loadSchoolSupportEnrollmentDetails(
     map.set(enroll.child_id, {
       program_title: enroll.school_support_programs?.title ?? null,
       slot_labels,
-      enrollment_status: enroll.status,
+      program_enrollment_status: enroll.status,
     });
   }
 
