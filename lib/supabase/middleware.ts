@@ -90,13 +90,23 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role, is_active")
       .eq("id", user.id)
       .single<{ role: string; is_active: boolean }>();
 
-    if (profile && profile.is_active === false) {
+    if (profileError || !profile) {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = parentRoute
+        ? "/espace-parents/connexion"
+        : "/connexion";
+      url.searchParams.set("error", profileError ? "session" : "profile");
+      return NextResponse.redirect(url);
+    }
+
+    if (profile.is_active === false) {
       await supabase.auth.signOut();
       const url = request.nextUrl.clone();
       url.pathname = parentRoute
@@ -106,7 +116,7 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    const role = profile?.role;
+    const role = profile.role;
     const isParent = role === "PARENT";
 
     if (isParent) {
@@ -125,7 +135,7 @@ export async function updateSession(request: NextRequest) {
         url.pathname = "/espace-parents";
         return NextResponse.redirect(url);
       }
-    } else if (profile && parentRoute) {
+    } else if (parentRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
       return NextResponse.redirect(url);

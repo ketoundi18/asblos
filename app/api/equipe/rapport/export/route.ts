@@ -7,7 +7,7 @@ import { getStaffMonthlyReport } from "@/lib/data/equipe/get-staff-monthly-repor
 export async function GET(request: Request) {
   const profile = await getCurrentProfile();
 
-  if (!profile || !canExportReports(profile.role)) {
+  if (!profile || !profile.is_active || !canExportReports(profile.role)) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 

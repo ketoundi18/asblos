@@ -1,5 +1,13 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/auth/permissions";
+
+function redirectInactiveProfile(profile: Profile): never {
+  if (profile.role === "PARENT") {
+    redirect("/espace-parents/connexion?error=inactive");
+  }
+  redirect("/connexion?error=inactive");
+}
 
 export async function getCurrentUser() {
   const supabase = await createClient();
@@ -40,11 +48,11 @@ export async function requireProfile(): Promise<Profile> {
   const profile = await getCurrentProfile();
 
   if (!profile) {
-    throw new Error("Profil introuvable");
+    redirect("/connexion");
   }
 
   if (!profile.is_active) {
-    throw new Error("Compte désactivé");
+    redirectInactiveProfile(profile);
   }
 
   return profile;

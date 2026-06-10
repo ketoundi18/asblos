@@ -9,7 +9,7 @@ export async function GET(
 ) {
   const profile = await getCurrentProfile();
 
-  if (!profile || !canManageChildGdpr(profile.role)) {
+  if (!profile || !profile.is_active || !canManageChildGdpr(profile.role)) {
     return NextResponse.json({ error: "Accès refusé." }, { status: 403 });
   }
 

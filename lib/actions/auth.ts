@@ -6,17 +6,22 @@ import { loginSchema } from "@/lib/validations/auth";
 import { z } from "zod";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
+import { safeNameString } from "@/lib/validations/safe-name";
 import type { LoginActionState, ParentSignupState } from "@/lib/actions/auth-state";
 
 const parentSignupSchema = z
   .object({
-    full_name: z.string().min(1, "Ton nom est obligatoire"),
+    full_name: safeNameString("Ton nom"),
     email: z
       .string()
       .trim()
       .email("E-mail invalide")
       .transform((value) => value.toLowerCase()),
-    phone: z.string().min(1, "Ton téléphone est obligatoire"),
+    phone: z
+      .string()
+      .trim()
+      .min(8, "Numéro de téléphone trop court")
+      .max(30, "Numéro de téléphone trop long"),
     password: z.string().min(8, "Minimum 8 caractères"),
     password_confirm: z.string(),
   })
