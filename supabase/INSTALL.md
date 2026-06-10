@@ -49,6 +49,7 @@
 | 40 | `038_membership_on_link_verified.sql` | Adhésion auto à la validation lien parent (I5) |
 | 41 | `039_profiles_select_staff_full.sql` | RLS profils pour staff full (GO F) |
 | 42 | `040_get_child_enrollment_state.sql` | RPC lecture unifiée statuts A+B+C (C1 phase 1) |
+| 43 | `041_enrollment_admin_transitions.sql` | RPC transitions admin validate/reject/confirm (C1 phase 3) |
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -133,6 +134,14 @@ SELECT EXISTS (
   WHERE routine_schema = 'public'
     AND routine_name = 'get_child_enrollment_state'
 ) AS migration_040_ok;
+
+-- 041 : RPC transitions admin (validate / reject / confirm soutien)
+SELECT EXISTS (
+  SELECT 1
+  FROM information_schema.routines
+  WHERE routine_schema = 'public'
+    AND routine_name = 'activate_child_enrollment_admin'
+) AS migration_041_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

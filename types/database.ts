@@ -1114,6 +1114,18 @@ export type Database = {
         }
         Returns: number
       }
+      activate_child_enrollment_admin: {
+        Args: {
+          p_child_id: string
+          p_school_year: string
+          p_verified_at: string
+        }
+        Returns: undefined
+      }
+      confirm_child_enrollment_validated: {
+        Args: { p_child_id: string; p_verified_at: string }
+        Returns: undefined
+      }
       get_child_enrollment_state: {
         Args: { p_child_id: string; p_school_year?: string | null }
         Returns: Json
@@ -1134,6 +1146,10 @@ export type Database = {
       }
       my_parent_child_ids: { Args: never; Returns: string[] }
       my_verified_child_ids: { Args: never; Returns: string[] }
+      reject_child_enrollment_admin: {
+        Args: { p_child_id: string; p_school_year: string }
+        Returns: undefined
+      }
       request_school_support_upgrade: {
         Args: { p_child_id: string }
         Returns: undefined
