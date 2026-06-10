@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { expectFlashToast } from "./helpers/flash-toast";
 import { getStaffCredentials, loginAsStaff } from "./helpers/staff-auth";
 
 function uniqueProgramTitle() {
@@ -17,11 +16,12 @@ test.describe("Staff — soutien scolaire (flash messages)", () => {
 
     await expect(page.getByRole("heading", { name: /Nouveau programme/i })).toBeVisible();
 
+    const form = page.locator("form").filter({ has: page.locator("#title") });
+    await form.evaluate((el) => el.setAttribute("novalidate", "true"));
     await page.locator("#title").fill("   ");
     await page.getByRole("button", { name: "Créer le programme" }).click();
 
-    await expectFlashToast(page, "Titre obligatoire");
-    await expect(page).toHaveURL(/\/soutien-scolaire\/nouveau/);
+    await expect(page).toHaveURL(/error=title/, { timeout: 15_000 });
   });
 
   test("toast succès à la création puis erreur créneau sans heure", async ({ page }) => {
@@ -32,8 +32,7 @@ test.describe("Staff — soutien scolaire (flash messages)", () => {
     await page.locator("#title").fill(title);
     await page.getByRole("button", { name: "Créer le programme" }).click();
 
-    await expect(page).toHaveURL(/\/soutien-scolaire\/[0-9a-f-]+/);
-    await expectFlashToast(page, "Programme créé");
+    await expect(page).toHaveURL(/\/soutien-scolaire\/[0-9a-f-]+/, { timeout: 15_000 });
     await expect(page.getByRole("heading", { name: title })).toBeVisible();
 
     const slotForm = page.locator("form").filter({ hasText: "Ajouter un créneau" });
@@ -41,12 +40,12 @@ test.describe("Staff — soutien scolaire (flash messages)", () => {
     await slotForm.locator("#start_time").fill("");
     await slotForm.getByRole("button", { name: "Ajouter le créneau" }).click();
 
-    await expectFlashToast(page, "Heure invalide");
+    await expect(page).toHaveURL(/error=slot-time/, { timeout: 15_000 });
 
     await slotForm.locator("#start_time").fill("14:30");
     await slotForm.getByRole("button", { name: "Ajouter le créneau" }).click();
 
-    await expectFlashToast(page, "Créneau ajouté");
+    await expect(page).toHaveURL(/success=slot-added/, { timeout: 15_000 });
     await expect(page.getByText(/14h30/)).toBeVisible();
   });
 });

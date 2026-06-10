@@ -113,9 +113,8 @@ export async function staffEnrollChildSchoolSupportAction(
   });
 
   if (!result.ok) {
-    redirect(
-      childPath(childId, `error=soutien-enroll&warning=${encodeURIComponent(result.error)}`)
-    );
+    console.error("[soutien-staff] enroll failed:", result.error);
+    redirect(childPath(childId, "error=soutien-enroll"));
   }
 
   revalidatePath(childPath(childId));

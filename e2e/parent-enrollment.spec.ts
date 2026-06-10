@@ -26,14 +26,16 @@ test.describe("Parcours parent — inscription wizard", () => {
 
     await expect(page.getByRole("heading", { name: /Inscrire un enfant/i })).toBeVisible();
 
-    // Étape 1 — enfant (IDs explicites : l'étape 2 est cachée mais reste dans le DOM)
+    // Étape 1 — enfant (IDs uniques ; l'étape 2 est cachée dans le DOM)
+    await expect(page.getByRole("heading", { name: "Étape 1 — Votre enfant" })).toBeVisible();
     await page.locator("#first_name").fill(firstName);
     await page.locator("#last_name").fill(lastName);
     await page.locator("#birth_date").fill("2015-09-01");
     await page.getByRole("button", { name: /Continuer — Formule/i }).click();
 
-    // Étape 2 — formule BASE (défaut)
-    await expect(page.getByText("Étape 2 — Parent & formule")).toBeVisible();
+    await expect(
+      page.locator('nav[aria-label="Étapes d\'inscription"] li').nth(1).locator(".bg-primary")
+    ).toBeVisible({ timeout: 15_000 });
     await page.getByRole("radio", { name: /Inscription simple à l'ASBL/i }).check();
 
     const phone = page.locator("#guardian_phone");
@@ -68,6 +70,9 @@ test.describe("Parcours parent — inscription wizard", () => {
     await page.locator("#birth_date").fill("2014-03-15");
     await page.getByRole("button", { name: /Continuer — Formule/i }).click();
 
+    await expect(
+      page.locator('nav[aria-label="Étapes d\'inscription"] li').nth(1).locator(".bg-primary")
+    ).toBeVisible({ timeout: 15_000 });
     await page.getByRole("radio", { name: /Inscription \+ soutien scolaire/i }).check();
 
     const phone = page.locator("#guardian_phone");

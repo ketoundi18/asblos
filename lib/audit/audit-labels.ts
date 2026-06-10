@@ -10,6 +10,16 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PAYMENT_FAILED: "Paiement échoué",
   MEMBERSHIP_ACTIVATED: "Adhésion activée",
   ASBL_SETTINGS_UPDATED: "Tarif ASBL modifié",
+  STAFF_CLOCK_IN: "Service commencé",
+  STAFF_CLOCK_OUT: "Service terminé",
+  STAFF_TIME_SETTLEMENT: "Clôture journalière solde",
+  STAFF_TIME_ADJUSTMENT: "Pointage corrigé (admin)",
+  STAFF_ACCOUNT_CREATED: "Compte équipe créé",
+  STAFF_ACCOUNT_ACTIVATED: "Compte équipe réactivé",
+  STAFF_ACCOUNT_DEACTIVATED: "Compte équipe désactivé",
+  STAFF_CONTRACT_CREATED: "Objectif horaire défini",
+  STAFF_CONTRACT_UPDATED: "Objectif horaire modifié",
+  PASSWORD_CHANGED: "Mot de passe modifié",
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {
@@ -19,6 +29,8 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   profiles: "Profil",
   parent_child_links: "Lien parent",
   asbl_settings: "Réglages ASBL",
+  staff_time_entries: "Pointage staff",
+  staff_time_ledger: "Solde flexibilité",
 };
 
 export const AUDIT_ACTION_OPTIONS: { value: AuditAction; label: string }[] = (

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { DevScrollRestore } from "@/components/dev/dev-scroll-restore";
 import { FlashToastHandler } from "@/components/ui/flash-toast-handler";
 import { fontBody, fontVariables } from "@/lib/fonts";
 import "./globals.css";
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="fr" className={fontVariables}>
       <body className={`${fontBody.className} min-h-screen font-sans antialiased`}>
         {children}
+        <DevScrollRestore />
         <Suspense fallback={null}>
           <FlashToastHandler />
         </Suspense>

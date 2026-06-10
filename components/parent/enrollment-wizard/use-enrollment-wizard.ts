@@ -21,7 +21,18 @@ function validateRequiredFields(
   for (const name of names) {
     const el = form.elements.namedItem(name) as HTMLInputElement | null;
     if (!el) continue;
-    if (!el.reportValidity()) {
+
+    if (el.type === "checkbox") {
+      if (el.required && !el.checked) {
+        el.reportValidity();
+        return false;
+      }
+      continue;
+    }
+
+    if (!el.value.trim()) {
+      el.focus();
+      el.reportValidity();
       return false;
     }
   }
@@ -102,18 +113,16 @@ export function useEnrollmentWizard({
   }, [enrollState.fieldErrors, stepKey]);
 
   function validateStep1(): boolean {
-    const form = formRef.current;
-    if (!form) return false;
+    const fieldIds = ["first_name", "last_name", "birth_date"] as const;
 
-    const ok = validateRequiredFields(form, [
-      "first_name",
-      "last_name",
-      "birth_date",
-    ] as const);
-
-    if (!ok) {
-      setLocalValidationError(LOCAL_REQUIRED_MESSAGE);
-      return false;
+    for (const id of fieldIds) {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (!el?.value.trim()) {
+        el?.focus();
+        el?.reportValidity();
+        setLocalValidationError(LOCAL_REQUIRED_MESSAGE);
+        return false;
+      }
     }
 
     setLocalValidationError(null);

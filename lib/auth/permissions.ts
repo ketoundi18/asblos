@@ -77,3 +77,12 @@ export function canViewChildrenList(role: UserRole): boolean {
 export function canViewActivities(role: UserRole): boolean {
   return isStaffFullAccess(role) || isStaffLimitedAccess(role);
 }
+
+/** Pointage horaire — TRAVAILLEUR, STAGIAIRE, BENEVOLE (pas ADMIN en V1). */
+export function canClockStaffTime(role: UserRole): boolean {
+  return (
+    role === "TRAVAILLEUR" ||
+    role === "STAGIAIRE" ||
+    role === "BENEVOLE"
+  );
+}

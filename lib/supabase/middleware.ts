@@ -28,6 +28,8 @@ function isAuthCallback(pathname: string) {
 }
 
 function isPublicApiRoute(pathname: string) {
+  if (pathname.startsWith("/api/cron/")) return true;
+
   return PUBLIC_API_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );

@@ -4,9 +4,11 @@
 
 001 profiles · 004 children · 007/007a parent · 010 enrollment · 023 payments RLS ·
 025 audit · 026 parent flow atomic · 027 security RPC hardening · 028 anonymize_child ·
-029 signup parent + RLS verified_at
+029 signup parent + RLS verified_at · 030 sync enrollment paid ·
+031–034 staff time (contrats, pointages, ledger, balances) ·
+035 staff time security fixes (RLS close, vue rapport)
 
-Prochaine libre : **030+**
+Prochaine libre : **036+**
 
 ## Template RPC sensible (RGPD, paiement, enrollment)
 

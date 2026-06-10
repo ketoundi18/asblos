@@ -34,7 +34,7 @@ export function ParentDesktopNav({ pathname }: { pathname: string }) {
               className={cn(
                 "border-b-2 px-4 py-3 text-sm font-medium transition-colors",
                 active
-                  ? "border-primary text-primary"
+                  ? "border-primary bg-primary/5 text-primary font-semibold"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
@@ -63,8 +63,10 @@ export function ParentMobileNav({ pathname }: { pathname: string }) {
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-medium transition-colors",
-                active ? "text-primary" : "text-muted-foreground hover:text-primary"
+                "flex min-h-[44px] min-w-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl px-2 py-1.5 text-xs font-medium transition-colors",
+                active
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
               )}
             >
               <Icon className="h-5 w-5 shrink-0" aria-hidden />

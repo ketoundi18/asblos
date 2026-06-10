@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { ParentEnrollmentForm } from "@/components/parent/parent-enrollment-form";
+import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import {
   getAsblSettingsForCurrentYear,
@@ -86,19 +87,18 @@ export default async function ParentInscrireEnfantPage({
   }));
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Button asChild variant="ghost" size="sm" className="-ml-2">
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 h-11">
           <Link href="/espace-parents">
             <ArrowLeft className="h-4 w-4" />
             Retour
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold">Inscrire un enfant</h1>
-        <p className="text-muted-foreground">
-          Suivez les étapes pour inscrire votre enfant, choisir la formule et finaliser
-          le paiement si nécessaire.
-        </p>
+        <PageHeader
+          title="Inscrire un enfant"
+          description="Suivez les étapes pour inscrire votre enfant, choisir la formule et finaliser le paiement si nécessaire."
+        />
       </div>
 
       <ParentEnrollmentForm

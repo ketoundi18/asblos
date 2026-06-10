@@ -25,7 +25,7 @@ Next.js 15 App Router · TypeScript strict · Tailwind · shadcn/ui · Supabase 
 ## Deux interfaces
 | Espace | Routes | Utilisateurs |
 |--------|--------|--------------|
-| Staff | `/connexion`, `/`, `/enfants`, `/activites`, `/paiements`, `/rapports`… | ADMIN, TRAVAILLEUR, BÉNÉVOLE, STAGIAIRE |
+| Staff | `/connexion`, `/`, `/enfants`, `/planning`, `/activites`, `/mon-service`, `/equipe`, `/paiements`, `/rapports`… | ADMIN, TRAVAILLEUR, BÉNÉVOLE, STAGIAIRE |
 | Parents | `/espace-parents/inscription`, `/espace-parents/connexion`, `/espace-parents/*` | PARENT uniquement |
 
 PARENT ≠ interface staff. Staff ≠ espace public parents.
@@ -61,6 +61,7 @@ Exigences maintenues :
 - ✅ Soutien scolaire : programmes, créneaux parent, cotisation dédiée
 - ✅ RGPD : anonymisation enfant via RPC `anonymize_child` (028)
 - ✅ CI : lint, typecheck, build, e2e Playwright
+- ⏳ Module **Horaires & pointage** (phase 0 validée) : `/mon-service` + `/equipe` — compte flexibilité horaire
 - ⏳ À renforcer : emails confirmation · Mollie prod complet · rapports avancés · polish UX
 
 ## Conventions code
@@ -85,10 +86,11 @@ Par défaut : plan court → attendre **GO** explicite avant de coder.
 - Après chaque feature : tests manuels + 1–2 améliorations possibles
 
 ## Début de chaque session
-1. `npm run typecheck` + lint (+ build si pas de dev actif)
-2. `.env.local` OK · pas de secrets commités
-3. Test navigateur staff (+ parents si concerné)
-4. Résumé OK / attention
+1. Lire `CONSTITUTION.md` + `DECISIONS.md` si modification large (règle `.cursor/rules/agentic.mdc`)
+2. `npm run typecheck` + lint (+ build si pas de dev actif)
+3. `.env.local` OK · pas de secrets commités
+4. Test navigateur staff (+ parents si concerné)
+5. Résumé OK / attention
 
 ## Journal de bord des bugs
 À chaque bug signalé : créer/mettre à jour une entrée dans `JOURNAL_DE_BORD.md` (numérotation chronologique, format complet, patterns récurrents, statut).
@@ -98,8 +100,9 @@ Format chat obligatoire : **📋 JOURNAL DE BORD - Bug #XX** (voir le fichier po
 - Auth → Email : Sign up ON · Confirm email OFF en dev
 - Nouvelle valeur enum → script séparé (007a) puis reste
 - Rate limit e-mail → user manuel ou attendre · message clair FR
-- Migrations : 001→029 · **007a avant 007** · FIX_lien_parent_lucas si besoin legacy
-- Dernières migrations notables : **028** `anonymize_child` (RGPD) · **029** signup parent + RLS verified_at
+- Migrations : 001→030 · **007a avant 007** · FIX_lien_parent_lucas si besoin legacy
+- Dernières migrations notables : **028** `anonymize_child` (RGPD) · **029** signup parent + RLS · **030** sync enrollment paid
+- Prochaines (GO phase 1) : **031–034** staff time (contrats, pointages, ledger, balances)
 
 ## Definition of Done
 Build OK · erreurs FR · permissions rôle + RLS si nouvelle table · test manuel 3 étapes · migration documentée

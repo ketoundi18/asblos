@@ -24,3 +24,15 @@ export const initialParentSignupState: ParentSignupState = {
   success: false,
   fieldErrors: {},
 };
+
+export type ChangePasswordState = {
+  error: string | null;
+  success: boolean;
+  fieldErrors: Record<string, string>;
+};
+
+export const initialChangePasswordState: ChangePasswordState = {
+  error: null,
+  success: false,
+  fieldErrors: {},
+};

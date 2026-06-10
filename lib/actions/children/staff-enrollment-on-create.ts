@@ -113,10 +113,11 @@ export async function attachStaffEnrollmentOnCreate(
     .single<{ id: string }>();
 
   if (membershipError || !membership) {
-    const detail = membershipError?.message ?? "erreur inconnue";
+    console.error("[staff-enrollment] membership insert failed:", membershipError?.message);
     return {
       fieldErrors: {
-        guardian_email: `Adhésion non enregistrée (${detail}). Lance 022_memberships_staff_insert.sql dans Supabase.`,
+        guardian_email:
+          "Adhésion non enregistrée. Vérifie la migration 022 dans Supabase ou réessaie.",
       },
     };
   }
@@ -132,7 +133,8 @@ export async function attachStaffEnrollmentOnCreate(
     });
 
     if (!enrollResult.ok) {
-      return { enrollmentWarning: enrollResult.error };
+      console.error("[create-child] soutien enroll failed:", enrollResult.error);
+      return { enrollmentWarning: "soutien-partial" };
     }
   }
 

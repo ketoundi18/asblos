@@ -231,6 +231,198 @@ export type Database = {
         };
         Relationships: [];
       };
+      staff_time_contracts: {
+        Row: {
+          id: string;
+          user_id: string;
+          period_type: "DAILY" | "WEEKLY";
+          target_minutes: number;
+          work_days: number[];
+          valid_from: string;
+          valid_until: string | null;
+          tolerance_minutes: number;
+          max_credit_minutes: number;
+          max_debit_minutes: number;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          period_type?: "DAILY" | "WEEKLY";
+          target_minutes: number;
+          work_days?: number[];
+          valid_from?: string;
+          valid_until?: string | null;
+          tolerance_minutes?: number;
+          max_credit_minutes?: number;
+          max_debit_minutes?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          period_type?: "DAILY" | "WEEKLY";
+          target_minutes?: number;
+          work_days?: number[];
+          valid_from?: string;
+          valid_until?: string | null;
+          tolerance_minutes?: number;
+          max_credit_minutes?: number;
+          max_debit_minutes?: number;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_contracts_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_time_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          started_at: string;
+          ended_at: string | null;
+          duration_minutes: number | null;
+          status: "OPEN" | "CLOSED" | "ADJUSTED";
+          note: string | null;
+          adjusted_by: string | null;
+          adjusted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          started_at?: string;
+          ended_at?: string | null;
+          status?: "OPEN" | "CLOSED" | "ADJUSTED";
+          note?: string | null;
+          adjusted_by?: string | null;
+          adjusted_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          started_at?: string;
+          ended_at?: string | null;
+          status?: "OPEN" | "CLOSED" | "ADJUSTED";
+          note?: string | null;
+          adjusted_by?: string | null;
+          adjusted_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_entries_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_time_balances: {
+        Row: {
+          user_id: string;
+          balance_minutes: number;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          balance_minutes?: number;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          balance_minutes?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_balances_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      staff_time_ledger: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind:
+            | "DAILY_SETTLEMENT"
+            | "WEEKLY_SETTLEMENT"
+            | "MANUAL_ADJUSTMENT"
+            | "RECOVERY_REQUEST"
+            | "PERIOD_RESET";
+          delta_minutes: number;
+          balance_after: number;
+          reference_date: string;
+          entry_id: string | null;
+          contract_id: string | null;
+          label: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind:
+            | "DAILY_SETTLEMENT"
+            | "WEEKLY_SETTLEMENT"
+            | "MANUAL_ADJUSTMENT"
+            | "RECOVERY_REQUEST"
+            | "PERIOD_RESET";
+          delta_minutes: number;
+          balance_after: number;
+          reference_date: string;
+          entry_id?: string | null;
+          contract_id?: string | null;
+          label: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?:
+            | "DAILY_SETTLEMENT"
+            | "WEEKLY_SETTLEMENT"
+            | "MANUAL_ADJUSTMENT"
+            | "RECOVERY_REQUEST"
+            | "PERIOD_RESET";
+          delta_minutes?: number;
+          balance_after?: number;
+          reference_date?: string;
+          entry_id?: string | null;
+          contract_id?: string | null;
+          label?: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "staff_time_ledger_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       asbl_settings: {
         Row: {
           id: string;
@@ -756,7 +948,15 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      staff_monthly_flex_report: {
+        Row: {
+          user_id: string | null;
+          month_start: string | null;
+          worked_minutes: number | null;
+          sessions_count: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       get_my_role: {
@@ -805,6 +1005,39 @@ export type Database = {
         };
         Returns: number;
       };
+      is_staff_limited: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_staff_clockable: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      is_staff_time_admin: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      settle_staff_time_day: {
+        Args: {
+          p_user_id: string;
+          p_reference_date: string;
+        };
+        Returns: string | null;
+      };
+      settle_staff_time_all_for_date: {
+        Args: {
+          p_reference_date?: string;
+        };
+        Returns: number;
+      };
+      upsert_staff_contract: {
+        Args: {
+          p_user_id: string;
+          p_target_minutes: number;
+          p_work_days: number[];
+        };
+        Returns: Json;
+      };
       sync_enrollment_paid: {
         Args: {
           p_child_id: string;
@@ -844,6 +1077,14 @@ export type Database = {
         | "DEFERRED"
         | "PAID"
         | "WAIVED";
+      staff_time_period: "DAILY" | "WEEKLY";
+      staff_time_entry_status: "OPEN" | "CLOSED" | "ADJUSTED";
+      staff_time_ledger_kind:
+        | "DAILY_SETTLEMENT"
+        | "WEEKLY_SETTLEMENT"
+        | "MANUAL_ADJUSTMENT"
+        | "RECOVERY_REQUEST"
+        | "PERIOD_RESET";
     };
     CompositeTypes: {
       [_ in never]: never;

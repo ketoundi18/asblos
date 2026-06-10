@@ -13,6 +13,7 @@ import { activityFormSchema } from "@/lib/validations/activity";
 import type { Database } from "@/types/database";
 import type { ActivityFormState } from "@/lib/actions/activities-state";
 import { normalizeTimeForDb } from "@/lib/date-utils";
+import { mapActivityInsertError } from "@/lib/messages/map-staff-action-error";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
@@ -92,13 +93,8 @@ export async function createActivityAction(
     .single<{ id: string }>();
 
   if (error || !activity) {
-    const detail = error?.message ?? "";
-    const needs012 =
-      detail.includes("price_cents") || detail.includes("parent_registration");
     return {
-      error: needs012
-        ? "Lance 012_activity_parent_options.sql dans Supabase, puis réessaie."
-        : `Impossible de créer l'activité${detail ? ` (${detail})` : ""}.`,
+      error: mapActivityInsertError(error?.message),
       fieldErrors: {},
     };
   }

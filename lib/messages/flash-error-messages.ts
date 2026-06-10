@@ -238,9 +238,11 @@ function buildStaffErrorMessages(
     },
     migration_required: {
       type: "error",
-      title: "Migration manquante",
-      description:
-        "Applique la migration 028 (anonymize_child) dans Supabase SQL Editor avant d'anonymiser une fiche.",
+      title: "Fonctionnalité pas encore activée",
+      description: staffDetail(
+        detail,
+        "Une configuration base de données est nécessaire sur cette instance. Contacte la personne qui gère AsblOS."
+      ),
     },
     already_anonymized: {
       type: "error",
@@ -342,6 +344,47 @@ function buildStaffErrorMessages(
         "Le créneau n'a pas pu être ajouté. Vérifie les migrations 017+ dans Supabase."
       ),
     },
+    "service-open": {
+      type: "error",
+      title: "Service déjà en cours",
+      description: "Termine d'abord le service en cours avant d'en commencer un nouveau.",
+    },
+    "service-none": {
+      type: "error",
+      title: "Aucun service en cours",
+      description: "Commence ton service avant de le terminer.",
+    },
+    "staff-self-toggle": {
+      type: "error",
+      title: "Action impossible",
+      description: "Tu ne peux pas désactiver ton propre compte.",
+    },
+    "staff-not-found": {
+      type: "error",
+      title: "Membre introuvable",
+      description: "Recharge la page et réessaie.",
+    },
+    "staff-admin-protected": {
+      type: "error",
+      title: "Compte protégé",
+      description: "Les comptes administrateur ne se désactivent pas depuis ici.",
+    },
+    "contract-member": {
+      type: "error",
+      title: "Membre introuvable",
+      description: "Recharge la page et réessaie.",
+    },
+    "contract-save": {
+      type: "error",
+      title: "Objectif non enregistré",
+      description: "Réessaie ou vérifie les migrations 031–037 dans Supabase.",
+    },
+    "contract-migration": {
+      type: "error",
+      title: "Objectif non enregistré",
+      description:
+        "Applique 037_upsert_staff_contract_rpc.sql dans Supabase SQL Editor, puis réessaie.",
+    },
   };
 }
 
@@ -372,15 +415,21 @@ export function resolveErrorFlashToast(
 }
 
 export function resolveWarningFlashToast(warning: string): FlashToast {
-  let description = warning;
-  try {
-    description = decodeURIComponent(warning);
-  } catch {
-    // keep raw
-  }
+  const STAFF_WARNING_MESSAGES: Record<string, FlashToast> = {
+    "soutien-partial": {
+      type: "info",
+      title: "Inscription partielle",
+      description:
+        "La fiche enfant a été créée, mais l'inscription au programme de soutien n'a pas abouti. Complète-la depuis la fiche enfant.",
+    },
+  };
+
+  const known = STAFF_WARNING_MESSAGES[warning];
+  if (known) return known;
+
   return {
     type: "info",
     title: "Information",
-    description,
+    description: "Une étape complémentaire peut être nécessaire. Vérifie la fiche concernée.",
   };
 }
