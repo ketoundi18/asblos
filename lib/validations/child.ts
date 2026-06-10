@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { safeNameString } from "@/lib/validations/safe-name";
 
 export const childStatusSchema = z.enum(["ACTIF", "INACTIF", "ARCHIVE"]);
 
 export const guardianRelationSchema = z.enum(["MERE", "PERE", "TUTEUR", "AUTRE"]);
 
 export const childFormSchema = z.object({
-  first_name: z.string().min(1, "Le prénom est obligatoire"),
-  last_name: z.string().min(1, "Le nom est obligatoire"),
+  first_name: safeNameString("Le prénom"),
+  last_name: safeNameString("Le nom"),
   birth_date: z.string().min(1, "La date de naissance est obligatoire"),
   school_name: z.string().optional(),
   school_class: z.string().optional(),
@@ -21,8 +22,8 @@ export const childFormSchema = z.object({
   notes: z.string().optional(),
   status: childStatusSchema.default("ACTIF"),
   guardian_relation: guardianRelationSchema,
-  guardian_first_name: z.string().min(1, "Le prénom du parent/tuteur est obligatoire"),
-  guardian_last_name: z.string().min(1, "Le nom du parent/tuteur est obligatoire"),
+  guardian_first_name: safeNameString("Le prénom du parent/tuteur"),
+  guardian_last_name: safeNameString("Le nom du parent/tuteur"),
   guardian_email: z
     .string()
     .email("E-mail du parent invalide")

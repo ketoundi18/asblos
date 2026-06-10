@@ -5,6 +5,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   CHILD_VALIDATED: "Inscription validée",
   CHILD_REJECTED: "Inscription refusée",
   CHILD_ANONYMIZED: "Fiche anonymisée",
+  CHILD_ARCHIVED: "Fiche archivée",
   PARENT_LINK_VERIFIED: "Lien parent vérifié",
   PAYMENT_PAID: "Paiement confirmé",
   PAYMENT_FAILED: "Paiement échoué",
@@ -20,6 +21,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   STAFF_CONTRACT_CREATED: "Objectif horaire défini",
   STAFF_CONTRACT_UPDATED: "Objectif horaire modifié",
   PASSWORD_CHANGED: "Mot de passe modifié",
+  USER_SIGNED_IN: "Connexion réussie",
 };
 
 export const AUDIT_ENTITY_LABELS: Record<string, string> = {

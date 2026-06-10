@@ -5,8 +5,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { canDeleteChild } from "@/lib/auth/permissions";
+import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
+import { guardChildId } from "@/lib/validations/uuid";
 
 export async function archiveChildAction(childId: string) {
+  guardChildId(childId);
   const profile = await requireProfile();
 
   if (!canDeleteChild(profile.role)) {
@@ -26,6 +30,16 @@ export async function archiveChildAction(childId: string) {
   if (error) {
     redirect(`/enfants/${childId}?error=archive`);
   }
+
+  const ipHash = await getAuditIpHash();
+  await logAuditEvent({
+    action: "CHILD_ARCHIVED",
+    entityType: "children",
+    entityId: childId,
+    actorId: profile.id,
+    actorRole: profile.role,
+    ipHash,
+  });
 
   revalidatePath("/enfants");
   redirect("/enfants");

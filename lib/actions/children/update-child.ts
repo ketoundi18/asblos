@@ -12,6 +12,7 @@ import {
   mapFieldErrors,
   parseChildForm,
 } from "@/lib/actions/children/child-form-parsing";
+import { guardChildId } from "@/lib/validations/uuid";
 
 type ChildUpdate = Database["public"]["Tables"]["children"]["Update"];
 type GuardianInsert = Database["public"]["Tables"]["guardians"]["Insert"];
@@ -22,6 +23,7 @@ export async function updateChildAction(
   _prevState: ChildFormState,
   formData: FormData
 ): Promise<ChildFormState> {
+  guardChildId(childId);
   const profile = await requireProfile();
 
   if (!canModifyChild(profile.role)) {
@@ -90,10 +92,18 @@ export async function updateChildAction(
   };
 
   if (primaryGuardian?.id) {
-    await supabase
+    const { error: guardianError } = await supabase
       .from("guardians")
       .update(guardianPayload)
       .eq("id", primaryGuardian.id);
+
+    if (guardianError) {
+      return {
+        error:
+          "Fiche enfant mise à jour, mais le parent/tuteur n'a pas pu être enregistré. Réessaie.",
+        fieldErrors: {},
+      };
+    }
   } else {
     const guardianInsert: GuardianInsert = {
       child_id: childId,
@@ -105,7 +115,17 @@ export async function updateChildAction(
       is_primary: true,
       can_pickup: data.guardian_can_pickup,
     };
-    await supabase.from("guardians").insert(guardianInsert);
+    const { error: guardianError } = await supabase
+      .from("guardians")
+      .insert(guardianInsert);
+
+    if (guardianError) {
+      return {
+        error:
+          "Fiche enfant mise à jour, mais le parent/tuteur n'a pas pu être enregistré. Réessaie.",
+        fieldErrors: {},
+      };
+    }
   }
 
   revalidatePath("/enfants");

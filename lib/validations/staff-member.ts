@@ -1,7 +1,5 @@
 import { z } from "zod";
-
-/** Caractères interdits en début de nom (injection formule CSV / Excel). */
-const FORMULA_PREFIX = /^[=+\-@]/;
+import { safeNameString } from "@/lib/validations/safe-name";
 
 export const creatableStaffRoleSchema = z.enum([
   "TRAVAILLEUR",
@@ -11,15 +9,12 @@ export const creatableStaffRoleSchema = z.enum([
 
 export const createStaffMemberSchema = z
   .object({
-    full_name: z
+    full_name: safeNameString("Le nom"),
+    email: z
       .string()
       .trim()
-      .min(1, "Le nom est obligatoire")
-      .max(120, "Le nom est trop long (120 caractères max)")
-      .refine((value) => !FORMULA_PREFIX.test(value), {
-        message: "Le nom ne peut pas commencer par =, +, - ou @",
-      }),
-    email: z.string().email("E-mail invalide"),
+      .email("E-mail invalide")
+      .transform((value) => value.toLowerCase()),
     role: creatableStaffRoleSchema,
     password: z.string().min(8, "Minimum 8 caractères"),
     password_confirm: z.string(),

@@ -16,12 +16,14 @@ import {
   getChildPaymentContext,
 } from "@/lib/data/parent-payments";
 import type { ParentSlotSelectionState } from "@/lib/actions/parent-school-support-slots-state";
+import { guardChildId } from "@/lib/validations/uuid";
 
 export async function saveParentSchoolSupportSlotsAction(
   childId: string,
   _prevState: ParentSlotSelectionState,
   formData: FormData
 ): Promise<ParentSlotSelectionState> {
+  guardChildId(childId, "/espace-parents");
   const profile = await requireProfile();
 
   if (!isParentRole(profile.role)) {

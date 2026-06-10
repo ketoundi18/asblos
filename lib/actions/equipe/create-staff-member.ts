@@ -69,7 +69,7 @@ export async function createStaffMemberAction(
   const admin = createAdminClient();
 
   const { data, error } = await admin.auth.admin.createUser({
-    email: email.trim().toLowerCase(),
+    email,
     password,
     email_confirm: true,
     user_metadata: { full_name: full_name.trim() },
@@ -93,7 +93,7 @@ export async function createStaffMemberAction(
     actorId: profile.id,
     actorRole: profile.role,
     metadata: {
-      email: email.trim().toLowerCase(),
+      email,
       role,
       full_name: full_name.trim(),
     },

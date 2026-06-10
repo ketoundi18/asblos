@@ -11,6 +11,7 @@ import {
   requireChildPaymentContextOrRedirect,
   requireParentProfileOrRedirect,
 } from "@/lib/payments/parent-payment-guards";
+import { guardChildId } from "@/lib/validations/uuid";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
 
@@ -21,6 +22,7 @@ export async function startParentPaymentAction(
   childId: string,
   method: PayMethod
 ) {
+  guardChildId(childId, "/espace-parents");
   const profile = await requireParentProfileOrRedirect();
 
   if (!isMollieConfigured()) {

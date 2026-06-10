@@ -9,6 +9,7 @@ export type AuditAction =
   | "CHILD_REJECTED"
   | "CHILD_CREATED"
   | "CHILD_ANONYMIZED"
+  | "CHILD_ARCHIVED"
   | "PARENT_LINK_VERIFIED"
   | "PAYMENT_PAID"
   | "PAYMENT_FAILED"
@@ -23,7 +24,8 @@ export type AuditAction =
   | "STAFF_ACCOUNT_DEACTIVATED"
   | "STAFF_CONTRACT_CREATED"
   | "STAFF_CONTRACT_UPDATED"
-  | "PASSWORD_CHANGED";
+  | "PASSWORD_CHANGED"
+  | "USER_SIGNED_IN";
 
 export type AuditEntityType =
   | "children"
@@ -46,13 +48,16 @@ export type LogAuditInput = {
   ipHash?: string | null;
 };
 
-/** Empreinte IP (RGPD) — jamais l'IP en clair en base. */
+/** Empreinte IP (RGPD) — jamais l'IP en clair en base. Nécessite AUDIT_IP_SALT. */
 export function hashAuditIp(ip: string | null | undefined): string | null {
   if (!ip?.trim()) return null;
-  const salt =
-    process.env.AUDIT_IP_SALT ??
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-    "asblos-audit";
+  const salt = process.env.AUDIT_IP_SALT?.trim();
+  if (!salt) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[audit] AUDIT_IP_SALT manquant — ip_hash ignoré");
+    }
+    return null;
+  }
   return createHash("sha256")
     .update(`${salt}:${ip.trim()}`)
     .digest("hex")

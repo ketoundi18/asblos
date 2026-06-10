@@ -7,6 +7,7 @@ import {
 import { syncMolliePaymentByProviderId } from "@/lib/payments/sync-mollie";
 import { isMollieConfigured } from "@/lib/mollie/client";
 import { reportError } from "@/lib/monitoring/report-error";
+import { getAuditIpHashFromHeaders } from "@/lib/audit/request-ip";
 
 export async function POST(request: NextRequest) {
   if (!verifyMollieWebhookRequest(request)) {
@@ -24,7 +25,8 @@ export async function POST(request: NextRequest) {
       return new Response("Missing or invalid payment id", { status: 400 });
     }
 
-    const result = await syncMolliePaymentByProviderId(molliePaymentId);
+    const ipHash = getAuditIpHashFromHeaders(request.headers);
+    const result = await syncMolliePaymentByProviderId(molliePaymentId, { ipHash });
 
     if (!result.ok) {
       if (isMollieWebhookNoRetryError(result.error)) {

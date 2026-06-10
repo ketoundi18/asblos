@@ -11,11 +11,13 @@ import {
   activatePendingSchoolSupportEnrollments,
   verifyParentLinkForChild,
 } from "@/lib/enrollment/activate-pending-enrollments";
+import { guardChildId } from "@/lib/validations/uuid";
 
 export async function confirmSchoolSupportMembershipAction(
   childId: string,
   formData: FormData
 ) {
+  guardChildId(childId);
   const profile = await requireProfile();
 
   if (!canManageUsers(profile.role)) {

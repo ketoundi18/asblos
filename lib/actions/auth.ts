@@ -4,12 +4,18 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/validations/auth";
 import { z } from "zod";
+import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import type { LoginActionState, ParentSignupState } from "@/lib/actions/auth-state";
 
 const parentSignupSchema = z
   .object({
     full_name: z.string().min(1, "Ton nom est obligatoire"),
-    email: z.string().email("E-mail invalide"),
+    email: z
+      .string()
+      .trim()
+      .email("E-mail invalide")
+      .transform((value) => value.toLowerCase()),
     phone: z.string().min(1, "Ton téléphone est obligatoire"),
     password: z.string().min(8, "Minimum 8 caractères"),
     password_confirm: z.string(),
@@ -109,6 +115,17 @@ export async function loginAction(
     return { error: "Compte désactivé.", fieldErrors: {} };
   }
 
+  const ipHash = await getAuditIpHash();
+  await logAuditEvent({
+    action: "USER_SIGNED_IN",
+    entityType: "profiles",
+    entityId: user.id,
+    actorId: user.id,
+    actorRole: profile.role,
+    metadata: { channel: "staff" },
+    ipHash,
+  });
+
   if (profile.role === "PARENT") {
     redirect("/espace-parents");
   }
@@ -149,7 +166,7 @@ export async function parentLoginAction(
 
   const supabase = await createClient();
   const { error: signInError } = await supabase.auth.signInWithPassword({
-    email: parsed.data.email.trim().toLowerCase(),
+    email: parsed.data.email,
     password: parsed.data.password,
   });
 
@@ -190,6 +207,17 @@ export async function parentLoginAction(
     return { error: "Compte désactivé.", fieldErrors: {} };
   }
 
+  const ipHash = await getAuditIpHash();
+  await logAuditEvent({
+    action: "USER_SIGNED_IN",
+    entityType: "profiles",
+    entityId: user.id,
+    actorId: user.id,
+    actorRole: profile.role,
+    metadata: { channel: "parent" },
+    ipHash,
+  });
+
   redirect("/espace-parents");
 }
 
@@ -216,7 +244,7 @@ export async function parentSignupAction(
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
-    email: parsed.data.email.trim().toLowerCase(),
+    email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: {

@@ -12,9 +12,11 @@ import {
   requireParentProfileOrRedirect,
   revalidatePaymentViews,
 } from "@/lib/payments/parent-payment-guards";
+import { guardChildId } from "@/lib/validations/uuid";
 
 /** Vérifie en base (ou sync Mollie) avant l'étape « terminé » du wizard. */
 export async function continueEnrollmentWizardAfterPaymentAction(childId: string) {
+  guardChildId(childId, "/espace-parents");
   await requireParentProfileOrRedirect();
 
   const context = await requireChildPaymentContextOrRedirect(childId);

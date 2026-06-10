@@ -124,8 +124,22 @@ export async function createChildAction(
     .single<{ id: string }>();
 
   if (guardianError || !guardian) {
+    const incompleteNote = `[INCOMPLET ${new Date().toISOString().slice(0, 10)}] Tuteur non enregistré.`;
+    const existingNotes = emptyToNull(data.notes);
+    await supabase
+      .from("children")
+      .update({
+        status: "INACTIF",
+        notes: existingNotes
+          ? `${incompleteNote}\n${existingNotes}`
+          : incompleteNote,
+        updated_by: profile.id,
+      })
+      .eq("id", child.id);
+
     return {
-      error: "Enfant créé, mais le parent/tuteur n'a pas pu être enregistré.",
+      error:
+        "La fiche enfant a été créée en état incomplet (inactif). Corrigez le tuteur depuis la fiche ou contactez l'administrateur.",
       fieldErrors: {},
     };
   }

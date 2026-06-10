@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { requireProfile } from "@/lib/auth/session";
 import { canManageChildGdpr } from "@/lib/auth/permissions";
+import { guardChildId } from "@/lib/validations/uuid";
 
 function mapAnonymizeError(message: string): string {
   if (message.includes("child_not_anonymizable")) {
@@ -23,6 +25,7 @@ export async function anonymizeChildAction(
   _formData?: FormData
 ) {
   void _formData;
+  guardChildId(childId);
   const profile = await requireProfile();
 
   if (!canManageChildGdpr(profile.role)) {
@@ -42,6 +45,7 @@ export async function anonymizeChildAction(
   }
 
   const pseudoLastName = childId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const ipHash = await getAuditIpHash();
 
   await logAuditEvent({
     action: "CHILD_ANONYMIZED",
@@ -50,6 +54,7 @@ export async function anonymizeChildAction(
     actorId: profile.id,
     actorRole: profile.role,
     metadata: { pseudo_last_name: pseudoLastName },
+    ipHash,
   });
 
   revalidatePath("/enfants");

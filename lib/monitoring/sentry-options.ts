@@ -1,4 +1,5 @@
 import type { BrowserOptions, EdgeOptions, NodeOptions } from "@sentry/nextjs";
+import type { ErrorEvent, EventHint } from "@sentry/core";
 
 function parseSampleRate(value: string | undefined, fallback: number): number {
   if (!value?.trim()) return fallback;
@@ -16,6 +17,39 @@ function isDevSentryEnabled(): boolean {
     process.env.SENTRY_ENABLE_DEV === "true" ||
     process.env.NEXT_PUBLIC_SENTRY_ENABLE_DEV === "true"
   );
+}
+
+/** Erreurs webpack / cache .next en dev — bruit, pas des bugs prod. */
+const DEV_CACHE_NOISE = [
+  "__webpack_modules__",
+  "next-devtool",
+  "next/dist/next-devtools",
+  "could not find the module",
+  "cannot find module",
+  "module not found",
+  "ENOENT",
+  ".next/",
+  "6141.js",
+];
+
+function isDevCacheNoise(event: ErrorEvent): boolean {
+  const parts: string[] = [];
+  if (event.message) parts.push(event.message);
+  for (const ex of event.exception?.values ?? []) {
+    if (ex.type) parts.push(ex.type);
+    if (ex.value) parts.push(ex.value);
+  }
+  const blob = parts.join(" ").toLowerCase();
+  return DEV_CACHE_NOISE.some((needle) => blob.includes(needle.toLowerCase()));
+}
+
+function beforeSend(event: ErrorEvent, hint: EventHint): ErrorEvent | null {
+  void hint;
+  if (isDevCacheNoise(event)) return null;
+  if (process.env.NODE_ENV === "development" && !isDevSentryEnabled()) {
+    return null;
+  }
+  return event;
 }
 
 /** Active uniquement si DSN défini ; désactivé en dev sauf flag explicite */
@@ -38,6 +72,7 @@ function baseOptions() {
       "production",
     sendDefaultPii: false,
     ignoreTransactions: ["/api/health", "/monitoring/sentry-tunnel"],
+    beforeSend,
   };
 }
 

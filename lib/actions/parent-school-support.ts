@@ -9,6 +9,7 @@ import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
 import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import { applySchoolSupportUpgrade } from "@/lib/membership/apply-school-support-upgrade";
 import { resolveSchoolSupportEnrollmentEligibility } from "@/lib/parent/school-support-eligibility";
+import { guardChildId, isValidUuid } from "@/lib/validations/uuid";
 
 export async function enrollChildInSchoolSupportAction(
   programId: string,
@@ -20,7 +21,7 @@ export async function enrollChildInSchoolSupportAction(
   }
 
   const childId = formData.get("child_id");
-  if (typeof childId !== "string" || !childId) {
+  if (typeof childId !== "string" || !childId || !isValidUuid(childId)) {
     redirect("/espace-parents/soutien-scolaire?error=child");
   }
 
@@ -116,6 +117,7 @@ export async function enrollChildInSchoolSupportAction(
 }
 
 export async function upgradeToSchoolSupportAction(childId: string) {
+  guardChildId(childId, "/espace-parents");
   const profile = await requireProfile();
   if (!isParentRole(profile.role)) {
     redirect("/espace-parents?error=permission");

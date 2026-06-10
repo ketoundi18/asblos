@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isStaffRole } from "@/lib/auth/roles";
 import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { changePasswordSchema } from "@/lib/validations/change-password";
 import { verifyCurrentPassword } from "@/lib/supabase/verify-password";
 import type { ChangePasswordState } from "@/lib/actions/auth-state";
@@ -100,12 +101,14 @@ export async function changePasswordAction(
     };
   }
 
+  const ipHash = await getAuditIpHash();
   await logAuditEvent({
     action: "PASSWORD_CHANGED",
     entityType: "profiles",
     entityId: profile.id,
     actorId: profile.id,
     actorRole: profile.role,
+    ipHash,
   });
 
   revalidatePath("/mon-compte");

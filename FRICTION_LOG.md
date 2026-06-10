@@ -37,6 +37,28 @@ curl -s -o /dev/null -w "layout.css: %{http_code} size:%{size_download}\n" "http
 
 ---
 
+## 2026-06 — Alertes Sentry en dev (webpack / next-devtools)
+
+**Blocage :** Emails Sentry « high priority » pour `GET /connexion` — `__webpack_modules__ is not a function`, module `next-devtools` introuvable.
+
+**Cause :** Cache `.next` corrompu pendant `npm run dev` **+** `SENTRY_ENABLE_DEV=true` dans `.env.local` → erreurs dev envoyées à Sentry comme en prod.
+
+**Résolution :** `SENTRY_ENABLE_DEV=false` par défaut ; filtre `beforeSend` dans `lib/monitoring/sentry-options.ts` pour ignorer le bruit webpack/cache.
+
+**Éviter :** Ne jamais activer Sentry dev sans test volontaire (`/api/debug/sentry-test`) ; `npm run dev:clean` si webpack plante.
+
+---
+
+## 2026-06 — Backlog audit soir (S2–S4, M4–M7, D1)
+
+**Blocage :** Audit Cursor + Claude — sel IP sur service role, hashAuditIp mort, downgrade staff-read, enfants orphelins, guardian silencieux, archivage sans audit.
+
+**Résolution :** `AUDIT_IP_SALT` seul sel ; `getAuditIpHash()` sur login/GDPR/paiements ; `createStaffReadClient` fail loud ; compensation INACTIF create-child ; erreurs guardian update-child ; `CHILD_ARCHIVED` + UUID guards.
+
+**Éviter :** Définir `AUDIT_IP_SALT` en prod (openssl rand -hex 32) ; tester création enfant + archivage dans `/rapports` audit.
+
+---
+
 ## 2026-06 — Cache Next.js corrompu (e2e)
 
 **Blocage :** 4 tests e2e échouaient — `Runtime Error: Cannot find module './6141.js'` sur `/soutien-scolaire/nouveau` ; wizard parent bloqué à l'étape 1.

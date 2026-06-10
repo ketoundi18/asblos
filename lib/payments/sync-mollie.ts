@@ -42,7 +42,8 @@ async function syncMembershipEnrollmentIfPaid(
 }
 
 export async function syncMolliePaymentByProviderId(
-  molliePaymentId: string
+  molliePaymentId: string,
+  options?: { ipHash?: string | null }
 ): Promise<{ ok: boolean; status?: PaymentStatus; error?: string }> {
   try {
     const mollie = getMollieClient();
@@ -116,6 +117,7 @@ export async function syncMolliePaymentByProviderId(
           reference_id: payment.reference_id,
           source: "mollie_webhook",
         },
+        ipHash: options?.ipHash,
       });
     }
 
@@ -129,6 +131,7 @@ export async function syncMolliePaymentByProviderId(
           provider_payment_id: molliePaymentId,
           source: "mollie_webhook",
         },
+        ipHash: options?.ipHash,
       });
     }
 

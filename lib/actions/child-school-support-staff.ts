@@ -14,6 +14,7 @@ import {
 import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
 import { resolveParentIdForChild } from "@/lib/enrollment/resolve-parent-for-child";
 import { activatePendingSchoolSupportEnrollments } from "@/lib/enrollment/activate-pending-enrollments";
+import { guardChildId, isValidUuid } from "@/lib/validations/uuid";
 
 function childPath(childId: string, query?: string) {
   return `/enfants/${childId}${query ? `?${query}` : ""}`;
@@ -23,6 +24,7 @@ export async function staffEnrollChildSchoolSupportAction(
   childId: string,
   formData: FormData
 ) {
+  guardChildId(childId);
   const profile = await requireProfile();
   if (!canModifyChild(profile.role)) {
     redirect(childPath(childId, "error=permission"));
@@ -128,6 +130,10 @@ export async function staffUpdateSchoolSupportSlotsAction(
   enrollmentId: string,
   formData: FormData
 ) {
+  guardChildId(childId);
+  if (!isValidUuid(enrollmentId)) {
+    redirect(childPath(childId, "error=not-found"));
+  }
   const profile = await requireProfile();
   if (!canModifyChild(profile.role)) {
     redirect(childPath(childId, "error=permission"));
@@ -184,6 +190,7 @@ export async function staffUpdateSchoolSupportSlotsAction(
 }
 
 export async function staffActivateSchoolSupportAction(childId: string) {
+  guardChildId(childId);
   const profile = await requireProfile();
   if (!canModifyChild(profile.role)) {
     redirect(childPath(childId, "error=permission"));
@@ -236,6 +243,10 @@ export async function staffCancelSchoolSupportAction(
   childId: string,
   enrollmentId: string
 ) {
+  guardChildId(childId);
+  if (!isValidUuid(enrollmentId)) {
+    redirect(childPath(childId, "error=not-found"));
+  }
   const profile = await requireProfile();
   if (!canModifyChild(profile.role)) {
     redirect(childPath(childId, "error=permission"));
