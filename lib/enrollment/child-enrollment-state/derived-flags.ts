@@ -26,6 +26,25 @@ function inferEffectiveStatus(
   }
 }
 
+/** Miroir SQL membership_status_to_layer_a (RPC 044). */
+export function mapMembershipStatusToEnrollmentStatus(
+  status: MembershipStatus
+): ChildEnrollmentStatus | null {
+  switch (status) {
+    case "AWAITING_PAYMENT":
+      return "EN_ATTENTE_PAIEMENT";
+    case "AWAITING_ASBL":
+      return "PAYE_EN_ATTENTE_ASBL";
+    case "ACTIVE":
+      return "VALIDE";
+    case "REJECTED":
+    case "CANCELLED":
+      return "REFUSE";
+    default:
+      return null;
+  }
+}
+
 /** Recalcule les flags dérivés sans appeler la RPC (listes admin, tests). */
 export function deriveEnrollmentFlagsFromLayers(
   snapshot: EnrollmentLayersSnapshot
