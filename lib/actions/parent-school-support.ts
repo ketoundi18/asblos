@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/server";
 import { requireProfile } from "@/lib/auth/session";
 import { isParentRole } from "@/lib/auth/roles";
 import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
-import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import { applySchoolSupportUpgrade } from "@/lib/membership/apply-school-support-upgrade";
 import { resolveSchoolSupportEnrollmentEligibility } from "@/lib/parent/school-support-eligibility";
 import { guardChildId, guardUuid, isValidUuid } from "@/lib/validations/uuid";
@@ -39,8 +38,6 @@ export async function enrollChildInSchoolSupportAction(
   if (!verifiedLink) {
     redirect("/espace-parents/soutien-scolaire?error=link");
   }
-
-  await syncMissingMembershipsForCurrentParent();
 
   const membership = await getMembershipForChildCurrentYear(childId);
 

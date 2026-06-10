@@ -32,7 +32,7 @@ AsblOS utilise **trois couches de statut** pour le parcours enfant / adhésion /
 | Blocage validation admin (`validateParentLinkAction`) | `memberships` (AWAITING_PAYMENT + fee > 0) | `enrollment_status === EN_ATTENTE_PAIEMENT` si `created_via = PARENT` |
 | Confirmation soutien admin (`confirmSchoolSupportMembershipAction`) | `memberships.plan/status` | `enrollment_status === PAYE_EN_ATTENTE_ASBL` (`isLegacyPending`) |
 | Dashboard parent (étapes sérénité) | `memberships` en priorité | `link.enrollment_status` (legacy) |
-| Éligibilité choix créneaux parent | `memberships` | sync runtime `ensureMembershipForChild` |
+| Éligibilité choix créneaux parent | `memberships` | trigger **038** si lien validé sans ligne B |
 | Affichage liste admin / paiements | `memberships` | sync + mapping depuis A |
 | Inscription programme (jours) | `school_support_enrollments.status` | — (nécessite adhésion SCHOOL_SUPPORT côté B) |
 
@@ -98,9 +98,9 @@ Enum SQL : `membership_status` · Plan : `membership_plan` (`BASE` | `SCHOOL_SUP
 - `validateParentLinkAction` / `confirmSchoolSupportMembershipAction` — double-write A + B
 - `applySchoolSupportUpgrade` — upgrade BASE → SCHOOL_SUPPORT
 
-**Pansement runtime (à supprimer — I5) :**
+**Pansement runtime (supprimé — I5 ✅) :**
 
-- `syncMissingMembershipsForCurrentParent()` / `ensureMembershipForChild()` — recréent B depuis A si ligne absente
+- ~~`syncMissingMembershipsForCurrentParent()`~~ — remplacé par trigger DB `trg_ensure_membership_on_parent_link` (migration **038**) à la validation du lien parent.
 
 ---
 
@@ -169,7 +169,7 @@ flowchart TD
 
 | Fichier | Rôle |
 |---------|------|
-| `lib/data/membership-sync.ts` | `inferMembership` — A → B (création ligne manquante) |
+| `lib/data/membership-sync.ts` | ~~`inferMembership`~~ supprimé — logique dans trigger **038** |
 | `lib/parent/serenity.ts` | UI parent — lit B, fallback `link.enrollment_status` |
 | `lib/actions/school-support-admin.ts` | `isLegacyPending` — A si B absent |
 | `lib/actions/parent-admin.ts` | Double check paiement B + A |
@@ -208,7 +208,7 @@ flowchart TD
 
 1. **Double modèle A + B** — chaque feature « inscription » doit toucher les deux ou une RPC.
 2. **`isLegacyPending`** — enfants sans ligne `memberships` mais A = PAYE_EN_ATTENTE_ASBL.
-3. **`syncMissingMembershipsForCurrentParent`** — masque les incohérences au runtime (I5).
+3. ~~**`syncMissingMembershipsForCurrentParent`**~~ — résolu migration 038 (trigger lien validé).
 4. **`allowed: true` jamais atteint** dans `resolveSchoolSupportEnrollmentEligibility` pour ACTIVE — flux toujours via `choose_days`.
 5. **Noms legacy** — `serenity.ts` = dashboard parent (renommage prévu DM-4).
 

@@ -3,7 +3,6 @@ import {
   type MembershipPlan,
   type MembershipStatus,
 } from "@/lib/constants/status";
-import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 
 export type { MembershipPlan, MembershipStatus };
@@ -45,8 +44,6 @@ export async function getMembershipForChildCurrentYear(
 export async function getMembershipsForParentDashboard(): Promise<
   Map<string, Membership>
 > {
-  await syncMissingMembershipsForCurrentParent();
-
   const supabase = await createClient();
   const schoolYear = getCurrentSchoolYear();
 

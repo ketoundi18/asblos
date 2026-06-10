@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getAsblSettingsForCurrentYear, getSchoolSupportFeeCents } from "@/lib/data/asbl-settings";
 import { getMembershipForChildCurrentYear } from "@/lib/data/memberships";
-import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
 import type { MembershipPlan, MembershipStatus } from "@/lib/data/memberships";
 import type { Database } from "@/types/database";
 
@@ -143,8 +142,6 @@ export async function applySchoolSupportUpgrade(
   if (!(await verifyParentLink(supabase, parentId, childId))) {
     return { ok: false, code: "link", detail: "Lien parent non validé." };
   }
-
-  await syncMissingMembershipsForCurrentParent();
 
   const membership = await getMembershipForChildCurrentYear(childId);
   if (!membership) {
