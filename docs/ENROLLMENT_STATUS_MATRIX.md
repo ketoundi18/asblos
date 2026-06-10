@@ -224,7 +224,19 @@ flowchart TD
 | **0** ✅ | Ce document |
 | **1** ✅ | RPC `get_child_enrollment_state(child_id, school_year)` — lecture unique (`lib/enrollment/child-enrollment-state.ts`) |
 | **2** ✅ | Lectures migrées ; writers centralisés dans `enrollment-writes.ts` |
-| **3** 🔄 | RPC SQL transitions (`041_*`, `042_*`) ✅ ; lectures métier migrées sauf writers/create ; drop `children.enrollment_status` |
+| **3** 🔄 | RPC transitions ✅ ; lectures migrées ; writers centralisés ; **phase 4** = drop `children.enrollment_status` |
+
+### Dettes C1 restantes (2026-06)
+
+| Dette | Statut | Fichier / action |
+|-------|--------|------------------|
+| Writers couche A fallback TS | 🔄 | `enrollment-writes/*` (RPC 041/042 + fallback direct) |
+| Création parent fallback | ✅ | `create-parent-enrollment-core` → `writeParentEnrollmentLayerA` |
+| Création parent RPC | ✅ | `create_parent_enrollment_core` (026/027) — chemin principal |
+| Colonne `children.enrollment_status` | ❌ phase 4 | Migration drop après 100 % RPC |
+| RPC parent `set_child_enrollment_layer_a_parent` | ❌ | Optionnel avant drop colonne |
+| Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
+| `staffParentChildEnrollmentBadge(child)` legacy | ❌ | Supprimer quand plus d'appelants |
 
 **Critère de fin V2 :** zéro lecture métier de `enrollment_status` hors migration/backfill ; zéro `syncMissing*` runtime.
 

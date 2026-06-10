@@ -100,7 +100,6 @@ export async function createParentEnrollmentAction(
       emergency_contact_name: emptyToNull(data.emergency_contact_name),
       emergency_contact_phone: emptyToNull(data.emergency_contact_phone),
       status: "ACTIF",
-      enrollment_status: quote.enrollmentStatus,
     },
     guardian: {
       relation: data.guardian_relation,
