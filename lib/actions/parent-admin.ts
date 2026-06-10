@@ -104,10 +104,12 @@ export async function validateParentLinkAction(
     });
   }
 
-  revalidatePath("/");
   revalidatePath("/administration");
   revalidatePath("/espace-parents");
   revalidatePath("/enfants");
+  if (link?.child_id) {
+    revalidatePath(`/enfants/${link.child_id}`);
+  }
   redirect(`${returnTo}?success=validated`);
 }
 

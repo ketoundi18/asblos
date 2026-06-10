@@ -147,7 +147,6 @@ export async function confirmSchoolSupportMembershipAction(
     });
   }
 
-  revalidatePath("/");
   revalidatePath("/administration");
   revalidatePath("/soutien-scolaire");
   revalidatePath("/soutien-scolaire/demandes");

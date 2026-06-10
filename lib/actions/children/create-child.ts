@@ -175,7 +175,7 @@ export async function createChildAction(
     }
 
     revalidatePath("/enfants");
-    revalidatePath("/");
+    revalidatePath(`/enfants/${child.id}`);
     revalidatePath("/soutien-scolaire");
     revalidatePath("/administration");
 

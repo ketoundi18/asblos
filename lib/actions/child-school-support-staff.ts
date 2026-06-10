@@ -127,7 +127,6 @@ export async function staffEnrollChildSchoolSupportAction(
 
   revalidatePath(childPath(childId));
   revalidatePath("/soutien-scolaire");
-  revalidatePath("/");
   redirect(childPath(childId, "success=soutien-enroll"));
 }
 
@@ -240,7 +239,6 @@ export async function staffActivateSchoolSupportAction(childId: string) {
   await activatePendingSchoolSupportEnrollments(supabase, childId);
 
   revalidatePath(childPath(childId));
-  revalidatePath("/");
   revalidatePath("/soutien-scolaire");
   redirect(childPath(childId, "success=soutien-activated"));
 }

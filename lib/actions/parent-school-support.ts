@@ -133,7 +133,7 @@ export async function upgradeToSchoolSupportAction(childId: string) {
   revalidatePath("/espace-parents");
   revalidatePath("/espace-parents/soutien-scolaire");
   revalidatePath("/administration");
-  revalidatePath("/");
+  revalidatePath(`/enfants/${childId}`);
 
   if (result.needsPayment) {
     redirect(`/espace-parents/paiement/${childId}?success=upgrade`);
