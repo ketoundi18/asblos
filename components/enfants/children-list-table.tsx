@@ -9,25 +9,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CHILD_STATUS_LABELS } from "@/lib/validations/child";
-import { staffParentChildEnrollmentBadge } from "@/lib/enrollment/child-enrollment-state";
+import type { ChildListItem } from "@/lib/data/children";
 import {
   getChildAge,
   getChildFullName,
-  type Child,
 } from "@/types/child";
 
-function statusVariant(status: Child["status"]) {
+function statusVariant(status: ChildListItem["status"]) {
   if (status === "ACTIF") return "success" as const;
   if (status === "INACTIF") return "warning" as const;
   return "muted" as const;
 }
 
-function enrollmentLabel(child: Child) {
-  return staffParentChildEnrollmentBadge(child);
-}
-
 type Props = {
-  items: Child[];
+  items: ChildListItem[];
   fullListView: boolean;
 };
 
@@ -46,7 +41,7 @@ export function ChildrenListTable({ items, fullListView }: Props) {
         </TableHeader>
         <TableBody>
           {items.map((child) => {
-            const parentBadge = enrollmentLabel(child);
+            const parentBadge = child.parentEnrollmentBadge;
             return (
               <TableRow key={child.id} className="hover:bg-muted/50">
                 <TableCell>

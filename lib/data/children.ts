@@ -1,14 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { isStaffFullAccess } from "@/lib/auth/permissions";
+import { staffParentChildEnrollmentBadgeFromState } from "@/lib/enrollment/child-enrollment-state";
+import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import type { Child, ChildWithGuardians, Guardian } from "@/types/child";
 
 /** Colonnes sans données médicales / notes internes (bénévoles, stagiaires). */
 const CHILD_COLUMNS_LIMITED =
-  "id, first_name, last_name, birth_date, school_name, school_class, allergies, image_rights, image_rights_date, outing_authorization, outing_auth_date, emergency_contact_name, emergency_contact_phone, status, created_via, enrollment_status, created_at, updated_at, deleted_at, anonymized_at" as const;
+  "id, first_name, last_name, birth_date, school_name, school_class, allergies, image_rights, image_rights_date, outing_authorization, outing_auth_date, emergency_contact_name, emergency_contact_phone, status, created_via, created_at, updated_at, deleted_at, anonymized_at" as const;
+
+export type ChildListItem = Child & {
+  parentEnrollmentBadge: ReturnType<typeof staffParentChildEnrollmentBadgeFromState>;
+};
 
 export async function getChildrenList(): Promise<{
-  children: Child[];
+  children: ChildListItem[];
   loadError: string | null;
 }> {
   const supabase = await createClient();
@@ -47,7 +53,22 @@ export async function getChildrenList(): Promise<{
     };
   }
 
-  return { children: (data ?? []) as unknown as Child[], loadError: null };
+  const rows = (data ?? []) as unknown as Child[];
+  const childIds = rows.map((child) => child.id);
+  const { states, loadError: stateError } = await getChildEnrollmentStates(childIds);
+
+  if (stateError) {
+    return { children: [], loadError: stateError };
+  }
+
+  const children: ChildListItem[] = rows.map((child) => ({
+    ...child,
+    parentEnrollmentBadge: states.has(child.id)
+      ? staffParentChildEnrollmentBadgeFromState(states.get(child.id)!)
+      : null,
+  }));
+
+  return { children, loadError: null };
 }
 
 export async function getChildById(

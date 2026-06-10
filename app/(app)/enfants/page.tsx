@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChildrenListTable } from "@/components/enfants/children-list-table";
 import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
 import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
-import type { Child } from "@/types/child";
 
 export default async function EnfantsPage() {
   const profile = await getCurrentProfile();
@@ -59,7 +58,7 @@ export default async function EnfantsPage() {
           </CardContent>
         </Card>
       ) : (
-        <ChildrenListTable items={children as Child[]} fullListView={fullListView} />
+        <ChildrenListTable items={children} fullListView={fullListView} />
       )}
     </div>
   );

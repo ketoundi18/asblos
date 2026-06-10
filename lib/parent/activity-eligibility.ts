@@ -18,15 +18,9 @@ export type ActivityRegistrationEligibility =
       actionLabel?: string;
     };
 
-type ChildEnrollment = {
-  enrollment_status: string | null;
-  created_via: string | null;
-};
-
-/** Règle métier : inscription activité si cotisation ACTIVE (ou enfant staff déjà validé). */
+/** Règle métier : inscription activité si cotisation ACTIVE. */
 export function resolveActivityRegistrationEligibility(
-  membership: Membership | null,
-  child: ChildEnrollment | null
+  membership: Membership | null
 ): ActivityRegistrationEligibility {
   if (membership) {
     if (membership.status === "ACTIVE") {
@@ -76,10 +70,6 @@ export function resolveActivityRegistrationEligibility(
     }
   }
 
-  if (child?.enrollment_status === "VALIDE") {
-    return { allowed: true };
-  }
-
   return {
     allowed: false,
     reason: "legacy_pending",
@@ -91,11 +81,14 @@ export function resolveActivityRegistrationEligibility(
 export function resolveActivityRegistrationEligibilityFromState(
   state: ChildEnrollmentState
 ): ActivityRegistrationEligibility {
-  return resolveActivityRegistrationEligibility(
-    membershipFromEnrollmentState(state),
-    {
-      enrollment_status: state.layer_a.enrollment_status,
-      created_via: state.layer_a.created_via,
-    }
+  const membershipResult = resolveActivityRegistrationEligibility(
+    membershipFromEnrollmentState(state)
   );
+  if (membershipResult.allowed) {
+    return membershipResult;
+  }
+  if (state.derived.is_asbl_validated) {
+    return { allowed: true };
+  }
+  return membershipResult;
 }
