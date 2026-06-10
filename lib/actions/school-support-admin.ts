@@ -11,6 +11,8 @@ import {
   activatePendingSchoolSupportEnrollments,
   verifyParentLinkForChild,
 } from "@/lib/enrollment/activate-pending-enrollments";
+import { logAuditEvent } from "@/lib/audit/log-audit";
+import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { guardChildId } from "@/lib/validations/uuid";
 
 export async function confirmSchoolSupportMembershipAction(
@@ -62,6 +64,8 @@ export async function confirmSchoolSupportMembershipAction(
     redirect(`${returnTo}?error=soutien-not-found`);
   }
 
+  let membershipId: string | null = membership?.id ?? null;
+
   if (membership) {
     if (membership.status === "AWAITING_PAYMENT" && membership.fee_cents > 0) {
       redirect(`${returnTo}?error=payment-required`);
@@ -95,19 +99,24 @@ export async function confirmSchoolSupportMembershipAction(
       redirect(`${returnTo}?error=soutien-not-found`);
     }
 
-    const { error } = await supabase.from("memberships").insert({
-      child_id: childId,
-      parent_id: link.parent_id,
-      school_year: schoolYear,
-      plan: "SCHOOL_SUPPORT",
-      fee_cents: feeCents,
-      status: "ACTIVE",
-      asbl_validated_at: verifiedAt,
-    });
+    const { data: inserted, error } = await supabase
+      .from("memberships")
+      .insert({
+        child_id: childId,
+        parent_id: link.parent_id,
+        school_year: schoolYear,
+        plan: "SCHOOL_SUPPORT",
+        fee_cents: feeCents,
+        status: "ACTIVE",
+        asbl_validated_at: verifiedAt,
+      })
+      .select("id")
+      .single<{ id: string }>();
 
-    if (error) {
+    if (error || !inserted) {
       redirect(`${returnTo}?error=soutien-confirm`);
     }
+    membershipId = inserted.id;
   }
 
   await supabase
@@ -120,6 +129,23 @@ export async function confirmSchoolSupportMembershipAction(
 
   await verifyParentLinkForChild(supabase, childId, verifiedAt);
   await activatePendingSchoolSupportEnrollments(supabase, childId);
+
+  if (membershipId) {
+    const ipHash = await getAuditIpHash();
+    await logAuditEvent({
+      action: "MEMBERSHIP_ACTIVATED",
+      entityType: "memberships",
+      entityId: membershipId,
+      actorId: profile.id,
+      actorRole: profile.role,
+      metadata: {
+        child_id: childId,
+        source: "school_support_confirm",
+        school_year: schoolYear,
+      },
+      ipHash,
+    });
+  }
 
   revalidatePath("/");
   revalidatePath("/administration");
