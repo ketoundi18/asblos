@@ -14,20 +14,10 @@ import type { Database } from "@/types/database";
 import type { ActivityFormState } from "@/lib/actions/activities-state";
 import { normalizeTimeForDb } from "@/lib/date-utils";
 import { mapActivityInsertError } from "@/lib/messages/map-staff-action-error";
+import { emptyToNull, mapFieldErrors } from "@/lib/utils/form-utils";
 import { guardUuid, isValidUuid } from "@/lib/validations/uuid";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
-
-function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-  }
-  return fieldErrors;
-}
 
 function parseActivityForm(formData: FormData) {
   return activityFormSchema.safeParse({
@@ -49,10 +39,6 @@ function priceEurosToCents(isPaid: boolean, priceEuros?: string): number {
   if (!isPaid) return 0;
   const raw = (priceEuros ?? "").trim().replace(",", ".");
   return Math.round(Number(raw) * 100);
-}
-
-function emptyToNull(value?: string) {
-  return value && value.trim() !== "" ? value.trim() : null;
 }
 
 export async function createActivityAction(

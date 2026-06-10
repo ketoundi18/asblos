@@ -1,15 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentSchoolYear } from "@/lib/school-year";
+import {
+  type MembershipPlan,
+  type MembershipStatus,
+} from "@/lib/constants/status";
 import { syncMissingMembershipsForCurrentParent } from "@/lib/data/membership-sync";
+import { getCurrentSchoolYear } from "@/lib/school-year";
 
-export type MembershipStatus =
-  | "AWAITING_PAYMENT"
-  | "AWAITING_ASBL"
-  | "ACTIVE"
-  | "REJECTED"
-  | "CANCELLED";
-
-export type MembershipPlan = "BASE" | "SCHOOL_SUPPORT";
+export type { MembershipPlan, MembershipStatus };
 
 export type Membership = {
   id: string;

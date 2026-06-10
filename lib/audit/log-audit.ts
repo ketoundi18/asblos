@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportError } from "@/lib/monitoring/report-error";
 import type { Json } from "@/types/database";
 
 /** Actions d'audit connues — extensible sans migration SQL. */
@@ -54,7 +55,10 @@ export function hashAuditIp(ip: string | null | undefined): string | null {
   const salt = process.env.AUDIT_IP_SALT?.trim();
   if (!salt) {
     if (process.env.NODE_ENV === "production") {
-      console.error("[audit] AUDIT_IP_SALT manquant — ip_hash ignoré");
+      void reportError(new Error("AUDIT_IP_SALT manquant — ip_hash ignoré"), {
+        surface: "audit",
+        code: "missing_audit_ip_salt",
+      });
     }
     return null;
   }
@@ -82,13 +86,17 @@ export async function logAuditEvent(input: LogAuditInput): Promise<void> {
     });
 
     if (error) {
-      console.error("[audit] insert failed:", input.action, error.message);
+      void reportError(new Error(error.message), {
+        surface: "audit",
+        code: "insert_failed",
+        action: input.action,
+      });
     }
   } catch (err) {
-    console.error(
-      "[audit] unavailable:",
-      input.action,
-      err instanceof Error ? err.message : err
-    );
+    void reportError(err, {
+      surface: "audit",
+      code: "unavailable",
+      action: input.action,
+    });
   }
 }

@@ -49,6 +49,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Database types sanity check
+        run: npm run check:types
+
       - name: Build
         run: npm run build
 

@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
     return Response.json({ ok: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[cron/staff-time-settlement]", message);
     await reportError(err instanceof Error ? err : new Error(message), {
       surface: "cron-staff-time-settlement",
     });

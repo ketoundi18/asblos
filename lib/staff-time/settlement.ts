@@ -2,6 +2,7 @@ import "server-only";
 
 import { addDaysToIso, getLocalTodayISO } from "@/lib/date-utils";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportError } from "@/lib/monitoring/report-error";
 
 /** Jours passés rattrapés au 1er pointage (ordre chronologique). */
 export const SETTLEMENT_CATCHUP_DAYS = 14;
@@ -54,12 +55,11 @@ export async function catchUpStaffTimeSettlements(userId: string): Promise<numbe
       const ledgerId = await settleStaffTimeDay(userId, referenceDate);
       if (ledgerId) settledCount += 1;
     } catch (err) {
-      console.error(
-        "[settlement] catch-up failed:",
+      void reportError(err, {
+        surface: "settlement-catch-up",
         userId,
         referenceDate,
-        err instanceof Error ? err.message : err
-      );
+      });
     }
   }
 

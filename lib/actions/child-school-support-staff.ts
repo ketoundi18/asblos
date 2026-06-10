@@ -13,6 +13,7 @@ import {
 } from "@/lib/enrollment/build-enrollment-quote";
 import { enrollSchoolSupportByStaff } from "@/lib/enrollment/enroll-school-support-by-staff";
 import { resolveParentIdForChild } from "@/lib/enrollment/resolve-parent-for-child";
+import { reportError } from "@/lib/monitoring/report-error";
 import { activatePendingSchoolSupportEnrollments } from "@/lib/enrollment/activate-pending-enrollments";
 import { guardChildId, isValidUuid } from "@/lib/validations/uuid";
 
@@ -115,7 +116,12 @@ export async function staffEnrollChildSchoolSupportAction(
   });
 
   if (!result.ok) {
-    console.error("[soutien-staff] enroll failed:", result.error);
+    void reportError(new Error(`staff school support enroll: ${result.error}`), {
+      surface: "child-school-support-staff",
+      childId,
+      programId,
+      errorCode: result.error,
+    });
     redirect(childPath(childId, "error=soutien-enroll"));
   }
 

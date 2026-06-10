@@ -15,6 +15,7 @@ import {
 import { createParentEnrollmentCore } from "@/lib/enrollment/create-parent-enrollment-core";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
+import { emptyToNull, mapFieldErrors } from "@/lib/utils/form-utils";
 
 function parseForm(formData: FormData) {
   return childFormSchema.safeParse({
@@ -41,23 +42,6 @@ function parseForm(formData: FormData) {
     guardian_phone: formData.get("guardian_phone"),
     guardian_can_pickup: formData.get("guardian_can_pickup") === "on",
   });
-}
-
-function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) {
-      fieldErrors[field] = issue.message;
-    }
-  }
-  return fieldErrors;
-}
-
-function emptyToNull(value?: string) {
-  return value && value.trim() !== "" ? value.trim() : null;
 }
 
 function revalidateParentEnrollmentPaths() {

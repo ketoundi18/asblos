@@ -9,17 +9,8 @@ import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { upsertStaffContractSchema } from "@/lib/validations/staff-contract";
 import type { UpsertStaffContractState } from "@/lib/actions/equipe-state";
-
-function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-  }
-  return fieldErrors;
-}
+import { reportError } from "@/lib/monitoring/report-error";
+import { mapFieldErrors } from "@/lib/utils/form-utils";
 
 function mapRpcError(message: string): "contract-member" | "contract-save" {
   if (message.includes("member_not_found") || message.includes("P0002")) {
@@ -78,7 +69,10 @@ export async function upsertStaffContractAction(
   );
 
   if (rpcError) {
-    console.error("[contract] rpc failed:", rpcError.message);
+    void reportError(new Error(rpcError.message), {
+      surface: "upsert-staff-contract",
+      code: "rpc_failed",
+    });
     const code = mapRpcError(rpcError.message);
     if (code === "contract-save" && rpcError.message.includes("does not exist")) {
       redirect(`${RETURN_PATH}?error=contract-migration`);
@@ -91,7 +85,10 @@ export async function upsertStaffContractAction(
   const isUpdate = Boolean(result?.is_update);
 
   if (!newContractId) {
-    console.error("[contract] rpc returned empty id");
+    void reportError(new Error("upsert_staff_contract returned empty id"), {
+      surface: "upsert-staff-contract",
+      code: "empty_id",
+    });
     redirect(`${RETURN_PATH}?error=contract-save`);
   }
 

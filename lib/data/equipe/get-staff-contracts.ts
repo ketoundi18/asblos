@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { UserRole } from "@/lib/auth/roles";
+import { reportError } from "@/lib/monitoring/report-error";
 
 export type StaffContractRow = {
   id: string;
@@ -28,7 +29,10 @@ export async function getActiveStaffContracts(): Promise<{
     .order("valid_from", { ascending: false });
 
   if (contractsError) {
-    console.error("[getActiveStaffContracts]", contractsError.message);
+    void reportError(new Error(contractsError.message), {
+      surface: "getActiveStaffContracts",
+      phase: "contracts",
+    });
     return {
       contracts: [],
       loadError: isMissingStaffTimeModule(contractsError.message)
@@ -49,7 +53,10 @@ export async function getActiveStaffContracts(): Promise<{
     .in("id", userIds);
 
   if (profilesError) {
-    console.error("[getActiveStaffContracts] profiles", profilesError.message);
+    void reportError(new Error(profilesError.message), {
+      surface: "getActiveStaffContracts",
+      phase: "profiles",
+    });
     return { contracts: [], loadError: profilesError.message };
   }
 

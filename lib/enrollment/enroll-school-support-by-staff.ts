@@ -1,5 +1,6 @@
 import "server-only";
 import type { ServerSupabase } from "@/lib/supabase/server-types";
+import { reportError } from "@/lib/monitoring/report-error";
 
 type Result = { ok: true; enrollmentId: string } | { ok: false; error: string };
 
@@ -79,7 +80,14 @@ export async function enrollSchoolSupportByStaff(
     if (enrollError?.code === "23505" || enrollError?.message.includes("unique")) {
       return { ok: false, error: "already_enrolled" };
     }
-    console.error("[enroll-school-support]", enrollError?.message);
+    void reportError(
+      enrollError ?? new Error("school_support_enrollments insert failed"),
+      {
+        surface: "enroll-school-support-by-staff",
+        childId,
+        programId,
+      }
+    );
     return { ok: false, error: "enroll_failed" };
   }
 

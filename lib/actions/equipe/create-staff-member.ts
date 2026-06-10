@@ -9,17 +9,7 @@ import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { createStaffMemberSchema } from "@/lib/validations/staff-member";
 import type { CreateStaffMemberState } from "@/lib/actions/equipe-state";
-
-function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-  }
-  return fieldErrors;
-}
+import { mapFieldErrors } from "@/lib/utils/form-utils";
 
 function mapCreateUserError(message: string): string {
   const m = message.toLowerCase();

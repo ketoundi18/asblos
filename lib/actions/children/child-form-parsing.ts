@@ -1,4 +1,5 @@
 import { childFormSchema } from "@/lib/validations/child";
+export { emptyToNull, mapFieldErrors } from "@/lib/utils/form-utils";
 
 export function parseChildForm(formData: FormData) {
   return childFormSchema.safeParse({
@@ -25,21 +26,4 @@ export function parseChildForm(formData: FormData) {
     guardian_phone: formData.get("guardian_phone"),
     guardian_can_pickup: formData.get("guardian_can_pickup") === "on",
   });
-}
-
-export function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) {
-      fieldErrors[field] = issue.message;
-    }
-  }
-  return fieldErrors;
-}
-
-export function emptyToNull(value?: string) {
-  return value && value.trim() !== "" ? value.trim() : null;
 }

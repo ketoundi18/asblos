@@ -1,0 +1,5 @@
+# Ignorer les hotfix paramétrés (données prod)
+*
+!.gitignore
+!README.md
+!*.example.sql

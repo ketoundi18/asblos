@@ -10,17 +10,7 @@ import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { changePasswordSchema } from "@/lib/validations/change-password";
 import { verifyCurrentPassword } from "@/lib/supabase/verify-password";
 import type { ChangePasswordState } from "@/lib/actions/auth-state";
-
-function mapFieldErrors(
-  issues: { path: (string | number)[]; message: string }[]
-): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of issues) {
-    const field = String(issue.path[0]);
-    if (!fieldErrors[field]) fieldErrors[field] = issue.message;
-  }
-  return fieldErrors;
-}
+import { mapFieldErrors } from "@/lib/utils/form-utils";
 
 function mapUpdatePasswordError(message: string): string {
   const m = message.toLowerCase();

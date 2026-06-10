@@ -1,5 +1,7 @@
 /** Messages staff opaques — jamais de error.message Postgres/SQL dans l'UI. */
 
+import { reportError } from "@/lib/monitoring/report-error";
+
 export function mapActivityInsertError(message: string | undefined): string {
   if (
     message?.includes("price_cents") ||
@@ -9,7 +11,9 @@ export function mapActivityInsertError(message: string | undefined): string {
   }
 
   if (message) {
-    console.error("[activity] insert failed:", message);
+    void reportError(new Error(message), {
+      surface: "activity-insert",
+    });
   }
 
   return "Impossible de créer l'activité. Réessaie dans un instant.";
