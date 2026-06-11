@@ -69,7 +69,11 @@ export default async function ParentInscrireEnfantPage({
     initialSchoolSupport = paymentContext?.membership_plan === "SCHOOL_SUPPORT";
     if (paymentContext) {
       initialNeedsPayment = childNeedsMembershipPayment(paymentContext);
-      if (step === "termine" && initialNeedsPayment) {
+      if (
+        step === "termine" &&
+        initialNeedsPayment &&
+        !paymentContext.paid_payment
+      ) {
         redirect(
           `/espace-parents/inscrire?step=paiement&childId=${resumeChildId}&error=payment-required`
         );

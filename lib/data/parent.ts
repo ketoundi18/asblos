@@ -118,7 +118,7 @@ export async function getParentDashboard(): Promise<{
     };
   });
 
-  if (stateError) {
+  if (stateError?.includes("040_get_child_enrollment_state")) {
     return { links: [], loadError: stateError };
   }
 

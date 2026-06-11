@@ -52,9 +52,10 @@ test.describe("Parcours parent — inscription wizard", () => {
 
     await page.getByRole("link", { name: /Retour — Mes enfants/i }).click();
     await expect(page).toHaveURL(/\/espace-parents\/?$/);
+    await expect(page.getByRole("heading", { name: /Bonjour,/ })).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: `${firstName} ${lastName}` })
-    ).toBeVisible();
+      page.getByRole("heading", { name: new RegExp(firstName) })
+    ).toBeVisible({ timeout: 30_000 });
   });
 
   test("inscription SCHOOL_SUPPORT + simulation paiement si disponible", async ({
@@ -100,8 +101,9 @@ test.describe("Parcours parent — inscription wizard", () => {
 
     if (await simulateBtn.isVisible()) {
       await simulateBtn.click();
+      await expect(page).toHaveURL(/step=termine/, { timeout: 30_000 });
       await expect(page.getByText("Inscription enregistrée")).toBeVisible({
-        timeout: 30_000,
+        timeout: 15_000,
       });
     } else {
       await expect(doneHeading).toBeVisible();

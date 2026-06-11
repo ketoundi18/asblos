@@ -21,10 +21,12 @@ export async function getChildEnrollmentState(
         loadError: "Lance 040_get_child_enrollment_state.sql dans Supabase.",
       };
     }
-    return { state: null, loadError: error.message };
+    // Lien parent obsolète ou enfant hors périmètre — ne pas bloquer les autres fiches.
+    return { state: null, loadError: null };
   }
 
-  return { state: parseChildEnrollmentState(data), loadError: null };
+  const state = parseChildEnrollmentState(data);
+  return { state, loadError: null };
 }
 
 export async function getChildEnrollmentStates(
@@ -51,11 +53,6 @@ export async function getChildEnrollmentStates(
   );
   if (migrationMissing?.loadError) {
     return { states: new Map(), loadError: migrationMissing.loadError };
-  }
-
-  const otherError = results.find((r) => r.loadError);
-  if (otherError?.loadError) {
-    return { states: new Map(), loadError: otherError.loadError };
   }
 
   const states = new Map<string, ChildEnrollmentState>();

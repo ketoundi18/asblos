@@ -10,6 +10,8 @@ test.describe("Espace parents — connexion", () => {
   test("connexion parent puis accès à l'accueil", async ({ page }) => {
     test.skip(!getParentCredentials(), "E2E_PARENT_EMAIL / E2E_PARENT_PASSWORD requis");
     await loginAsParent(page);
-    await expect(page.getByRole("link", { name: /Inscrire/ })).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Inscrire", exact: true })
+    ).toBeVisible();
   });
 });
