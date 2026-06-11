@@ -78,6 +78,43 @@ check_rpc "settle_staff_time_all_for_date" '{"p_reference_date":"2020-01-01"}'
 check_rpc "settle_staff_time_day" '{"p_user_id":"00000000-0000-0000-0000-000000000001","p_reference_date":"2020-01-01"}'
 check_rpc "anonymize_child" '{"p_child_id":"00000000-0000-0000-0000-000000000001"}'
 check_rpc "sync_enrollment_paid" '{"p_child_id":"00000000-0000-0000-0000-000000000001","p_membership_id":"00000000-0000-0000-0000-000000000002"}'
+check_rpc "get_child_enrollment_state" '{"p_child_id":"00000000-0000-0000-0000-000000000001","p_school_year":"2025-2026"}'
+check_rpc "create_parent_enrollment_core" '{}'
 
 echo ""
-echo "Done."
+echo "--- C1 enrollment (046) ---"
+legacy_col=$(check_rest GET "children?select=enrollment_status&limit=0")
+legacy_code=$(echo "$legacy_col" | cut -d'|' -f1)
+legacy_body=$(echo "$legacy_col" | cut -d'|' -f2-)
+if echo "$legacy_body" | grep -q 'enrollment_status'; then
+  if echo "$legacy_body" | grep -qi 'does not exist\|42703\|column'; then
+    echo "✅ children.enrollment_status: colonne absente (046 OK)"
+  else
+    echo "❌ children.enrollment_status: colonne encore présente — applique 045 puis 046"
+  fi
+elif [[ "$legacy_code" == "200" ]]; then
+  echo "❌ children.enrollment_status: colonne encore présente — applique 046"
+else
+  echo "⚠️  children.enrollment_status: vérif inconclusive (HTTP $legacy_code)"
+fi
+
+echo ""
+echo "--- Auth Admin (création compte équipe) ---"
+auth_headers=(-H "apikey: $KEY")
+if [[ "$KEY" != sb_secret_* ]]; then
+  auth_headers+=(-H "Authorization: Bearer $KEY")
+fi
+auth_raw=$(curl -s -w "\n%{http_code}" "${auth_headers[@]}" \
+  "$URL/auth/v1/admin/users?per_page=1")
+auth_code=$(echo "$auth_raw" | tail -n1)
+auth_body=$(echo "$auth_raw" | sed '$d')
+if [[ "$auth_code" == "200" ]]; then
+  echo "✅ auth admin: listUsers OK (HTTP 200)"
+elif echo "$auth_body" | grep -qi 'bad_jwt\|invalid jwt'; then
+  echo "❌ auth admin: clé refusée (bad_jwt) — vérifie SUPABASE_SERVICE_ROLE_KEY"
+else
+  echo "⚠️  auth admin: HTTP $auth_code — $auth_body"
+fi
+
+echo ""
+echo "ou le bloc P0 dans supabase/INSTALL.md (section Vérification)."

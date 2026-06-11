@@ -21,7 +21,15 @@ Ouvre [http://localhost:3000](http://localhost:3000).
 
 ### Base de données
 
-Applique les migrations SQL dans l'ordre : **[supabase/INSTALL.md](./supabase/INSTALL.md)** (001 → 042).
+Applique les migrations SQL dans l'ordre : **[supabase/INSTALL.md](./supabase/INSTALL.md)** (001 → 046).
+
+Vérifie la base distante :
+
+```bash
+bash scripts/check-supabase-remote.sh
+```
+
+Puis le bloc SQL P0 dans `INSTALL.md` ou `scripts/verify-supabase-migrations.sql` (Supabase SQL Editor).
 
 Crée ensuite un compte **ADMIN** dans Supabase → Authentication → Users, avec App Metadata :
 

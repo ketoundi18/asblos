@@ -56,7 +56,7 @@ export async function buildChildGdprExport(
       .select("*")
       .eq("entity_type", "children")
       .eq("entity_id", childId)
-      .order("created_at", { ascending: false }),
+      .order("occurred_at", { ascending: false }),
   ]);
 
   return {

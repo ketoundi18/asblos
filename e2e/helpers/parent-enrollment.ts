@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { waitForAppStyles } from "./app-ready";
 
 export function uniqueChildName() {
   const suffix = Date.now().toString(36).slice(-6);
@@ -6,8 +7,10 @@ export function uniqueChildName() {
 }
 
 export async function gotoParentEnrollment(page: Page) {
+  await waitForAppStyles(page);
   await page.goto("/espace-parents/inscrire", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Inscrire un enfant/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Continuer — Formule/i })).toBeEnabled();
 }
 
 export async function fillChildStepAndGoToFormula(

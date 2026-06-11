@@ -4,7 +4,8 @@
 
 ## Avant la démo (checklist)
 
-- [ ] Migrations **001 → 039** appliquées ([supabase/INSTALL.md](./supabase/INSTALL.md))
+- [ ] Migrations **001 → 046** appliquées ([supabase/INSTALL.md](./supabase/INSTALL.md))
+- [ ] Vérif Supabase OK : `bash scripts/check-supabase-remote.sh` + SQL Editor (`scripts/verify-supabase-migrations.sql`)
 - [ ] App déployée ou `npm run dev:clean` en local
 - [ ] Comptes de test créés (voir ci-dessous)
 - [ ] Parcours testé **2 fois** la veille

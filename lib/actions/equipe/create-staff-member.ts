@@ -2,16 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile } from "@/lib/auth/session";
+import { createAuthUserAdmin } from "@/lib/supabase/auth-admin-create-user";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
 import { createStaffMemberSchema } from "@/lib/validations/staff-member";
 import type { CreateStaffMemberState } from "@/lib/actions/equipe-state";
 import { mapFieldErrors } from "@/lib/utils/form-utils";
+import { reportError } from "@/lib/monitoring/report-error";
 
-function mapCreateUserError(message: string): string {
+function mapCreateUserError(message: string, code?: string): string {
   const m = message.toLowerCase();
   if (m.includes("already registered") || m.includes("already been registered")) {
     return "Cet e-mail est déjà utilisé. Choisis un autre e-mail ou désactive l'ancien compte.";
@@ -22,8 +23,26 @@ function mapCreateUserError(message: string): string {
   if (m.includes("invalid email")) {
     return "Adresse e-mail invalide.";
   }
-  if (m.includes("signup_not_allowed")) {
-    return "Création refusée par Supabase. Vérifie la migration 029.";
+  if (
+    m.includes("signup_not_allowed") ||
+    m.includes("database error saving new user")
+  ) {
+    return "Création refusée par Supabase. Vérifie que la migration 029 est appliquée.";
+  }
+  if (
+    code === "bad_jwt" ||
+    m.includes("bad_jwt") ||
+    m.includes("invalid jwt") ||
+    m.includes("invalid number of segments") ||
+    m.includes("expected 3 parts in jwt")
+  ) {
+    return "Clé Supabase admin invalide sur Vercel. Vérifie SUPABASE_SERVICE_ROLE_KEY (Secret key ou service_role legacy).";
+  }
+  if (code === "config" || code === "network") {
+    return "Connexion Supabase impossible côté serveur. Vérifie les variables sur Vercel.";
+  }
+  if (code) {
+    return `Erreur Supabase (${code}). Réessaie ou contacte l'admin technique.`;
   }
   return "Impossible de créer le compte. Réessaie ou vérifie Supabase.";
 }
@@ -57,22 +76,26 @@ export async function createStaffMemberAction(
   }
 
   const { full_name, email, role, password } = parsed.data;
-  const admin = createAdminClient();
 
-  const { data, error } = await admin.auth.admin.createUser({
+  const { user, error } = await createAuthUserAdmin({
     email,
     password,
-    email_confirm: true,
-    user_metadata: { full_name: full_name.trim() },
-    app_metadata: {
+    emailConfirm: true,
+    userMetadata: { full_name: full_name.trim() },
+    appMetadata: {
       signup_source: "admin",
       role,
     },
   });
 
-  if (error || !data.user) {
+  if (error || !user) {
+    void reportError(new Error(error?.message ?? "createStaffMember: unknown"), {
+      surface: "create-staff-member",
+      code: error?.code,
+      status: error?.status,
+    });
     return {
-      error: mapCreateUserError(error?.message ?? "unknown"),
+      error: mapCreateUserError(error?.message ?? "unknown", error?.code),
       fieldErrors: {},
     };
   }
@@ -81,7 +104,7 @@ export async function createStaffMemberAction(
   await logAuditEvent({
     action: "STAFF_ACCOUNT_CREATED",
     entityType: "profiles",
-    entityId: data.user.id,
+    entityId: user.id,
     actorId: profile.id,
     actorRole: profile.role,
     metadata: {

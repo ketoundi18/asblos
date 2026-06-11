@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit",
     "gen:types": "bash scripts/gen-types.sh",
     "check:types": "bash scripts/check-database-types.sh",
+    "check:supabase": "bash scripts/check-supabase-remote.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import { createAdminCompatibleFetch } from "@/lib/supabase/admin-fetch";
 
 export function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,6 +16,9 @@ export function createAdminClient() {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+    },
+    global: {
+      fetch: createAdminCompatibleFetch(serviceRoleKey),
     },
   });
 }
