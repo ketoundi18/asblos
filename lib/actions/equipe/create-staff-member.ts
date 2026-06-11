@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth/session";
-import { createAuthUserAdmin } from "@/lib/supabase/auth-admin-create-user";
+import { createAuthUserAdmin, deleteAuthUserAdmin } from "@/lib/supabase/auth-admin-create-user";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { canManageUsers } from "@/lib/auth/permissions";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
@@ -27,7 +28,7 @@ function mapCreateUserError(message: string, code?: string): string {
     m.includes("signup_not_allowed") ||
     m.includes("database error saving new user")
   ) {
-    return "Création refusée par Supabase. Exécute scripts/fix-handle-new-user-post-046.sql dans le SQL Editor, puis réessaie.";
+    return "Création refusée par Supabase. Exécute scripts/fix-handle-new-user-post-046.sql (trigger parent uniquement), puis réessaie.";
   }
   if (
     code === "bad_jwt" ||
@@ -100,6 +101,32 @@ export async function createStaffMemberAction(
     });
     return {
       error: mapCreateUserError(error?.message ?? "unknown", error?.code),
+      fieldErrors: {},
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      id: user.id,
+      email,
+      full_name: full_name.trim(),
+      role,
+      signup_source: "admin",
+      is_active: true,
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    await deleteAuthUserAdmin(user.id);
+    void reportError(new Error(profileError.message), {
+      surface: "create-staff-member",
+      code: "profile_insert_failed",
+      pgCode: profileError.code,
+    });
+    return {
+      error: "Compte Auth créé mais profil équipe impossible. Réessaie ou contacte l'admin technique.",
       fieldErrors: {},
     };
   }

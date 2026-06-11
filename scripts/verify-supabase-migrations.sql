@@ -37,4 +37,6 @@ SELECT
     WHERE routine_schema = 'public' AND routine_name = 'create_parent_enrollment_core'
   )) AS m027_parent_enrollment_ok,
   (SELECT pg_get_functiondef('public.handle_new_user()'::regprocedure)
-    LIKE '%signup_not_allowed%') AS m029_handle_new_user_ok;
+    LIKE '%signup_not_allowed%') AS m029_legacy_block_still_present,
+  (SELECT pg_get_functiondef('public.handle_new_user()'::regprocedure)
+    LIKE '%signup_source%parent%') AS m047_parent_only_ok;

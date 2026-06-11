@@ -19,6 +19,17 @@ export type CreateAuthUserResult =
   | { user: User; error: null }
   | { user: null; error: CreateAuthUserError };
 
+function authAdminHeaders(key: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    apikey: key,
+    "Content-Type": "application/json",
+  };
+  if (!isSupabaseSecretApiKey(key)) {
+    headers.Authorization = `Bearer ${key}`;
+  }
+  return headers;
+}
+
 function parseAuthUserPayload(payload: Record<string, unknown>): User | null {
   const nested = payload.user;
   if (nested && typeof nested === "object" && "id" in nested) {
@@ -75,14 +86,7 @@ export async function createAuthUserAdmin(
     };
   }
 
-  const headers: Record<string, string> = {
-    apikey: key,
-    "Content-Type": "application/json",
-  };
-
-  if (!isSupabaseSecretApiKey(key)) {
-    headers.Authorization = `Bearer ${key}`;
-  }
+  const headers = authAdminHeaders(key);
 
   const body = {
     email: input.email,
@@ -131,4 +135,20 @@ export async function createAuthUserAdmin(
   }
 
   return { user, error: null };
+}
+
+/** Supprime un utilisateur Auth (rollback si insert profiles échoue). */
+export async function deleteAuthUserAdmin(userId: string): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return;
+
+  try {
+    await fetch(`${url}/auth/v1/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: authAdminHeaders(key),
+    });
+  } catch {
+    // Best-effort cleanup
+  }
 }
