@@ -29,7 +29,7 @@ describe("createAuthUserAdmin", () => {
     const result = await createAuthUserAdmin({
       email: "staff@test.invalid",
       password: "TestPass123!",
-      appMetadata: { signup_source: "admin", role: "BENEVOLE" },
+      appMetadata: { signup_source: "admin", role: "BENEVOLE", created_by: "asblos_admin" },
       userMetadata: { full_name: "Test Staff" },
     });
 
@@ -43,7 +43,11 @@ describe("createAuthUserAdmin", () => {
     expect(headers.get("Authorization")).toBeNull();
 
     const body = JSON.parse(String(init.body)) as Record<string, unknown>;
-    expect(body.app_metadata).toEqual({ signup_source: "admin", role: "BENEVOLE" });
+    expect(body.app_metadata).toEqual({
+      signup_source: "admin",
+      role: "BENEVOLE",
+      created_by: "asblos_admin",
+    });
   });
 
   it("mappe une erreur Auth", async () => {

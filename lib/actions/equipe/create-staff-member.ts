@@ -27,7 +27,7 @@ function mapCreateUserError(message: string, code?: string): string {
     m.includes("signup_not_allowed") ||
     m.includes("database error saving new user")
   ) {
-    return "Création refusée par Supabase. Vérifie que la migration 029 est appliquée.";
+    return "Création refusée par Supabase. Exécute scripts/fix-handle-new-user-post-046.sql dans le SQL Editor, puis réessaie.";
   }
   if (
     code === "bad_jwt" ||
@@ -88,6 +88,7 @@ export async function createStaffMemberAction(
     appMetadata: {
       signup_source: "admin",
       role,
+      created_by: "asblos_admin",
     },
   });
 
