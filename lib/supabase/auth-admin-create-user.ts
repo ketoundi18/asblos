@@ -25,7 +25,7 @@ function parseAuthUserPayload(payload: Record<string, unknown>): User | null {
     return nested as User;
   }
   if (typeof payload.id === "string") {
-    return payload as User;
+    return payload as unknown as User;
   }
   return null;
 }
@@ -44,7 +44,9 @@ function parseAuthErrorPayload(
       payload.message ??
       fallback
   );
-  const code = String(errObj.code ?? errObj.error_code ?? payload.code ?? "").trim();
+  const code = String(
+    errObj.error_code ?? errObj.code ?? payload.error_code ?? payload.code ?? ""
+  ).trim();
 
   return {
     message,

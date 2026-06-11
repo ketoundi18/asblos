@@ -22,7 +22,7 @@ describe("createAdminCompatibleFetch", () => {
       },
     });
 
-    const [, init] = nativeFetch.mock.calls[0] as [string, RequestInit];
+    const [, init] = nativeFetch.mock.calls[0] as unknown as [string, RequestInit];
     const headers = new Headers(init.headers);
     expect(headers.get("apikey")).toBe(secret);
     expect(headers.get("Authorization")).toBeNull();
@@ -43,7 +43,7 @@ describe("createAdminCompatibleFetch", () => {
       },
     });
 
-    const [, init] = nativeFetch.mock.calls[0] as [string, RequestInit];
+    const [, init] = nativeFetch.mock.calls[0] as unknown as [string, RequestInit];
     const headers = new Headers(init.headers);
     expect(headers.get("Authorization")).toBe(`Bearer ${jwt}`);
 

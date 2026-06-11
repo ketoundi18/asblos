@@ -44,6 +44,9 @@ function mapCreateUserError(message: string, code?: string): string {
   if (code) {
     return `Erreur Supabase (${code}). Réessaie ou contacte l'admin technique.`;
   }
+  if (message && message !== "unknown") {
+    return `Impossible de créer le compte (${message.slice(0, 120)}).`;
+  }
   return "Impossible de créer le compte. Réessaie ou vérifie Supabase.";
 }
 

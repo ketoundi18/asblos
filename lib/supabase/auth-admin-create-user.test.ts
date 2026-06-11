@@ -36,7 +36,7 @@ describe("createAuthUserAdmin", () => {
     expect(result.error).toBeNull();
     expect(result.user?.id).toBe("user-1");
 
-    const [url, init] = nativeFetch.mock.calls[0] as [string, RequestInit];
+    const [url, init] = nativeFetch.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://proj.supabase.co/auth/v1/admin/users");
     const headers = new Headers(init.headers);
     expect(headers.get("apikey")).toBe(ENV.SUPABASE_SERVICE_ROLE_KEY);
