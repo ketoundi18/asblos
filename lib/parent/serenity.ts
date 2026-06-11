@@ -222,6 +222,38 @@ export function buildChildSerenityView(input: {
   };
 }
 
+/** Vue minimale quand la RPC d'état n'est pas encore disponible (ex. inscription fraîche). */
+export function buildChildSerenityFallbackView(input: {
+  link: ParentChildLink;
+  activityCount: number;
+}): ChildSerenityView {
+  const { link, activityCount } = input;
+  const firstName = link.first_name;
+
+  return {
+    childId: link.child_id,
+    firstName,
+    lastName: link.last_name,
+    steps: [
+      step({
+        id: "enrollment",
+        title: "Inscription enregistrée",
+        description: `La fiche de ${firstName} est bien reçue par l'ASBL.`,
+        state: "done",
+      }),
+      step({
+        id: "validation",
+        title: "Validation ASBL",
+        description: "L'équipe ASBL examine le dossier — patience, c'est en cours.",
+        state: "current",
+      }),
+    ],
+    reassurance: `${firstName} — voir les étapes ci-dessous.`,
+    activityCount,
+    isFullyActive: false,
+  };
+}
+
 function buildReassurance(
   firstName: string,
   ctx: {

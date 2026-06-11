@@ -34,7 +34,7 @@ export async function simulateParentPaymentAction(
   await resyncPaidMembershipOrContinue(childId, context, successRedirect);
 
   if (!childNeedsMembershipPayment(context)) {
-    redirect("/espace-parents");
+    redirect(successRedirect);
   }
 
   const feeCents = context.fee_cents;

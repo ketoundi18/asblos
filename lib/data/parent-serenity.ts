@@ -1,6 +1,7 @@
 import { getParentDashboard } from "@/lib/data/parent";
 import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import {
+  buildChildSerenityFallbackView,
   buildChildSerenityView,
   type ChildSerenityView,
 } from "@/lib/parent/serenity";
@@ -40,20 +41,17 @@ export async function getParentSerenityDashboard(): Promise<{
     getActivityCountByChild(childIds),
   ]);
 
-  if (stateError) {
+  if (stateError?.includes("040_get_child_enrollment_state")) {
     return { children: [], loadError: stateError };
   }
 
   const children = links.flatMap((link) => {
     const state = states.get(link.child_id);
-    if (!state) return [];
-    return [
-      buildChildSerenityView({
-        link,
-        state,
-        activityCount: activityCounts.get(link.child_id) ?? 0,
-      }),
-    ];
+    const activityCount = activityCounts.get(link.child_id) ?? 0;
+    if (!state) {
+      return [buildChildSerenityFallbackView({ link, activityCount })];
+    }
+    return [buildChildSerenityView({ link, state, activityCount })];
   });
 
   return { children, loadError };

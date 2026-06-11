@@ -22,6 +22,8 @@
     "test:e2e:install": "playwright install chromium",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
+    "cleanup:e2e": "node scripts/cleanup-e2e-data.mjs",
+    "cleanup:e2e:dry": "node scripts/cleanup-e2e-data.mjs --dry-run",
     "css:check": "bash scripts/css-check.sh",
     "secrets:sync": "bash scripts/sync-github-secrets.sh"
   },

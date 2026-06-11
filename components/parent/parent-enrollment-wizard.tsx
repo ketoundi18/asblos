@@ -8,10 +8,10 @@ import { EnrollmentStepDone } from "@/components/parent/enrollment-wizard/enroll
 import { EnrollmentStepFormula } from "@/components/parent/enrollment-wizard/enrollment-step-formula";
 import { EnrollmentStepPayment } from "@/components/parent/enrollment-wizard/enrollment-step-payment";
 import { EnrollmentFormError } from "@/components/parent/enrollment-wizard/enrollment-wizard-ui";
+import { Step1HiddenFields } from "@/components/parent/enrollment-wizard/step1-hidden-fields";
 import { useEnrollmentWizard } from "@/components/parent/enrollment-wizard/use-enrollment-wizard";
 import type { EnrollmentWizardProps } from "@/components/parent/enrollment-wizard/types";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
   const {
@@ -50,34 +50,37 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
           className="space-y-6"
           noValidate
         >
-          <div className={cn(wizard.stepKey !== "enfant" && "hidden")}>
+          {wizard.stepKey === "enfant" ? (
             <EnrollmentStepChild
-              fieldErrors={wizard.enrollState.fieldErrors}
-              error={wizard.stepKey === "enfant" ? wizard.enrollState.error : null}
-              localValidationError={wizard.localValidationError}
-              onContinue={() => {
-                if (wizard.validateStep1()) wizard.setStepKey("formule");
-              }}
-            />
-          </div>
-
-          <div className={cn(wizard.stepKey !== "formule" && "hidden")}>
-            <EnrollmentStepFormula
+              key={wizard.step1Draft ? "enfant-draft" : "enfant-new"}
               fieldErrors={wizard.enrollState.fieldErrors}
               error={wizard.enrollState.error}
               localValidationError={wizard.localValidationError}
-              guardianDefaults={guardianDefaults}
-              openPrograms={openPrograms}
-              schoolSupportFeeCents={schoolSupportFeeCents}
-              schoolSupportFeeLabel={schoolSupportFeeLabel}
-              confirmOpen={wizard.confirmOpen}
-              confirmSummary={wizard.confirmSummary}
-              onBack={() => wizard.setStepKey("enfant")}
-              onOpenConfirm={wizard.openEnrollmentConfirm}
-              onConfirmOpenChange={wizard.setConfirmOpen}
-              onConfirmEnrollment={wizard.confirmEnrollment}
+              draft={wizard.step1Draft}
+              onContinue={wizard.goToFormulaStep}
             />
-          </div>
+          ) : null}
+
+          {wizard.stepKey === "formule" ? (
+            <>
+              {wizard.step1Draft ? <Step1HiddenFields draft={wizard.step1Draft} /> : null}
+              <EnrollmentStepFormula
+                fieldErrors={wizard.enrollState.fieldErrors}
+                error={wizard.enrollState.error}
+                localValidationError={wizard.localValidationError}
+                guardianDefaults={guardianDefaults}
+                openPrograms={openPrograms}
+                schoolSupportFeeCents={schoolSupportFeeCents}
+                schoolSupportFeeLabel={schoolSupportFeeLabel}
+                confirmOpen={wizard.confirmOpen}
+                confirmSummary={wizard.confirmSummary}
+                onBack={wizard.goBackToChildStep}
+                onOpenConfirm={wizard.openEnrollmentConfirm}
+                onConfirmOpenChange={wizard.setConfirmOpen}
+                onConfirmEnrollment={wizard.confirmEnrollment}
+              />
+            </>
+          ) : null}
 
           <Button asChild variant="outline" className="w-full">
             <Link href="/espace-parents">Annuler</Link>

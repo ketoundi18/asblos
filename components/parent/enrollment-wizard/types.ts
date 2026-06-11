@@ -31,3 +31,16 @@ export type EnrollmentWizardProps = {
 };
 
 export type GuardianDefaults = EnrollmentWizardProps["guardianDefaults"];
+
+export type Step1Draft = {
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  school_name: string;
+  school_class: string;
+  allergies: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  image_rights: boolean;
+  outing_authorization: boolean;
+};

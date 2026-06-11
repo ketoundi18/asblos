@@ -31,6 +31,7 @@ const baseURL =
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.mjs",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

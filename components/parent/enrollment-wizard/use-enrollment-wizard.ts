@@ -8,6 +8,7 @@ import { buildEnrollmentWizardSteps } from "@/lib/parent/enrollment-wizard-steps
 import {
   STEP1_FIELD_KEYS,
   type EnrollmentWizardProps,
+  type Step1Draft,
 } from "@/components/parent/enrollment-wizard/types";
 
 const STEPS_REQUIRING_CHILD = new Set(["jours", "paiement", "termine"]);
@@ -39,6 +40,30 @@ function validateRequiredFields(
   return true;
 }
 
+function captureStep1Draft(form: HTMLFormElement): Step1Draft {
+  const read = (name: string) => {
+    const el = form.elements.namedItem(name) as HTMLInputElement | null;
+    return el?.value?.trim() ?? "";
+  };
+  const readCheck = (name: string) => {
+    const el = form.elements.namedItem(name) as HTMLInputElement | null;
+    return el?.checked ?? false;
+  };
+
+  return {
+    first_name: read("first_name"),
+    last_name: read("last_name"),
+    birth_date: read("birth_date"),
+    school_name: read("school_name"),
+    school_class: read("school_class"),
+    allergies: read("allergies"),
+    emergency_contact_name: read("emergency_contact_name"),
+    emergency_contact_phone: read("emergency_contact_phone"),
+    image_rights: readCheck("image_rights"),
+    outing_authorization: readCheck("outing_authorization"),
+  };
+}
+
 export function useEnrollmentWizard({
   initialStep,
   initialChildId,
@@ -65,6 +90,7 @@ export function useEnrollmentWizard({
     null
   );
   const [resumeError, setResumeError] = useState<string | null>(null);
+  const [step1Draft, setStep1Draft] = useState<Step1Draft | null>(null);
 
   const [enrollState, enrollAction] = useFormState(
     createParentEnrollmentAction,
@@ -113,10 +139,13 @@ export function useEnrollmentWizard({
   }, [enrollState.fieldErrors, stepKey]);
 
   function validateStep1(): boolean {
+    const form = formRef.current;
+    if (!form) return false;
+
     const fieldIds = ["first_name", "last_name", "birth_date"] as const;
 
     for (const id of fieldIds) {
-      const el = document.getElementById(id) as HTMLInputElement | null;
+      const el = form.querySelector(`#${id}`) as HTMLInputElement | null;
       if (!el?.value.trim()) {
         el?.focus();
         el?.reportValidity();
@@ -155,24 +184,36 @@ export function useEnrollmentWizard({
     }
   }
 
+  function goToFormulaStep() {
+    const form = formRef.current;
+    if (!form || !validateStep1()) return;
+    setStep1Draft(captureStep1Draft(form));
+    setStepKey("formule");
+  }
+
   function openEnrollmentConfirm() {
     const form = formRef.current;
     if (!form || !validateStep2Form(form)) return;
 
-    const firstName = (
-      form.elements.namedItem("first_name") as HTMLInputElement | null
-    )?.value.trim();
-    const lastName = (
-      form.elements.namedItem("last_name") as HTMLInputElement | null
-    )?.value.trim();
-    setConfirmSummary(
-      [firstName, lastName].filter(Boolean).join(" ") || "votre enfant"
-    );
+    const summary = step1Draft
+      ? [step1Draft.first_name, step1Draft.last_name].filter(Boolean).join(" ")
+      : [
+          (form.elements.namedItem("first_name") as HTMLInputElement | null)?.value.trim(),
+          (form.elements.namedItem("last_name") as HTMLInputElement | null)?.value.trim(),
+        ]
+          .filter(Boolean)
+          .join(" ");
+    setConfirmSummary(summary || "votre enfant");
     setConfirmOpen(true);
   }
 
   function confirmEnrollment() {
     formRef.current?.requestSubmit();
+  }
+
+  function goBackToChildStep() {
+    setStepKey("enfant");
+    setLocalValidationError(null);
   }
 
   function goToPostSlotsStep() {
@@ -198,6 +239,9 @@ export function useEnrollmentWizard({
     showEnrollmentForm,
     validateStep1,
     validateStep2,
+    goToFormulaStep,
+    goBackToChildStep,
+    step1Draft,
     openEnrollmentConfirm,
     confirmEnrollment,
     goToPostSlotsStep,

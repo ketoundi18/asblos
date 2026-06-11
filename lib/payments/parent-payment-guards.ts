@@ -46,7 +46,7 @@ export async function resyncPaidMembershipOrContinue(
   successRedirect: string
 ): Promise<void> {
   if (context.membership_status === "AWAITING_ASBL") {
-    redirect("/espace-parents?success=deja-paye");
+    redirect(successRedirect);
   }
 
   if (
@@ -65,7 +65,7 @@ export async function resyncPaidMembershipOrContinue(
   }
 
   if (context.paid_payment) {
-    redirect("/espace-parents?success=deja-paye");
+    redirect(successRedirect);
   }
 }
 
