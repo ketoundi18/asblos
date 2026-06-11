@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, Clock, Lock } from "lucide-react";
-import type { ChildSerenityView, SerenityStep, SerenityStepState } from "@/lib/parent/serenity";
+import type {
+  ChildDashboardView,
+  DashboardStep,
+  DashboardStepState,
+} from "@/lib/parent/child-dashboard-view";
 import { StatusPill } from "@/components/ui/status-pill";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-function StepIcon({ state }: { state: SerenityStepState }) {
+function StepIcon({ state }: { state: DashboardStepState }) {
   if (state === "done") {
     return <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />;
   }
@@ -19,7 +23,7 @@ function StepIcon({ state }: { state: SerenityStepState }) {
   return <Lock className="h-4 w-4 shrink-0 text-muted-foreground/60" aria-hidden />;
 }
 
-function StepRow({ step, isLast }: { step: SerenityStep; isLast: boolean }) {
+function StepRow({ step, isLast }: { step: DashboardStep; isLast: boolean }) {
   return (
     <li className="relative flex gap-3 pb-6 last:pb-0">
       {!isLast ? (
@@ -57,10 +61,10 @@ function StepRow({ step, isLast }: { step: SerenityStep; isLast: boolean }) {
 }
 
 type Props = {
-  child: ChildSerenityView;
+  child: ChildDashboardView;
 };
 
-export function ParentSerenityCard({ child }: Props) {
+export function ParentDashboardCard({ child }: Props) {
   const allDone = child.steps.every((s) => s.state === "done");
 
   return (

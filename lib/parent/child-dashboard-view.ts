@@ -1,44 +1,44 @@
 import type { ParentChildLink } from "@/lib/data/parent";
 import type { ChildEnrollmentState } from "@/lib/enrollment/child-enrollment-state";
-import { resolveSerenityAsblValidated } from "@/lib/enrollment/child-enrollment-state";
+import { resolveParentDashboardAsblValidated } from "@/lib/enrollment/child-enrollment-state";
 
-export type SerenityStepState = "done" | "current" | "waiting" | "locked";
+export type DashboardStepState = "done" | "current" | "waiting" | "locked";
 
-export type SerenityStep = {
+export type DashboardStep = {
   id: string;
   title: string;
   description: string;
-  state: SerenityStepState;
+  state: DashboardStepState;
   actionLabel?: string;
   actionHref?: string;
 };
 
-export type ChildSerenityView = {
+export type ChildDashboardView = {
   childId: string;
   firstName: string;
   lastName: string;
-  steps: SerenityStep[];
+  steps: DashboardStep[];
   reassurance: string;
   activityCount: number;
   isFullyActive: boolean;
 };
 
 function step(
-  partial: SerenityStep & { id: string }
-): SerenityStep {
+  partial: DashboardStep & { id: string }
+): DashboardStep {
   return partial;
 }
 
-export function buildChildSerenityView(input: {
+export function buildChildDashboardView(input: {
   link: ParentChildLink;
   state: ChildEnrollmentState;
   activityCount: number;
-}): ChildSerenityView {
+}): ChildDashboardView {
   const { link, state, activityCount } = input;
   const firstName = link.first_name;
   const membership = state.layer_b;
   const derived = state.derived;
-  const steps: SerenityStep[] = [];
+  const steps: DashboardStep[] = [];
 
   steps.push(
     step({
@@ -94,7 +94,7 @@ export function buildChildSerenityView(input: {
     );
   }
 
-  const isAsblValidated = resolveSerenityAsblValidated(state, link.verified);
+  const isAsblValidated = resolveParentDashboardAsblValidated(state, link.verified);
   const waitingAsblMembership = membership?.status === "AWAITING_ASBL";
 
   if (derived.is_rejected) {
@@ -223,10 +223,10 @@ export function buildChildSerenityView(input: {
 }
 
 /** Vue minimale quand la RPC d'état n'est pas encore disponible (ex. inscription fraîche). */
-export function buildChildSerenityFallbackView(input: {
+export function buildChildDashboardFallbackView(input: {
   link: ParentChildLink;
   activityCount: number;
-}): ChildSerenityView {
+}): ChildDashboardView {
   const { link, activityCount } = input;
   const firstName = link.first_name;
 

@@ -52,7 +52,7 @@ Ne jamais mélanger les patterns (pas de tableau dense côté parent).
 | Attente | « Tout est en ordre de votre côté. L'ASBL finalise la validation. » |
 | Erreur | « Nous n'avons pas pu enregistrer. Réessayez dans un instant. » |
 
-Réutiliser l'esprit de `lib/parent/serenity.ts` (étapes visuelles, `reassurance`).
+Réutiliser l'esprit de `lib/parent/child-dashboard-view.ts` (étapes visuelles, `reassurance`).
 
 ## Patterns parent recommandés
 

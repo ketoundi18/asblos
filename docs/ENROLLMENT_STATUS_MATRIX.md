@@ -169,7 +169,7 @@ flowchart TD
 |---------|------|
 | `lib/enrollment/get-child-enrollment-state.ts` | **Lecture RPC** A+B+C + flags dérivés (C1 phase 1) |
 | `lib/enrollment/child-enrollment-state.ts` | Parse JSON + helpers purs |
-| `lib/parent/serenity.ts` | UI parent — lit **RPC** via `getChildEnrollmentStates` |
+| `lib/parent/child-dashboard-view.ts` | UI parent — lit **RPC** via `getChildEnrollmentStates` |
 | `lib/actions/school-support-admin.ts` | ✅ RPC C1 phase 1 |
 | `lib/actions/parent-admin.ts` | ✅ RPC C1 phase 1 |
 | `lib/enrollment/enrollment-writes.ts` | Double-write V1 centralisé A+B (validate, reject, paiement, upgrade) |
@@ -211,7 +211,7 @@ flowchart TD
 2. **`isLegacyPending`** — rare sans membership ; géré par RPC + paiements confirmés.
 3. ~~**`syncMissingMembershipsForCurrentParent`**~~ — résolu migration 038.
 4. **`allowed: true` jamais atteint** dans `resolveSchoolSupportEnrollmentEligibility` pour ACTIVE — flux toujours via `choose_days`.
-5. **Noms legacy** — `serenity.ts` = dashboard parent (renommage prévu DM-4).
+5. ~~**Noms legacy** — `serenity.ts` renommé `child-dashboard-view.ts` (DM-4 ✅).~~
 
 ---
 
@@ -234,7 +234,7 @@ flowchart TD
 | Création parent RPC | ✅ | `create_parent_enrollment_core` — sans colonne legacy |
 | Colonne `children.enrollment_status` | ✅ 046 | Supprimée — source = `memberships` |
 | RPC parent `set_child_enrollment_layer_a_parent` | ✅ 045 | Met à jour `memberships` uniquement |
-| Renommage `serenity.ts` → dashboard parent | ❌ DM-4 | Cosmétique |
+| Renommage `serenity.ts` → dashboard parent | ✅ DM-4 | `child-dashboard-view.ts`, `parent-dashboard.ts`, `parent-dashboard-card.tsx` |
 | `staffParentChildEnrollmentBadge(child)` legacy | ✅ | Supprimé — remplacé par `FromState` |
 
 **Critère de fin V2 :** ✅ atteint (juin 2026) — zéro lecture/écriture métier de colonne `enrollment_status` ; zéro `syncMissing*` runtime.

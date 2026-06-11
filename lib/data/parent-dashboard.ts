@@ -1,10 +1,10 @@
 import { getParentDashboard } from "@/lib/data/parent";
 import { getChildEnrollmentStates } from "@/lib/enrollment/get-child-enrollment-state";
 import {
-  buildChildSerenityFallbackView,
-  buildChildSerenityView,
-  type ChildSerenityView,
-} from "@/lib/parent/serenity";
+  buildChildDashboardFallbackView,
+  buildChildDashboardView,
+  type ChildDashboardView,
+} from "@/lib/parent/child-dashboard-view";
 import { createClient } from "@/lib/supabase/server";
 
 async function getActivityCountByChild(
@@ -26,8 +26,8 @@ async function getActivityCountByChild(
   return map;
 }
 
-export async function getParentSerenityDashboard(): Promise<{
-  children: ChildSerenityView[];
+export async function getParentChildDashboards(): Promise<{
+  children: ChildDashboardView[];
   loadError: string | null;
 }> {
   const { links, loadError } = await getParentDashboard();
@@ -49,9 +49,9 @@ export async function getParentSerenityDashboard(): Promise<{
     const state = states.get(link.child_id);
     const activityCount = activityCounts.get(link.child_id) ?? 0;
     if (!state) {
-      return [buildChildSerenityFallbackView({ link, activityCount })];
+      return [buildChildDashboardFallbackView({ link, activityCount })];
     }
-    return [buildChildSerenityView({ link, state, activityCount })];
+    return [buildChildDashboardView({ link, state, activityCount })];
   });
 
   return { children, loadError };

@@ -40,7 +40,7 @@ export function enrollmentStateIsSchoolSupportPendingConfirm(
 }
 
 /** Validation ASBL affichée dashboard parent (compat lien vérifié sans membership). */
-export function resolveSerenityAsblValidated(
+export function resolveParentDashboardAsblValidated(
   state: ChildEnrollmentState,
   linkVerified: boolean
 ): boolean {

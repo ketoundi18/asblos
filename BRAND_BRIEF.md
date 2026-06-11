@@ -164,7 +164,7 @@ boutons min. 44 px de hauteur, textes 16 px, contrastes testés.
 ## 7. Alignement avec l'existant
 
 Le fichier `app/globals.css` implémente déjà une base cohérente avec ce brief (bleu sérénité, crème, vert accent).  
-Les textes de `lib/parent/serenity.ts` incarnent le ton « bienveillance + clarté » — à généraliser à tout l'espace parent.
+Les textes de `lib/parent/child-dashboard-view.ts` incarnent le ton « bienveillance + clarté » — à généraliser à tout l'espace parent.
 
 ### Prochaines étapes branding (hors scope immédiat)
 - Charger Nunito + Source Sans 3 via `next/font` (remplacer `system-ui` actuel).

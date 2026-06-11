@@ -23,6 +23,6 @@ export {
   membershipFromEnrollmentState,
   membershipIsSchoolSupportPendingConfirm,
   queueMembershipFromState,
-  resolveSerenityAsblValidated,
+  resolveParentDashboardAsblValidated,
   staffParentChildEnrollmentBadgeFromState,
 } from "@/lib/enrollment/child-enrollment-state/helpers";

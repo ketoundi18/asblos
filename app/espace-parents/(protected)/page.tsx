@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth/session";
-import { getParentSerenityDashboard } from "@/lib/data/parent-serenity";
-import { ParentSerenityCard } from "@/components/parent/parent-serenity-card";
+import { getParentChildDashboards } from "@/lib/data/parent-dashboard";
+import { ParentDashboardCard } from "@/components/parent/parent-dashboard-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export default async function EspaceParentsPage() {
   const profile = await getCurrentProfile();
-  const { children, loadError } = await getParentSerenityDashboard();
+  const { children, loadError } = await getParentChildDashboards();
   const parentFirstName =
     profile?.full_name?.trim().split(/\s+/)[0] ?? "à vous";
 
@@ -51,7 +51,7 @@ export default async function EspaceParentsPage() {
       ) : (
         <div className="space-y-4">
           {children.map((child) => (
-            <ParentSerenityCard key={child.childId} child={child} />
+            <ParentDashboardCard key={child.childId} child={child} />
           ))}
         </div>
       )}
