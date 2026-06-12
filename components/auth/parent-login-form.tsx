@@ -48,6 +48,14 @@ export function ParentLoginForm() {
           {state.error}
         </div>
       ) : null}
+      <p className="text-right text-sm">
+        <a
+          href="/espace-parents/mot-de-passe-oublie"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Mot de passe oublié ?
+        </a>
+      </p>
       <SubmitButton />
     </form>
   );

@@ -26,6 +26,7 @@ export type AuditAction =
   | "STAFF_CONTRACT_CREATED"
   | "STAFF_CONTRACT_UPDATED"
   | "PASSWORD_CHANGED"
+  | "PASSWORD_RESET_REQUESTED"
   | "USER_SIGNED_IN";
 
 export type AuditEntityType =

@@ -16,5 +16,12 @@ export async function GET(request: Request) {
     }
   }
 
-  redirect("/connexion");
+  const channel = searchParams.get("next")?.includes("channel=parent")
+    ? "parent"
+    : "staff";
+  const fallback =
+    channel === "parent"
+      ? "/espace-parents/mot-de-passe-oublie?error=lien-expire"
+      : "/connexion/mot-de-passe-oublie?error=lien-expire";
+  redirect(fallback);
 }

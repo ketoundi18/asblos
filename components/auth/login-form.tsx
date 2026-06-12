@@ -38,7 +38,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           inputMode="email"
-          placeholder="prenom@asbl.be"
+          placeholder="prenom@monasbl.be"
           required
           aria-invalid={Boolean(state.fieldErrors.email)}
           aria-describedby={state.fieldErrors.email ? "email-error" : undefined}
@@ -79,6 +79,15 @@ export function LoginForm() {
           {state.error}
         </div>
       ) : null}
+
+      <p className="text-right text-sm">
+        <a
+          href="/connexion/mot-de-passe-oublie"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Mot de passe oublié ?
+        </a>
+      </p>
 
       <SubmitButton />
     </form>

@@ -2,10 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isAdminOnlyRoute, isAdminRole } from "@/lib/auth/admin-routes";
 
-const STAFF_PUBLIC = ["/connexion"];
+const STAFF_PUBLIC = ["/connexion", "/connexion/mot-de-passe-oublie"];
 const PARENT_PUBLIC = [
   "/espace-parents/connexion",
   "/espace-parents/inscription",
+  "/espace-parents/mot-de-passe-oublie",
 ];
 
 /** Routes sans session (webhooks, sonde santé, tunnel Sentry, debug dev). */

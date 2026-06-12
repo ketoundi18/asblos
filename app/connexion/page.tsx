@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -7,8 +8,24 @@ import {
 } from "@/components/ui/card";
 import { AuthPageShell } from "@/components/ui/auth-page-shell";
 import { LoginForm } from "@/components/auth/login-form";
+import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
+import { resolveFlashToast } from "@/lib/messages/flash-messages";
 
-export default function ConnexionPage() {
+type PageProps = {
+  searchParams: Promise<{ success?: string; error?: string }>;
+};
+
+export default async function ConnexionPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const flash =
+    params.success || params.error
+      ? resolveFlashToast({
+          success: params.success,
+          error: params.error,
+          audience: "staff",
+        })
+      : null;
+
   return (
     <AuthPageShell
       title="Connexion staff"
@@ -26,6 +43,7 @@ export default function ConnexionPage() {
         </p>
       }
     >
+      {flash ? <ServerNoticeToast flash={flash} /> : null}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="font-heading text-lg">Identifiants</CardTitle>

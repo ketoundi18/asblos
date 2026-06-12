@@ -130,6 +130,11 @@ const SUCCESS_MESSAGES: Record<string, FlashToast> = {
     title: "Mot de passe modifié",
     description: "Ton nouveau mot de passe est actif. Garde-le pour toi.",
   },
+  "password-reset": {
+    type: "success",
+    title: "Mot de passe réinitialisé",
+    description: "Tu peux te connecter avec ton nouveau mot de passe.",
+  },
   "contract-created": {
     type: "success",
     title: "Objectif défini",
