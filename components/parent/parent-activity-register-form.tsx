@@ -25,11 +25,11 @@ export function ParentActivityRegisterForm({
     <div className="space-y-4">
       {isPaid ? (
         <p className="text-sm text-muted-foreground">
-          Participation suggérée :{" "}
+          Participation :{" "}
           <span className="font-medium text-foreground">
             {formatActivityPrice(priceCents)}
           </span>
-          . Votre enfant peut participer — le règlement peut suivre, sans pression.
+          . Règlement par <strong>virement bancaire</strong> (IBAN de l&apos;ASBL + preuve).
         </p>
       ) : null}
 
@@ -58,10 +58,11 @@ export function ParentActivityRegisterForm({
                 variant="outline"
                 className="w-full"
               >
-                Inscrire et payer maintenant
+                Inscrire et payer par virement
               </Button>
               <p className="text-xs text-muted-foreground">
-                Aucune justification demandée. L&apos;ASBL vous contactera avec bienveillance si besoin.
+                Vous serez guidé pour copier l&apos;IBAN, la communication et envoyer une
+                preuve de virement.
               </p>
             </div>
           ) : (

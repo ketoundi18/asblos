@@ -9,6 +9,7 @@ import { ParentLinksPanel } from "@/components/admin/parent-links-panel";
 import { SchoolSupportAdminPanel } from "@/components/admin/school-support-admin-panel";
 import { resolveCombinedLoadErrorToast } from "@/lib/messages/flash-messages";
 import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
+import { isBankTransferConfigured } from "@/lib/asbl/fee-utils";
 
 export default async function AdministrationPage() {
   const profile = await getCurrentProfile();
@@ -30,21 +31,33 @@ export default async function AdministrationPage() {
 
   const loadErrors = [loadError, soutienError, settingsError];
   const combinedLoadError = resolveCombinedLoadErrorToast(loadErrors, "staff");
+  const bankReady = isBankTransferConfigured(settings);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Familles & réglages</h1>
         <p className="text-muted-foreground">
-          {pendingCount > 0
-            ? `${pendingCount} dossier${pendingCount > 1 ? "s" : ""} à traiter — ou consulte l'historique ci-dessous.`
-            : "Tout est à jour. Les réglages rares sont en bas de page."}
+          Compte bancaire, cotisations et dossiers familles.
         </p>
       </div>
 
       {combinedLoadError ? <ServerNoticeToast flash={combinedLoadError} /> : null}
 
       <section className="space-y-4">
+        <h2 className="text-lg font-semibold">
+          Compte bancaire ASBL {!bankReady ? "— à configurer" : ""}
+        </h2>
+        {!bankReady ? (
+          <p className="text-sm text-warning-foreground">
+            Obligatoire pour les cotisations (inscription enfant). Les activités
+            payantes peuvent aussi utiliser ce compte par défaut.
+          </p>
+        ) : null}
+        {settings ? <AsblSettingsPanel settings={settings} /> : null}
+      </section>
+
+      <section className="space-y-4 border-t pt-8">
         <h2 className="text-lg font-semibold">À traiter aujourd&apos;hui</h2>
         <SchoolSupportAdminPanel
           requests={schoolSupportRequests}
@@ -60,11 +73,6 @@ export default async function AdministrationPage() {
           <ParentLinksPanel links={links.filter((l) => l.verified)} validatedOnly />
         </section>
       ) : null}
-
-      <section className="space-y-4 border-t pt-8">
-        <h2 className="text-lg font-semibold text-muted-foreground">Réglages (rarement modifié)</h2>
-        {settings ? <AsblSettingsPanel settings={settings} /> : null}
-      </section>
     </div>
   );
 }

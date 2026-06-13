@@ -19,8 +19,7 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
     schoolSupportFeeCents,
     openPrograms,
     guardianDefaults,
-    mollieReady,
-    simulationEnabled,
+    bankTransferConfigured,
     initialStep,
     initialChildId,
     initialChildName,
@@ -103,8 +102,7 @@ export function ParentEnrollmentWizard(props: EnrollmentWizardProps) {
           childId={wizard.childId}
           childName={wizard.childName}
           schoolSupportFeeLabel={schoolSupportFeeLabel}
-          mollieReady={mollieReady}
-          simulationEnabled={simulationEnabled}
+          bankTransferConfigured={bankTransferConfigured}
         />
       ) : null}
 

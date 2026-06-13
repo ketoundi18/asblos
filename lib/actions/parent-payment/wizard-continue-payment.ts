@@ -1,10 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { isMollieConfigured } from "@/lib/mollie/client";
 import {
   childNeedsMembershipPayment,
   getChildPaymentContext,
+  parentMembershipPaymentSettled,
 } from "@/lib/data/parent-payments";
 import {
   markMembershipPaidOrRedirect,
@@ -14,7 +14,7 @@ import {
 } from "@/lib/payments/parent-payment-guards";
 import { guardChildId } from "@/lib/validations/uuid";
 
-/** Vérifie en base (ou sync Mollie) avant l'étape « terminé » du wizard. */
+/** Passe à l'étape « terminé » si preuve envoyée ou paiement confirmé (virement, sans Mollie). */
 export async function continueEnrollmentWizardAfterPaymentAction(childId: string) {
   guardChildId(childId, "/espace-parents");
   await requireParentProfileOrRedirect();
@@ -28,10 +28,7 @@ export async function continueEnrollmentWizardAfterPaymentAction(childId: string
     redirect(wizardDone);
   }
 
-  if (
-    context.membership_status === "AWAITING_ASBL" ||
-    context.paid_payment
-  ) {
+  if (parentMembershipPaymentSettled(context)) {
     if (
       context.paid_payment &&
       context.membership_status === "AWAITING_PAYMENT"
@@ -44,34 +41,6 @@ export async function continueEnrollmentWizardAfterPaymentAction(childId: string
       await revalidatePaymentViews();
     }
     redirect(wizardDone);
-  }
-
-  if (
-    context.pending_payment?.provider_payment_id &&
-    isMollieConfigured()
-  ) {
-    const { syncMolliePaymentByProviderId } = await import(
-      "@/lib/payments/sync-mollie"
-    );
-    await syncMolliePaymentByProviderId(
-      context.pending_payment.provider_payment_id
-    );
-    const refreshed = await getChildPaymentContext(childId);
-    if (refreshed && !childNeedsMembershipPayment(refreshed)) {
-      redirect(wizardDone);
-    }
-    if (
-      refreshed?.paid_payment &&
-      refreshed.membership_status === "AWAITING_PAYMENT"
-    ) {
-      await markMembershipPaidOrRedirect(
-        childId,
-        refreshed.membership_id,
-        `${wizardPayment}&error=membership-paid`
-      );
-      await revalidatePaymentViews();
-      redirect(wizardDone);
-    }
   }
 
   redirect(`${wizardPayment}&error=payment-required`);

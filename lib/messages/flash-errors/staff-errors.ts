@@ -219,5 +219,45 @@ export function buildStaffErrorMessages(
       description:
         "Applique 037_upsert_staff_contract_rpc.sql dans Supabase SQL Editor, puis réessaie.",
     },
+    "proof-not-submitted": {
+      type: "error",
+      title: "Preuve absente",
+      description: "Ce paiement n'a pas de preuve en attente de validation.",
+    },
+    "confirm-payment": {
+      type: "error",
+      title: "Confirmation impossible",
+      description: staffDetail(detail, "Réessaie ou vérifie la migration 048."),
+    },
+    "reject-payment": {
+      type: "error",
+      title: "Refus impossible",
+      description: staffDetail(detail, "Réessaie dans un instant."),
+    },
+    "membership-sync": {
+      type: "error",
+      title: "Cotisation non synchronisée",
+      description: "Le paiement est confirmé mais la cotisation n'a pas pu avancer.",
+    },
+    "activity-sync": {
+      type: "error",
+      title: "Activité non synchronisée",
+      description: "Le paiement est confirmé mais l'inscription activité n'a pas été mise à jour.",
+    },
+    "bank-iban": {
+      type: "error",
+      title: "IBAN invalide",
+      description: "Vérifie le format belge (ex. BE68…).",
+    },
+    "bank-holder": {
+      type: "error",
+      title: "Titulaire manquant",
+      description: "Indique le nom du titulaire du compte avec l'IBAN.",
+    },
+    "bank-save": {
+      type: "error",
+      title: "IBAN non enregistré",
+      description: staffDetail(detail, "Applique 048 puis 049 (virement) dans Supabase."),
+    },
   };
 }

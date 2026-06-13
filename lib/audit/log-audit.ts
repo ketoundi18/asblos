@@ -14,6 +14,8 @@ export type AuditAction =
   | "PARENT_LINK_VERIFIED"
   | "PAYMENT_PAID"
   | "PAYMENT_FAILED"
+  | "PAYMENT_PROOF_SUBMITTED"
+  | "PAYMENT_PROOF_REJECTED"
   | "MEMBERSHIP_ACTIVATED"
   | "ASBL_SETTINGS_UPDATED"
   | "STAFF_CLOCK_IN"
@@ -38,7 +40,8 @@ export type AuditEntityType =
   | "asbl_settings"
   | "staff_time_entries"
   | "staff_time_ledger"
-  | "staff_time_contracts";
+  | "staff_time_contracts"
+  | "activity_registrations";
 
 export type LogAuditInput = {
   action: AuditAction;

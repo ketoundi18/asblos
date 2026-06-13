@@ -16,6 +16,13 @@ import { normalizeTimeForDb } from "@/lib/date-utils";
 import { mapActivityInsertError } from "@/lib/messages/map-staff-action-error";
 import { emptyToNull, mapFieldErrors } from "@/lib/utils/form-utils";
 import { guardUuid, isValidUuid } from "@/lib/validations/uuid";
+import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
+import {
+  isValidIbanFormat,
+  isValidTransferReference,
+  normalizeIban,
+  suggestActivityTransferReference,
+} from "@/lib/payments/transfer-reference";
 
 type ActivityInsert = Database["public"]["Tables"]["activities"]["Insert"];
 
@@ -31,6 +38,11 @@ function parseActivityForm(formData: FormData) {
     status: formData.get("status") || "PLANIFIEE",
     is_paid: formData.get("is_paid") === "on",
     price_euros: formData.get("price_euros")?.toString() || undefined,
+    payment_bank_iban: formData.get("payment_bank_iban")?.toString() || undefined,
+    payment_bank_account_holder:
+      formData.get("payment_bank_account_holder")?.toString() || undefined,
+    payment_transfer_reference:
+      formData.get("payment_transfer_reference")?.toString() || undefined,
     parent_registration_open: formData.get("parent_registration_open") === "on",
   });
 }
@@ -56,6 +68,45 @@ export async function createActivityAction(
   }
 
   const data = parsed.data;
+
+  let paymentIban: string | null = null;
+  let paymentHolder: string | null = null;
+  let paymentReference: string | null = null;
+
+  if (data.is_paid) {
+    const { settings } = await getAsblSettingsForCurrentYear();
+    paymentIban = normalizeIban(data.payment_bank_iban ?? "");
+    paymentHolder = data.payment_bank_account_holder?.trim() ?? "";
+    paymentReference = data.payment_transfer_reference?.trim().toUpperCase() ?? "";
+
+    if (!paymentIban && settings?.bank_iban) {
+      paymentIban = normalizeIban(settings.bank_iban);
+      paymentHolder = paymentHolder || settings.bank_account_holder?.trim() || "";
+    }
+    if (!paymentReference) {
+      paymentReference = suggestActivityTransferReference(
+        data.title.trim(),
+        data.activity_date
+      );
+    }
+
+    const fieldErrors: Record<string, string> = {};
+    if (!paymentIban || !isValidIbanFormat(paymentIban)) {
+      fieldErrors.payment_bank_iban =
+        "IBAN manquant — remplis-le ici ou dans Administration → Compte bancaire.";
+    }
+    if (!paymentHolder) {
+      fieldErrors.payment_bank_account_holder = "Indique le titulaire du compte.";
+    }
+    if (!isValidTransferReference(paymentReference)) {
+      fieldErrors.payment_transfer_reference =
+        "Communication invalide (3–40 caractères).";
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return { error: null, fieldErrors };
+    }
+  }
+
   const supabase = await createClient();
 
   const payload: ActivityInsert = {
@@ -69,6 +120,9 @@ export async function createActivityAction(
     status: data.status,
     price_cents: priceEurosToCents(data.is_paid, data.price_euros),
     parent_registration_open: data.parent_registration_open,
+    payment_bank_iban: data.is_paid ? paymentIban : null,
+    payment_bank_account_holder: data.is_paid ? paymentHolder : null,
+    payment_transfer_reference: data.is_paid ? paymentReference : null,
     created_by: profile.id,
     updated_by: profile.id,
   };

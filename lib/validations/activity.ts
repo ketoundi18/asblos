@@ -27,6 +27,9 @@ export const activityFormSchema = z
     status: activityStatusSchema.default("PLANIFIEE"),
     is_paid: z.coerce.boolean().default(false),
     price_euros: z.string().optional(),
+    payment_bank_iban: z.string().optional(),
+    payment_bank_account_holder: z.string().optional(),
+    payment_transfer_reference: z.string().optional(),
     parent_registration_open: z.coerce.boolean().default(true),
   })
   .superRefine((data, ctx) => {

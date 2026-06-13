@@ -21,8 +21,7 @@ export type EnrollmentWizardProps = {
     email: string;
     phone: string;
   };
-  mollieReady: boolean;
-  simulationEnabled: boolean;
+  bankTransferConfigured: boolean;
   initialStep?: string;
   initialChildId?: string;
   initialChildName?: string;

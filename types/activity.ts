@@ -21,6 +21,9 @@ export type Activity = {
   deleted_at: string | null;
   price_cents: number;
   parent_registration_open: boolean;
+  payment_bank_iban: string | null;
+  payment_bank_account_holder: string | null;
+  payment_transfer_reference: string | null;
 };
 
 export type ActivityRegistrationPaymentStatus =
@@ -118,7 +121,18 @@ export function normalizeActivity<T extends Partial<Activity>>(row: T): Activity
     ...(row as Activity),
     price_cents: row.price_cents ?? 0,
     parent_registration_open: row.parent_registration_open ?? false,
+    payment_bank_iban: row.payment_bank_iban ?? null,
+    payment_bank_account_holder: row.payment_bank_account_holder ?? null,
+    payment_transfer_reference: row.payment_transfer_reference ?? null,
   };
+}
+
+export function isActivityPaymentBankConfigured(
+  activity: Pick<Activity, "price_cents" | "payment_bank_iban">,
+  settings?: { bank_iban?: string | null } | null
+): boolean {
+  if ((activity.price_cents ?? 0) <= 0) return true;
+  return !!(activity.payment_bank_iban?.trim() || settings?.bank_iban?.trim());
 }
 
 export function normalizeRegistrationPaymentStatus(
@@ -139,7 +153,10 @@ export function normalizeRegistrationPaymentStatus(
 export function getParentParticipationHint(
   status: ActivityRegistrationPaymentStatus
 ): string | null {
-  if (status === "DEFERRED" || status === "PENDING") {
+  if (status === "PENDING") {
+    return "Paiement par virement en attente — vous pouvez envoyer votre preuve quand vous voulez.";
+  }
+  if (status === "DEFERRED") {
     return "Participation à régler quand vous le pourrez.";
   }
   return null;

@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ParentPayButtons } from "@/components/parent/parent-pay-buttons";
-import { ParentSimulatePayButton } from "@/components/parent/parent-simulate-pay-button";
+import { ArrowRight, Landmark } from "lucide-react";
 import { ParentVerifyPaymentButton } from "@/components/parent/parent-verify-payment-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,42 +16,48 @@ type Props = {
   childId: string;
   childName: string;
   schoolSupportFeeLabel: string;
-  mollieReady: boolean;
-  simulationEnabled: boolean;
+  bankTransferConfigured: boolean;
 };
 
 export function EnrollmentStepPayment({
   childId,
   childName,
   schoolSupportFeeLabel,
-  mollieReady,
-  simulationEnabled,
+  bankTransferConfigured,
 }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Étape 4 — Cotisation</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Landmark className="h-5 w-5 text-primary" />
+          Étape 4 — Cotisation par virement
+        </CardTitle>
         <CardDescription>
           Finalisez le paiement pour {childName}.
           {schoolSupportFeeLabel !== "Gratuit" ? ` Total : ${schoolSupportFeeLabel}` : ""}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {simulationEnabled ? <ParentSimulatePayButton childId={childId} wizardMode /> : null}
-        {mollieReady ? (
-          <ParentPayButtons childId={childId} feeLabel={schoolSupportFeeLabel} />
-        ) : null}
-        {!simulationEnabled && !mollieReady ? (
+        {!bankTransferConfigured ? (
           <p className="text-sm text-warning-foreground">
-            Paiement en ligne bientôt disponible. Contactez l&apos;ASBL.
+            L&apos;ASBL n&apos;a pas encore configuré son IBAN. Contactez l&apos;équipe
+            pour finaliser la cotisation.
           </p>
-        ) : null}
-        <Button asChild variant="outline" className="w-full">
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Vous allez copier l&apos;IBAN et la communication, effectuer le virement,
+            puis envoyer une preuve (PDF ou photo). L&apos;ASBL confirme sous 48 h.
+          </p>
+        )}
+
+        <Button asChild className="w-full" size="lg" disabled={!bankTransferConfigured}>
           <Link href={`/espace-parents/paiement/${childId}?wizard=1`}>
-            Ouvrir la page paiement complète
+            Payer par virement
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
-        {mollieReady ? <ParentVerifyPaymentButton childId={childId} /> : null}
+
+        <ParentVerifyPaymentButton childId={childId} />
       </CardContent>
     </Card>
   );

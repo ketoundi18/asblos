@@ -19,7 +19,9 @@ export async function getAsblSettingsForCurrentYear(): Promise<{
 
   const { data, error } = await supabase
     .from("asbl_settings")
-    .select("id, school_year, enrollment_fee_cents, school_support_fee_cents, currency")
+    .select(
+      "id, school_year, enrollment_fee_cents, school_support_fee_cents, currency, bank_iban, bank_account_holder, bank_transfer_instructions"
+    )
     .eq("school_year", schoolYear)
     .maybeSingle<AsblSettings>();
 
@@ -44,6 +46,9 @@ export async function getAsblSettingsForCurrentYear(): Promise<{
       enrollment_fee_cents: 0,
       school_support_fee_cents: 0,
       currency: "EUR",
+      bank_iban: null,
+      bank_account_holder: null,
+      bank_transfer_instructions: null,
     },
     loadError: null,
   };

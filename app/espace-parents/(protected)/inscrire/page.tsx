@@ -9,14 +9,14 @@ import {
   formatEnrollmentFeeLabel,
   getSchoolSupportFeeCents,
 } from "@/lib/data/asbl-settings";
+import { isBankTransferConfigured } from "@/lib/asbl/fee-utils";
+import { createClient } from "@/lib/supabase/server";
 import {
   childNeedsMembershipPayment,
   getChildPaymentContext,
+  parentMembershipPaymentSettled,
 } from "@/lib/data/parent-payments";
 import { getParentOpenSchoolSupportPrograms } from "@/lib/data/school-support";
-import { isPaymentSimulationEnabled } from "@/lib/config/payments";
-import { isMollieConfigured } from "@/lib/mollie/client";
-import { createClient } from "@/lib/supabase/server";
 import { ArrowLeft } from "lucide-react";
 
 function splitFullName(fullName: string): { first: string; last: string } {
@@ -48,8 +48,7 @@ export default async function ParentInscrireEnfantPage({
   ]);
   const supportFee = getSchoolSupportFeeCents(settings);
   const supportFeeLabel = formatEnrollmentFeeLabel(supportFee);
-  const mollieReady = isMollieConfigured();
-  const simulationEnabled = isPaymentSimulationEnabled();
+  const bankTransferConfigured = isBankTransferConfigured(settings);
 
   let initialChildName = "";
   let initialNeedsPayment = false;
@@ -72,7 +71,7 @@ export default async function ParentInscrireEnfantPage({
       if (
         step === "termine" &&
         initialNeedsPayment &&
-        !paymentContext.paid_payment
+        !parentMembershipPaymentSettled(paymentContext)
       ) {
         redirect(
           `/espace-parents/inscrire?step=paiement&childId=${resumeChildId}&error=payment-required`
@@ -113,8 +112,7 @@ export default async function ParentInscrireEnfantPage({
           email: profile?.email ?? "",
           phone: profile?.phone ?? "",
         }}
-        mollieReady={mollieReady}
-        simulationEnabled={simulationEnabled}
+        bankTransferConfigured={bankTransferConfigured}
         initialStep={step}
         initialChildId={resumeChildId}
         initialChildName={initialChildName}

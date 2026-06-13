@@ -27,6 +27,9 @@ export type Database = {
           max_participants: number | null
           parent_registration_open: boolean
           price_cents: number
+          payment_bank_iban: string | null
+          payment_bank_account_holder: string | null
+          payment_transfer_reference: string | null
           start_time: string | null
           status: Database["public"]["Enums"]["activity_status"]
           title: string
@@ -45,6 +48,9 @@ export type Database = {
           max_participants?: number | null
           parent_registration_open?: boolean
           price_cents?: number
+          payment_bank_iban?: string | null
+          payment_bank_account_holder?: string | null
+          payment_transfer_reference?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["activity_status"]
           title: string
@@ -63,6 +69,9 @@ export type Database = {
           max_participants?: number | null
           parent_registration_open?: boolean
           price_cents?: number
+          payment_bank_iban?: string | null
+          payment_bank_account_holder?: string | null
+          payment_transfer_reference?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["activity_status"]
           title?: string
@@ -192,6 +201,9 @@ export type Database = {
       }
       asbl_settings: {
         Row: {
+          bank_account_holder: string | null
+          bank_iban: string | null
+          bank_transfer_instructions: string | null
           created_at: string
           currency: string
           effective_from: string
@@ -203,6 +215,9 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          bank_account_holder?: string | null
+          bank_iban?: string | null
+          bank_transfer_instructions?: string | null
           created_at?: string
           currency?: string
           effective_from?: string
@@ -214,6 +229,9 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          bank_account_holder?: string | null
+          bank_iban?: string | null
+          bank_transfer_instructions?: string | null
           created_at?: string
           currency?: string
           effective_from?: string
@@ -537,11 +555,16 @@ export type Database = {
           method: Database["public"]["Enums"]["payment_method"] | null
           paid_at: string | null
           parent_id: string
+          proof_original_filename: string | null
+          proof_rejection_note: string | null
+          proof_storage_path: string | null
+          proof_submitted_at: string | null
           provider: Database["public"]["Enums"]["payment_provider"] | null
           provider_payment_id: string | null
           purpose: Database["public"]["Enums"]["payment_purpose"] | null
           reference_id: string | null
           status: Database["public"]["Enums"]["payment_status"]
+          transfer_reference: string | null
           updated_at: string
         }
         Insert: {
@@ -553,11 +576,16 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string | null
           parent_id: string
+          proof_original_filename?: string | null
+          proof_rejection_note?: string | null
+          proof_storage_path?: string | null
+          proof_submitted_at?: string | null
           provider?: Database["public"]["Enums"]["payment_provider"] | null
           provider_payment_id?: string | null
           purpose?: Database["public"]["Enums"]["payment_purpose"] | null
           reference_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
+          transfer_reference?: string | null
           updated_at?: string
         }
         Update: {
@@ -569,11 +597,16 @@ export type Database = {
           method?: Database["public"]["Enums"]["payment_method"] | null
           paid_at?: string | null
           parent_id?: string
+          proof_original_filename?: string | null
+          proof_rejection_note?: string | null
+          proof_storage_path?: string | null
+          proof_submitted_at?: string | null
           provider?: Database["public"]["Enums"]["payment_provider"] | null
           provider_payment_id?: string | null
           purpose?: Database["public"]["Enums"]["payment_purpose"] | null
           reference_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
+          transfer_reference?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1190,6 +1223,10 @@ export type Database = {
         Args: { p_child_id: string; p_membership_id?: string }
         Returns: undefined
       }
+      confirm_bank_transfer_payment: {
+        Args: { p_payment_id: string }
+        Returns: undefined
+      }
       upsert_staff_contract: {
         Args: {
           p_target_minutes: number
@@ -1224,9 +1261,9 @@ export type Database = {
         | "REJECTED"
         | "CANCELLED"
       payment_method: "BANCONTACT" | "CARD" | "OTHER"
-      payment_provider: "MOLLIE" | "STRIPE"
+      payment_provider: "MOLLIE" | "STRIPE" | "MANUAL"
       payment_purpose: "MEMBERSHIP" | "ACTIVITY"
-      payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED"
+      payment_status: "PENDING" | "PAID" | "FAILED" | "REFUNDED" | "PROOF_SUBMITTED"
       school_support_enrollment_status: "ACTIVE" | "CANCELLED" | "PENDING"
       school_support_program_status: "DRAFT" | "OPEN" | "CLOSED"
       staff_time_entry_status: "OPEN" | "CLOSED" | "ADJUSTED"
@@ -1392,9 +1429,9 @@ export const Constants = {
         "CANCELLED",
       ],
       payment_method: ["BANCONTACT", "CARD", "OTHER"],
-      payment_provider: ["MOLLIE", "STRIPE"],
+      payment_provider: ["MOLLIE", "STRIPE", "MANUAL"],
       payment_purpose: ["MEMBERSHIP", "ACTIVITY"],
-      payment_status: ["PENDING", "PAID", "FAILED", "REFUNDED"],
+      payment_status: ["PENDING", "PAID", "FAILED", "REFUNDED", "PROOF_SUBMITTED"],
       school_support_enrollment_status: ["ACTIVE", "CANCELLED", "PENDING"],
       school_support_program_status: ["DRAFT", "OPEN", "CLOSED"],
       staff_time_entry_status: ["OPEN", "CLOSED", "ADJUSTED"],

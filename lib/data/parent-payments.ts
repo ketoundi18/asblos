@@ -19,6 +19,7 @@ export type ChildPaymentContext = {
   fee_cents: number;
   needs_payment: boolean;
   pending_payment: PaymentRow | null;
+  proof_submitted_payment: PaymentRow | null;
   paid_payment: PaymentRow | null;
 };
 
@@ -73,6 +74,8 @@ export async function getChildPaymentContext(
     : [];
 
   const paid_payment = membershipPayments.find((p) => p.status === "PAID") ?? null;
+  const proof_submitted_payment =
+    membershipPayments.find((p) => p.status === "PROOF_SUBMITTED") ?? null;
   const pending_payment =
     membershipPayments.find((p) => p.status === "PENDING") ?? null;
 
@@ -86,10 +89,23 @@ export async function getChildPaymentContext(
     fee_cents: feeCents,
     needs_payment: state.derived.needs_payment,
     pending_payment,
+    proof_submitted_payment,
     paid_payment,
   };
 }
 
 export function childNeedsMembershipPayment(context: ChildPaymentContext): boolean {
   return context.needs_payment;
+}
+
+/** Parent a fait sa part (preuve envoyée, payé, ou plus rien à payer). */
+export function parentMembershipPaymentSettled(
+  context: ChildPaymentContext
+): boolean {
+  if (!context.needs_payment) return true;
+  if (context.paid_payment) return true;
+  if (context.proof_submitted_payment) return true;
+  if (context.membership_status === "AWAITING_ASBL") return true;
+  if (context.membership_status === "ACTIVE") return true;
+  return false;
 }

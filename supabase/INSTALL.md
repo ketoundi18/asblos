@@ -55,6 +55,20 @@
 | 46 | `044_enrollment_state_derive_layer_a.sql` | RPC 040 : couche A dérivée depuis memberships (C1 phase 4) |
 | 47 | `045_stop_enrollment_status_double_write.sql` | Stop double-write couche A — memberships seule source d'écriture (C1 étape A) |
 | 48 | `046_drop_children_enrollment_status.sql` | RLS + trigger sans colonne ; DROP `children.enrollment_status` (C1 étape B) |
+| 49 | `047_handle_new_user_parent_only.sql` | Inscription publique réservée aux parents |
+| 50 | `048_bank_transfer_payments.sql` | **Run 1** — enums `MANUAL` + `PROOF_SUBMITTED` |
+| 51 | `049_bank_transfer_payments_schema.sql` | **Run 2** — IBAN, colonnes preuve, RPC, storage |
+| 52 | `050_activity_payment_bank.sql` | IBAN + communication par activité payante |
+| 53 | `051_bank_transfer_confirm_atomic.sql` | Confirmation staff atomique + anti-doublon paiements |
+
+### Module virement bancaire (048 → 051)
+
+1. **`048_bank_transfer_payments.sql`** — Run **seul** (enums `MANUAL`, `PROOF_SUBMITTED`)
+2. **`049_bank_transfer_payments_schema.sql`** — Run **seul** (colonnes, bucket, RPC fix parent)
+3. **`050_activity_payment_bank.sql`**
+4. **`051_bank_transfer_confirm_atomic.sql`**
+5. **Administration** → IBAN + titulaire ASBL
+6. Test manuel : parent preuve → staff `/paiements` → Confirmer
 
 ## Fichiers de réparation (instance existante uniquement)
 
@@ -77,8 +91,8 @@ N'exécute **que si** tu as une erreur précise documentée dans `JOURNAL_DE_BOR
 | `/enfants` | Migrations 004+ manquantes |
 | `/espace-parents` | 007a + 007+ manquantes |
 | `/mon-service` | 031–037 manquantes |
-| `/equipe/horaires` | 032 + **037** manquantes (upsert contrat) |
-| `/equipe/rapport` | 031–037 manquantes |
+| `/paiements` | 048–051 + bucket `payment-proofs` |
+| `/administration` (IBAN) | 049 |
 
 ## Regénérer les types TypeScript
 
@@ -188,6 +202,34 @@ SELECT NOT EXISTS (
     AND table_name = 'children'
     AND column_name = 'enrollment_status'
 ) AS migration_046_ok;
+
+-- 048–049 : virement bancaire (enums + colonnes preuve)
+SELECT EXISTS (
+  SELECT 1 FROM pg_enum e
+  JOIN pg_type t ON t.oid = e.enumtypid
+  WHERE t.typname = 'payment_status' AND e.enumlabel = 'PROOF_SUBMITTED'
+) AS migration_048_ok;
+
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'asbl_settings' AND column_name = 'bank_iban'
+) AS migration_049_ok;
+
+-- 050 : IBAN par activité payante
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.columns
+  WHERE table_schema = 'public' AND table_name = 'activities' AND column_name = 'payment_bank_iban'
+) AS migration_050_ok;
+
+-- 051 : confirmation staff atomique
+SELECT EXISTS (
+  SELECT 1 FROM information_schema.routines
+  WHERE routine_schema = 'public' AND routine_name = 'confirm_bank_transfer_payment'
+) AS migration_051_ok;
+
+-- 049 P0 : parent ne peut plus forcer PAYE_EN_ATTENTE_ASBL sans PAID
+SELECT pg_get_functiondef('public.set_child_enrollment_layer_a_parent(uuid, child_enrollment_status)'::regprocedure)
+  NOT LIKE '%PAYE_EN_ATTENTE_ASBL%' AS migration_049_rpc_parent_ok;
 ```
 
 Si une valeur est `false` ou `NULL`, applique la migration manquante depuis le tableau ci-dessus **dans l'ordre**.

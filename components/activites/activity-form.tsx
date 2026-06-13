@@ -8,6 +8,10 @@ import type { ActivityFormState } from "@/lib/actions/activities-state";
 import { ACTIVITY_STATUS_LABELS } from "@/lib/validations/activity";
 import type { Activity } from "@/types/activity";
 import { normalizeTimeValue } from "@/lib/date-utils";
+import {
+  formatIbanForDisplay,
+  suggestActivityTransferReference,
+} from "@/lib/payments/transfer-reference";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +33,9 @@ type ActivityFormProps = {
   initialState: ActivityFormState;
   activity?: Activity;
   submitLabel: string;
+  /** Valeurs par défaut depuis Administration (pré-remplissent le virement) */
+  defaultPaymentIban?: string | null;
+  defaultPaymentAccountHolder?: string | null;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -52,6 +59,8 @@ export function ActivityForm({
   initialState,
   activity,
   submitLabel,
+  defaultPaymentIban,
+  defaultPaymentAccountHolder,
 }: ActivityFormProps) {
   const isNew = !activity;
   const [state, formAction] = useFormState(action, initialState);
@@ -60,6 +69,9 @@ export function ActivityForm({
   const [parentOpen, setParentOpen] = useState(
     activity?.parent_registration_open ?? true
   );
+  const [transferReference, setTransferReference] = useState(
+    activity?.payment_transfer_reference ?? ""
+  );
   const defaultPriceEuros =
     defaultPaid && activity?.price_cents
       ? (activity.price_cents / 100).toFixed(2).replace(".", ",")
@@ -67,6 +79,26 @@ export function ActivityForm({
 
   const defaultStart = normalizeTimeValue(activity?.start_time ?? null) ?? "";
   const defaultEnd = normalizeTimeValue(activity?.end_time ?? null) ?? "";
+
+  const defaultIbanValue = activity?.payment_bank_iban
+    ? formatIbanForDisplay(activity.payment_bank_iban)
+    : defaultPaymentIban
+      ? formatIbanForDisplay(defaultPaymentIban)
+      : "";
+
+  const defaultHolderValue =
+    activity?.payment_bank_account_holder ?? defaultPaymentAccountHolder ?? "";
+
+  function handleSuggestReference() {
+    const titleInput = document.getElementById("title") as HTMLInputElement | null;
+    const dateInput = document.getElementById("activity_date") as HTMLInputElement | null;
+    setTransferReference(
+      suggestActivityTransferReference(
+        titleInput?.value ?? activity?.title ?? "",
+        dateInput?.value ?? activity?.activity_date ?? ""
+      )
+    );
+  }
 
   return (
     <form action={formAction} className="space-y-6">
@@ -206,29 +238,108 @@ export function ActivityForm({
             <input
               type="checkbox"
               checked={isPaid}
-              onChange={(e) => setIsPaid(e.target.checked)}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setIsPaid(checked);
+                if (checked && !transferReference.trim()) {
+                  handleSuggestReference();
+                }
+              }}
               className="h-4 w-4"
             />
             <span className="text-sm">Activité payante</span>
           </label>
           <input type="hidden" name="is_paid" value={isPaid ? "on" : ""} />
           {isPaid ? (
-            <div className="space-y-2">
-              <Label htmlFor="price_euros">Prix (€) *</Label>
-              <Input
-                id="price_euros"
-                name="price_euros"
-                type="text"
-                inputMode="decimal"
-                placeholder="Ex. 15 ou 15,50"
-                defaultValue={defaultPriceEuros}
-                required
-              />
-              {state.fieldErrors.price_euros ? (
-                <p className="text-sm text-destructive">
-                  {state.fieldErrors.price_euros}
-                </p>
-              ) : null}
+            <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm font-medium">Paiement par virement</p>
+              <div className="space-y-2">
+                <Label htmlFor="price_euros">Prix (€) *</Label>
+                <Input
+                  id="price_euros"
+                  name="price_euros"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Ex. 15 ou 15,50"
+                  defaultValue={defaultPriceEuros}
+                  required
+                />
+                {state.fieldErrors.price_euros ? (
+                  <p className="text-sm text-destructive">
+                    {state.fieldErrors.price_euros}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment_bank_iban">
+                  Numéro de compte (IBAN)
+                  {!defaultPaymentIban && !defaultIbanValue ? " *" : ""}
+                </Label>
+                <Input
+                  id="payment_bank_iban"
+                  name="payment_bank_iban"
+                  placeholder="BE68 5390 0754 7034"
+                  defaultValue={defaultIbanValue}
+                  className="font-mono"
+                  required={!defaultPaymentIban && !defaultIbanValue}
+                />
+                {state.fieldErrors.payment_bank_iban ? (
+                  <p className="text-sm text-destructive">
+                    {state.fieldErrors.payment_bank_iban}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    {defaultPaymentIban || defaultIbanValue
+                      ? "Optionnel si déjà configuré dans Administration — sinon obligatoire."
+                      : "Configure d'abord Administration → Compte bancaire, ou saisis l'IBAN ici."}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment_bank_account_holder">Titulaire du compte *</Label>
+                <Input
+                  id="payment_bank_account_holder"
+                  name="payment_bank_account_holder"
+                  placeholder="Nom de l'ASBL"
+                  defaultValue={defaultHolderValue}
+                  required
+                />
+                {state.fieldErrors.payment_bank_account_holder ? (
+                  <p className="text-sm text-destructive">
+                    {state.fieldErrors.payment_bank_account_holder}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="payment_transfer_reference">Communication *</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleSuggestReference}>
+                    Suggérer depuis le titre
+                  </Button>
+                </div>
+                <Input
+                  id="payment_transfer_reference"
+                  name="payment_transfer_reference"
+                  placeholder="Ex. ASBL-ACT-SORTIE-PARC-2606"
+                  value={transferReference}
+                  onChange={(e) => setTransferReference(e.target.value.toUpperCase())}
+                  className="font-mono uppercase"
+                  required
+                />
+                {state.fieldErrors.payment_transfer_reference ? (
+                  <p className="text-sm text-destructive">
+                    {state.fieldErrors.payment_transfer_reference}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Les parents devront recopier exactement cette communication lors du
+                    virement. Les preuves se valident dans <strong>Paiements</strong>.
+                  </p>
+                )}
+              </div>
             </div>
           ) : null}
 

@@ -31,9 +31,7 @@ test.describe("Parcours parent — inscription wizard", () => {
     await expectChildOnParentDashboard(page, firstName, lastName);
   });
 
-  test("inscription SCHOOL_SUPPORT + simulation paiement si disponible", async ({
-    page,
-  }) => {
+  test("inscription SCHOOL_SUPPORT + étape virement si disponible", async ({ page }) => {
     const { firstName, lastName } = uniqueChildName();
 
     await loginAsParent(page);
@@ -43,13 +41,11 @@ test.describe("Parcours parent — inscription wizard", () => {
     await page.getByRole("radio", { name: /Inscription \+ soutien scolaire/i }).check();
     await submitFormulaStep(page);
 
-    const simulateBtn = page.getByRole("button", {
-      name: /Simuler le paiement Bancontact/i,
-    });
+    const virementLink = page.getByRole("link", { name: /Payer par virement/i });
     const skipDaysBtn = page.getByRole("button", { name: /Passer — choisir plus tard/i });
     const doneHeading = page.getByText("Inscription enregistrée");
 
-    await expect(simulateBtn.or(skipDaysBtn).or(doneHeading)).toBeVisible({
+    await expect(virementLink.or(skipDaysBtn).or(doneHeading)).toBeVisible({
       timeout: 30_000,
     });
 
@@ -57,9 +53,13 @@ test.describe("Parcours parent — inscription wizard", () => {
       await skipDaysBtn.click();
     }
 
-    if (await simulateBtn.isVisible()) {
-      await simulateBtn.click();
-      await expect(page).toHaveURL(/\/espace-parents/, { timeout: 30_000 });
+    if (await virementLink.isVisible()) {
+      await expect(virementLink).toBeEnabled();
+      await virementLink.click();
+      await expect(page).toHaveURL(/\/espace-parents\/paiement\/.+\?wizard=1/, {
+        timeout: 15_000,
+      });
+      await expect(page.getByText(/Paiement par virement/i).first()).toBeVisible();
     } else {
       await expect(doneHeading).toBeVisible();
     }

@@ -9,6 +9,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   PARENT_LINK_VERIFIED: "Lien parent vérifié",
   PAYMENT_PAID: "Paiement confirmé",
   PAYMENT_FAILED: "Paiement échoué",
+  PAYMENT_PROOF_SUBMITTED: "Preuve de virement envoyée",
+  PAYMENT_PROOF_REJECTED: "Preuve de virement refusée",
   MEMBERSHIP_ACTIVATED: "Adhésion activée",
   ASBL_SETTINGS_UPDATED: "Tarif ASBL modifié",
   STAFF_CLOCK_IN: "Service commencé",

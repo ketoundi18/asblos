@@ -104,13 +104,20 @@ export default async function ParentActiviteDetailPage({
                 const status = registrationByChild.get(c.id) ?? "NOT_REQUIRED";
                 const hint = getParentParticipationHint(status);
                 return (
-                  <div key={c.id}>
+                  <div key={c.id} className="space-y-2">
                     <p className="font-medium">
                       {c.first_name} {c.last_name} —{" "}
                       <span className="text-success-foreground">Inscrit</span>
                     </p>
                     {hint ? (
                       <p className="text-sm text-muted-foreground">{hint}</p>
+                    ) : null}
+                    {status === "PENDING" && isPaid ? (
+                      <Button asChild size="sm" variant="outline">
+                        <Link href={`/espace-parents/paiement-activite/${id}/${c.id}`}>
+                          Payer par virement
+                        </Link>
+                      </Button>
                     ) : null}
                   </div>
                 );

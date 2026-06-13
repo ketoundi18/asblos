@@ -8,7 +8,15 @@ export type AsblSettingsSnapshot = {
   enrollment_fee_cents: number;
   school_support_fee_cents: number;
   currency: string;
+  bank_iban?: string | null;
+  bank_account_holder?: string | null;
+  bank_transfer_instructions?: string | null;
 };
+
+export function isBankTransferConfigured(settings: AsblSettingsSnapshot | null): boolean {
+  if (!settings?.bank_iban?.trim()) return false;
+  return true;
+}
 
 export type EnrollmentQuoteLine = {
   code: "BASE" | "SCHOOL_SUPPORT";

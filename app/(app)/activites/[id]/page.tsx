@@ -96,6 +96,19 @@ export default async function ActiviteDetailPage({
           {activity.description ? (
             <p className="text-muted-foreground">{activity.description}</p>
           ) : null}
+          {isActivityPaid(activity.price_cents) && activity.payment_bank_iban ? (
+            <div className="mt-3 rounded-md border bg-muted/40 p-3 text-sm space-y-1">
+              <p className="font-medium">Virement parents</p>
+              <p className="text-muted-foreground font-mono text-xs break-all">
+                IBAN : {activity.payment_bank_iban}
+              </p>
+              {activity.payment_transfer_reference ? (
+                <p className="text-muted-foreground font-mono text-xs">
+                  Communication : {activity.payment_transfer_reference}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

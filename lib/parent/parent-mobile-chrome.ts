@@ -2,6 +2,7 @@
 export const PARENT_HIDE_MOBILE_CHROME_PREFIXES = [
   "/espace-parents/inscrire",
   "/espace-parents/paiement",
+  "/espace-parents/paiement-activite",
   "/espace-parents/choisir-creneaux",
 ] as const;
 

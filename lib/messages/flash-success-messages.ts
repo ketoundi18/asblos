@@ -32,6 +32,21 @@ const SUCCESS_MESSAGES: Record<string, FlashToast> = {
     title: "Cotisation mise à jour",
     description: "Le montant de la cotisation annuelle est enregistré.",
   },
+  "bank-updated": {
+    type: "success",
+    title: "Coordonnées bancaires enregistrées",
+    description: "Les parents verront cet IBAN pour leurs virements.",
+  },
+  "proof-submitted": {
+    type: "success",
+    title: "Preuve envoyée",
+    description: "Merci ! L'ASBL confirmera votre paiement sous 48 h ouvrées.",
+  },
+  "proof-pending": {
+    type: "success",
+    title: "Preuve déjà reçue",
+    description: "Votre preuve est en cours de validation par l'ASBL.",
+  },
   enrolled: {
     type: "success",
     title: "Inscription confirmée",
@@ -162,6 +177,26 @@ const STAFF_SUCCESS_OVERRIDES: Partial<Record<string, FlashToast>> = {
     type: "success",
     title: "Paiement enregistré",
     description: "Le paiement a bien été pris en compte.",
+  },
+  "payment-confirmed": {
+    type: "success",
+    title: "Paiement confirmé",
+    description: "La cotisation ou l'activité est marquée comme payée.",
+  },
+  "payment-rejected": {
+    type: "success",
+    title: "Preuve refusée",
+    description: "Le parent peut renvoyer une nouvelle preuve.",
+  },
+  "payment-already-paid": {
+    type: "success",
+    title: "Déjà payé",
+    description: "Ce paiement était déjà confirmé.",
+  },
+  "bank-updated": {
+    type: "success",
+    title: "IBAN enregistré",
+    description: "Les coordonnées bancaires sont à jour.",
   },
 };
 

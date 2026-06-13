@@ -153,4 +153,34 @@ export const PARENT_ERROR_MESSAGES: Record<string, FlashToast> = {
     title: "Reprise impossible",
     description: "Recommencez l'inscription depuis le début.",
   },
+  "bank-not-configured": {
+    type: "error",
+    title: "Virement indisponible",
+    description: "L'ASBL n'a pas encore configuré son IBAN. Contactez l'équipe.",
+  },
+  "proof-missing": {
+    type: "error",
+    title: "Fichier manquant",
+    description: "Sélectionnez une preuve de virement (PDF, JPEG ou PNG).",
+  },
+  "proof_too_large": {
+    type: "error",
+    title: "Fichier trop volumineux",
+    description: "La preuve ne doit pas dépasser 5 Mo.",
+  },
+  "proof_type": {
+    type: "error",
+    title: "Format non accepté",
+    description: "Formats acceptés : PDF, JPEG ou PNG.",
+  },
+  "proof-upload": {
+    type: "error",
+    title: "Envoi impossible",
+    description: "La preuve n'a pas pu être téléversée. Réessayez.",
+  },
+  "proof-save": {
+    type: "error",
+    title: "Enregistrement impossible",
+    description: "Réessayez ou contactez l'ASBL si le problème persiste.",
+  },
 };

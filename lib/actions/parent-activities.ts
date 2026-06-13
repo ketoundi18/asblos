@@ -110,9 +110,7 @@ export async function registerParentChildToActivityAction(
   revalidatePath("/espace-parents");
 
   if (paymentStatus === "PENDING") {
-    redirect(
-      `/espace-parents/activites/${activityId}?success=inscription&payment=pending`
-    );
+    redirect(`/espace-parents/paiement-activite/${activityId}/${childId}`);
   }
 
   redirect(`/espace-parents/activites/${activityId}?success=inscription`);
