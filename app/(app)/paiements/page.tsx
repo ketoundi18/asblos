@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/session";
 import { canRecordPayment } from "@/lib/auth/permissions";
+import { getAsblSettingsForCurrentYear } from "@/lib/data/asbl-settings";
 import { getStaffPayments } from "@/lib/data/payments-staff";
+import { BankTransferSettingsCard } from "@/components/admin/bank-transfer-settings-card";
 import { StaffPaymentProofCard } from "@/components/staff/staff-payment-proof-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCentsForDisplay } from "@/lib/config/payments";
-import { resolveLoadErrorToast } from "@/lib/messages/flash-messages";
+import { isBankTransferConfigured } from "@/lib/asbl/fee-utils";
+import {
+  resolveFlashToast,
+  resolveLoadErrorToast,
+} from "@/lib/messages/flash-messages";
 import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 
 function statusBadge(status: string) {
@@ -25,14 +31,31 @@ function methodLabel(method: string | null, purpose: string | null) {
   return "—";
 }
 
-export default async function PaiementsPage() {
+export default async function PaiementsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; error?: string; detail?: string }>;
+}) {
   const profile = await getCurrentProfile();
 
   if (!profile || !canRecordPayment(profile.role)) {
-    redirect("/");
+    redirect("/?error=permission");
   }
 
-  const { payments, proofQueue, loadError } = await getStaffPayments();
+  const params = await searchParams;
+  const flash = resolveFlashToast({
+    success: params.success,
+    error: params.error,
+    detail: params.detail,
+    audience: "staff",
+  });
+
+  const [{ payments, proofQueue, loadError }, { settings }] = await Promise.all([
+    getStaffPayments(),
+    getAsblSettingsForCurrentYear(),
+  ]);
+
+  const bankReady = isBankTransferConfigured(settings);
 
   return (
     <div className="space-y-6">
@@ -43,8 +66,14 @@ export default async function PaiementsPage() {
         </p>
       </div>
 
+      {flash ? <ServerNoticeToast flash={flash} /> : null}
+
       {loadError ? (
         <ServerNoticeToast flash={resolveLoadErrorToast(loadError, "staff")} />
+      ) : null}
+
+      {settings && !bankReady ? (
+        <BankTransferSettingsCard settings={settings} returnTo="/paiements" />
       ) : null}
 
       {proofQueue.length > 0 ? (
@@ -99,6 +128,17 @@ export default async function PaiementsPage() {
           })}
         </section>
       )}
+
+      {settings && bankReady ? (
+        <details className="rounded-lg border bg-muted/20 p-4">
+          <summary className="cursor-pointer text-sm font-medium">
+            Modifier l&apos;IBAN ASBL
+          </summary>
+          <div className="mt-4">
+            <BankTransferSettingsCard settings={settings} returnTo="/paiements" />
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

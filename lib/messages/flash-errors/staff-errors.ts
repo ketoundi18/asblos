@@ -15,6 +15,12 @@ export function buildStaffErrorMessages(
       title: "Permission refusée",
       description: "Tu n'as pas les droits pour cette action.",
     },
+    "admin-only": {
+      type: "info",
+      title: "Réservé à l'administrateur",
+      description:
+        "La page Familles est réservée aux admins. Configure l'IBAN et valide les preuves depuis Paiements.",
+    },
     "payment-required": {
       type: "info",
       title: "Paiement en attente",

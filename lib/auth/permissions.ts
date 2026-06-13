@@ -66,6 +66,11 @@ export function canRecordPayment(role: UserRole): boolean {
   return isStaffFullAccess(role);
 }
 
+/** IBAN et coordonnées virement — admin + travailleur. */
+export function canManageAsblBankSettings(role: UserRole): boolean {
+  return canRecordPayment(role);
+}
+
 export function canViewFullChildProfile(role: UserRole): boolean {
   return isStaffFullAccess(role);
 }

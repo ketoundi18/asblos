@@ -152,8 +152,13 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
       const url = request.nextUrl.clone();
-      url.pathname = "/";
-      url.searchParams.set("error", "permission");
+      if (pathname.startsWith("/administration")) {
+        url.pathname = "/paiements";
+        url.searchParams.set("error", "admin-only");
+      } else {
+        url.pathname = "/";
+        url.searchParams.set("error", "permission");
+      }
       return NextResponse.redirect(url);
     }
 

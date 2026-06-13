@@ -7,16 +7,28 @@ import { getSchoolSupportAdminQueue } from "@/lib/data/school-support-admin";
 import { AsblSettingsPanel } from "@/components/admin/asbl-settings-panel";
 import { ParentLinksPanel } from "@/components/admin/parent-links-panel";
 import { SchoolSupportAdminPanel } from "@/components/admin/school-support-admin-panel";
-import { resolveCombinedLoadErrorToast } from "@/lib/messages/flash-messages";
+import { resolveCombinedLoadErrorToast, resolveFlashToast } from "@/lib/messages/flash-messages";
 import { ServerNoticeToast } from "@/components/ui/server-notice-toast";
 import { isBankTransferConfigured } from "@/lib/asbl/fee-utils";
 
-export default async function AdministrationPage() {
+export default async function AdministrationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ success?: string; error?: string; detail?: string }>;
+}) {
   const profile = await getCurrentProfile();
 
   if (!profile || !canManageUsers(profile.role)) {
     redirect("/");
   }
+
+  const params = await searchParams;
+  const flash = resolveFlashToast({
+    success: params.success,
+    error: params.error,
+    detail: params.detail,
+    audience: "staff",
+  });
 
   const [{ links, loadError }, { requests: schoolSupportRequests, loadError: soutienError }, { settings, loadError: settingsError }] =
     await Promise.all([
@@ -43,6 +55,7 @@ export default async function AdministrationPage() {
       </div>
 
       {combinedLoadError ? <ServerNoticeToast flash={combinedLoadError} /> : null}
+      {flash ? <ServerNoticeToast flash={flash} /> : null}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">

@@ -3,11 +3,20 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireProfile } from "@/lib/auth/session";
-import { canManageUsers } from "@/lib/auth/permissions";
+import { canManageAsblBankSettings, canManageUsers } from "@/lib/auth/permissions";
 import { getCurrentSchoolYear } from "@/lib/school-year";
 import { logAuditEvent } from "@/lib/audit/log-audit";
 import { getAuditIpHash } from "@/lib/audit/request-ip";
+
+function safeBankSettingsReturnPath(raw: FormDataEntryValue | null): string {
+  if (typeof raw === "string") {
+    const path = raw.split("?")[0];
+    if (path === "/paiements" || path === "/administration") return path;
+  }
+  return "/paiements";
+}
 
 export async function updateSchoolSupportFeeAction(formData: FormData) {
   const profile = await requireProfile();
@@ -97,9 +106,10 @@ export async function updateSchoolSupportFeeAction(formData: FormData) {
 
 export async function updateBankTransferSettingsAction(formData: FormData) {
   const profile = await requireProfile();
+  const returnTo = safeBankSettingsReturnPath(formData.get("return_to"));
 
-  if (!canManageUsers(profile.role)) {
-    redirect("/administration?error=permission");
+  if (!canManageAsblBankSettings(profile.role)) {
+    redirect(`${returnTo}?error=permission`);
   }
 
   const ibanRaw = formData.get("bank_iban");
@@ -114,18 +124,18 @@ export async function updateBankTransferSettingsAction(formData: FormData) {
     typeof instructionsRaw === "string" ? instructionsRaw.trim().slice(0, 500) : null;
 
   if (bank_iban.length > 0 && (bank_iban.length < 15 || !/^[A-Z]{2}[0-9A-Z]+$/.test(bank_iban))) {
-    redirect("/administration?error=bank-iban");
+    redirect(`${returnTo}?error=bank-iban`);
   }
 
   if (bank_iban.length > 0 && bank_account_holder.length === 0) {
-    redirect("/administration?error=bank-holder");
+    redirect(`${returnTo}?error=bank-holder`);
   }
 
   const schoolYear = getCurrentSchoolYear();
-  const supabase = await createClient();
+  const admin = createAdminClient();
   const ipHash = await getAuditIpHash();
 
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("asbl_settings")
     .select("id")
     .eq("school_year", schoolYear)
@@ -142,8 +152,8 @@ export async function updateBankTransferSettingsAction(formData: FormData) {
   };
 
   if (existing) {
-    const { error } = await supabase.from("asbl_settings").update(payload).eq("id", existing.id);
-    if (error) redirect("/administration?error=bank-save");
+    const { error } = await admin.from("asbl_settings").update(payload).eq("id", existing.id);
+    if (error) redirect(`${returnTo}?error=bank-save`);
 
     await logAuditEvent({
       action: "ASBL_SETTINGS_UPDATED",
@@ -155,7 +165,7 @@ export async function updateBankTransferSettingsAction(formData: FormData) {
       ipHash,
     });
   } else {
-    const { data: inserted, error } = await supabase
+    const { data: inserted, error } = await admin
       .from("asbl_settings")
       .insert({
         school_year: schoolYear,
@@ -166,7 +176,7 @@ export async function updateBankTransferSettingsAction(formData: FormData) {
       .select("id")
       .single<{ id: string }>();
 
-    if (error || !inserted) redirect("/administration?error=bank-save");
+    if (error || !inserted) redirect(`${returnTo}?error=bank-save`);
 
     await logAuditEvent({
       action: "ASBL_SETTINGS_UPDATED",
@@ -180,8 +190,9 @@ export async function updateBankTransferSettingsAction(formData: FormData) {
   }
 
   revalidatePath("/administration");
+  revalidatePath("/paiements");
   revalidatePath("/espace-parents");
-  redirect("/administration?success=bank-updated");
+  redirect(`${returnTo}?success=bank-updated`);
 }
 
 /** @deprecated Utiliser updateSchoolSupportFeeAction */
